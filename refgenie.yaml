@@ -1,0 +1,19 @@
+# Genome configuration
+
+genome_folder: $GENOMES
+genome_server: http://localhost
+
+genomes:
+  hg38:
+    bowtie2: indexed_bowtie2
+    hisat2: indexed_hisat2
+    tss_annotation: TSS.bed.gz
+    gtf: blah.gtf
+  mm10:
+    bowtie2: indexed_bowtie2
+    blacklist: blacklist/mm10.bed
+ 
+  rCRSd:
+    bowtie2: indexed_bowtie2
+    bowtie: indexed_bowtie
+

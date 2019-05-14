@@ -1,0 +1,21 @@
+<html>
+<head>
+    <title>Genome Details</title>
+</head>
+<body>
+    <h1>Genomes:</h1>
+
+<ul>
+{% for genome_name, assets in genomes.items() %}
+<li>{{ genome_name }}
+	<ul>
+	{% for asset in assets %}
+	<li><a href="/asset/{{ genome_name }}/{{ asset }}">{{ asset }}</a></li>
+	{% endfor %}
+	</ul>
+</li>
+{% endfor %}
+</ul>
+
+</body>
+</html>
