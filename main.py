@@ -10,7 +10,7 @@ from starlette.templating import Jinja2Templates
 
 import asyncio
 
-from refgenconf import RefGenomeConfiguration, load_yaml
+from refgenconf import RefGenomeConfiguration, load_yaml, load_genome_config
 
 app = FastAPI()
 
@@ -19,20 +19,11 @@ templates = Jinja2Templates(directory="templates")
 
 print("Ready...")
 
-# Don't error if RESOURCES is not set.
-try:
-    # First priority: GENOMES variable
-    genome_folder = os.environ["GENOMES"]
-except:
-    try:
-        # Second priority: RESOURCES/genomes
-        genome_folder = os.path.join(os.environ["RESOURCES"], "genomes")
-    except:
-        # Otherwise, current directory
-        genome_folder = ""
 
-genome_config = os.path.join(genome_folder, "refgenie.yaml")
+genome_config = os.path.join("refgenie.yaml")
+load_genome_config(genome_config)
 rgc = RefGenomeConfiguration(load_yaml(genome_config))
+
 
 # print(rgc)
 
@@ -49,17 +40,9 @@ base_folder="/genomes"
 # app.mount("/static", StaticFiles(directory=base_folder), name="static")
 
 @app.get("/")
-def read_root():
-    return {"Hello": "World"}
-
-@app.get("/assets")
-async def links(request: Request):
-    print(rgc.refgenomes)
-    return templates.TemplateResponse("list.html", {"request": request, "genomes": rgc.idx()})
-
-@app.get("/items/{id}")
-async def read_item(request: Request, id: str):
-    return templates.TemplateResponse("item.html", {"request": request, "id": id})
+async def list_assets(request: Request):
+    print(rgc.genomes)
+    return templates.TemplateResponse("list_assets.html", {"request": request, "genomes": rgc.idx()})
 
 
 @app.get("/genomes")
@@ -70,10 +53,8 @@ def list_available_genomes():
 
 
 @app.get("/genome/{genome}")
-def list_available_assets():
+def list_assets_by_genome():
     return rgc.list_indexes()
-
-
 
 
 @app.get("/asset/{genome}/{asset}")
