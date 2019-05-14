@@ -30,7 +30,6 @@ tests/test/*
 *.iso
 *.jar
 *.rar
-*.tar
 *.zip
  
 # Logs and databases 
