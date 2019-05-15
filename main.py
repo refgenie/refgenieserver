@@ -11,6 +11,10 @@ from starlette.templating import Jinja2Templates
 import asyncio
 
 from refgenconf import RefGenomeConfiguration, load_genome_config
+<<<<<<< HEAD
+=======
+from yacman import load_yaml
+>>>>>>> 789dc24b613d831770304be9d8c2aac0518befc5
 
 app = FastAPI()
 
@@ -48,7 +52,6 @@ async def list_assets(request: Request):
 def list_available_genomes():
     print("Genomes: {}".format(rgc.list_genomes()))
     return rgc.list_genomes()
-
 
 
 @app.get("/genome/{genome}")

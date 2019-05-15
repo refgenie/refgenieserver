@@ -1,4 +1,4 @@
-# Refgene_server
+# Refgenie_server
 
 This folder contains code for an API to provide reference genomes.
 
