@@ -7,6 +7,7 @@ RUN pip install jinja2
 
 # TODO: Replace with pypi when refgenconf is stable
 RUN pip install https://github.com/databio/refgenconf/archive/master.zip
+RUN pip install https://github.com/databio/yacman/archive/master.zip
 
 
 COPY files /genomes
