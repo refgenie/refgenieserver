@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 import os
 from pydantic import BaseModel
 from starlette.requests import Request
@@ -10,7 +10,7 @@ from starlette.templating import Jinja2Templates
 
 import asyncio
 
-from refgenconf import RefGenomeConfiguration, load_yaml, load_genome_config
+from refgenconf import RefGenomeConfiguration, load_genome_config
 
 app = FastAPI()
 
@@ -20,12 +20,11 @@ templates = Jinja2Templates(directory="templates")
 print("Ready...")
 
 
+
+# somehow get genome_config from args.genome_config
 genome_config = os.path.join("refgenie.yaml")
-load_genome_config(genome_config)
-rgc = RefGenomeConfiguration(load_yaml(genome_config))
 
-
-# print(rgc)
+rgc = RefGenomeConfiguration(load_genome_config(genome_config))
 
 print("Genomes: {}".format(rgc.list_genomes()))
 print("Indexes:\n{}".format(rgc.list_assets()))
@@ -66,7 +65,8 @@ def download_asset(genome: str, asset: str):
         return FileResponse(local_file)
     else:
         print("local file: ", local_file)
-        return {"error": "No such index on the server."}
+        raise HTTPException(status_code=404, detail="No such asset on server")
+        
 
 
 
