@@ -67,6 +67,11 @@ def download_asset(genome: str, asset: str):
         raise HTTPException(status_code=404, detail="No such asset on server")
 
 
+@app.get("/what")
+async def what(request: Request):
+    return templates.TemplateResponse("what.html", {"request": request, "version": v})
+
+
 if __name__ == "__main__":
     parser = Parser()
     args = parser.parse_args()
