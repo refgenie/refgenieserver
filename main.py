@@ -11,27 +11,16 @@ from starlette.templating import Jinja2Templates
 import asyncio
 
 from refgenconf import RefGenomeConfiguration, select_genome_config
-
+import uvicorn
 from _version import __version__ as v
+from const import BASE_FOLDER, BASE_URL
+from helpers import Parser
 
 app = FastAPI()
 
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
-
-print("Ready...")
-
-# genome_config from args.genome_config
-# genome_config_path = select_genome_config(args.genome_config)
-genome_config_path = os.path.join("refgenie.yaml")
-rgc = RefGenomeConfiguration(genome_config_path)
-
-print("Genomes: {}".format(rgc.genomes_str()))
-print("Indexes:\n{}".format(rgc.assets_str()))
-
-base_url = "http://big.databio.org/refgenie_files"
-base_folder = "/genomes"
 
 # This can be used to add a simple file server to server files in a directory
 # You access these files with e.g. http://localhost/static
@@ -68,11 +57,21 @@ def list_assets_by_genome():
 @app.get("/asset/{genome}/{asset}")
 def download_asset(genome: str, asset: str):
     ext = "tgz"
-    local_file = "{base}/{genome}/{asset}.{ext}".format(base=base_folder, genome=genome, asset=asset, ext=ext)
+    local_file = "{base}/{genome}/{asset}.{ext}".format(base=BASE_FOLDER, genome=genome, asset=asset, ext=ext)
     print("local file: ", local_file)
-    url = "{base}/{genome}/{asset}.{ext}".format(base=base_url, genome="example_data", asset="rCRS.fa.gz", ext=ext)
+    # url = "{base}/{genome}/{asset}.{ext}".format(base=BASE_URL, genome="example_data", asset="rCRS.fa.gz", ext=ext)
     if os.path.isfile(local_file):
         return FileResponse(local_file)
     else:
         print("local file: ", local_file)
         raise HTTPException(status_code=404, detail="No such asset on server")
+
+
+if __name__ == "__main__":
+    parser = Parser()
+    args = parser.parse_args()
+    rgc = RefGenomeConfiguration(select_genome_config(args.config))
+    print("Genomes: {}".format(rgc.list_genomes()))
+    print("Indexes:\n{}".format(rgc.list_assets()))
+    print(rgc.idx())
+    uvicorn.run(app, host="localhost", port=args.port)
