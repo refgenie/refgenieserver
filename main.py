@@ -49,21 +49,30 @@ async def index(request: Request):
 
 @app.get("/genomes")
 def list_available_genomes():
+    """
+    Returns a list of genomes this server holds at least one asset for. No inputs required.
+    """
     print("Genomes: {}".format(rgc.list_genomes()))
     return rgc.list_genomes()
 
 
 @app.get("/assets")
 def list_assets_by_genome():
+    """
+    List all assets that can be downloaded for a given genome.
+
+    - **genome**: 
+    """
     print("Assets: {}".format(rgc.list_assets()))
     return rgc.list_assets()
 
 
 @app.get("/asset/{genome}/{asset}")
 def download_asset(genome: str, asset: str):
-    local_file = "{base}/{genome}/{asset}.tar".format(base=base_folder, genome=genome, asset=asset)
+    ext = "tgz"
+    local_file = "{base}/{genome}/{asset}.{ext}".format(base=base_folder, genome=genome, asset=asset, ext=ext)
     print("local file: ", local_file)
-    url = "{base}/{genome}/{asset}.tar".format(base=base_url, genome="example_data", asset="rCRS.fa.gz")
+    url = "{base}/{genome}/{asset}.{ext}".format(base=base_url, genome="example_data", asset="rCRS.fa.gz", ext=ext)
     if os.path.isfile(local_file):
         return FileResponse(local_file)
     else:

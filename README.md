@@ -16,6 +16,12 @@ docker build -t fastapi .
 docker run --rm -p 80:80 --name fastapi -v $(pwd):/app fastapi /start-reload.sh
 ```
 
+Mount a directory of files to serve at `/genomes`:
+
+```
+docker run --rm -p 80:80 --name fastapi -v $(pwd):/app -v $(pwd)/files:/genomes fastapi /start-reload.sh
+```
+
 ## Running container for production:
 
 2. Run the container from the image you just built:
