@@ -12,10 +12,6 @@ docker build -t fastapi .
 
 ## Running container for development:
 
-```
-docker run --rm -p 80:80 --name fastapi -v $(pwd):/app fastapi /start-reload.sh
-```
-
 Mount a directory of files to serve at `/genomes`:
 
 ```

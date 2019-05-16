@@ -10,7 +10,7 @@ from starlette.templating import Jinja2Templates
 
 import asyncio
 
-from refgenconf import RefGenomeConfiguration, load_genome_config
+from refgenconf import RefGenomeConfiguration, select_genome_config
 
 from _version import __version__ as v
 
@@ -22,15 +22,13 @@ templates = Jinja2Templates(directory="templates")
 
 print("Ready...")
 
-# somehow get genome_config from args.genome_config
-genome_config = os.path.join("refgenie.yaml")
+# genome_config from args.genome_config
+# genome_config_path = select_genome_config(args.genome_config)
+genome_config_path = os.path.join("refgenie.yaml")
+rgc = RefGenomeConfiguration(genome_config_path)
 
-rgc = RefGenomeConfiguration(load_genome_config(genome_config))
-
-print("Genomes: {}".format(rgc.list_genomes()))
-print("Indexes:\n{}".format(rgc.list_assets()))
-
-print(rgc.idx())
+print("Genomes: {}".format(rgc.genomes_str()))
+print("Indexes:\n{}".format(rgc.assets_str()))
 
 base_url = "http://big.databio.org/refgenie_files"
 base_folder = "/genomes"
@@ -44,7 +42,7 @@ base_folder = "/genomes"
 @app.get("/index")
 async def index(request: Request):
     print(rgc.genomes)
-    return templates.TemplateResponse("index.html", {"request": request, "version": v, "genomes": rgc.idx()})
+    return templates.TemplateResponse("index.html", {"request": request, "version": v, "genomes": rgc.assets_dict()})
 
 
 @app.get("/genomes")
@@ -52,8 +50,8 @@ def list_available_genomes():
     """
     Returns a list of genomes this server holds at least one asset for. No inputs required.
     """
-    print("Genomes: {}".format(rgc.list_genomes()))
-    return rgc.list_genomes()
+    print("Genomes: {}".format(rgc.genomes_str()))
+    return rgc.genomes_list()
 
 
 @app.get("/assets")
@@ -63,8 +61,8 @@ def list_assets_by_genome():
 
     - **genome**: 
     """
-    print("Assets: {}".format(rgc.list_assets()))
-    return rgc.list_assets()
+    print("Assets: {}".format(rgc.assets_str()))
+    return rgc.assets_dict()
 
 
 @app.get("/asset/{genome}/{asset}")
