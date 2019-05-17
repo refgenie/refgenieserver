@@ -78,4 +78,4 @@ if __name__ == "__main__":
     rgc = RefGenomeConfiguration(select_genome_config(args.config))
     print("Genomes: {}".format(rgc.genomes_str()))
     print("Indexes:\n{}".format(rgc.assets_str()))
-    uvicorn.run(app, host="localhost", port=args.port)
+    uvicorn.run(app, host="0.0.0.0", port=args.port)
