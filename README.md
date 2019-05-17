@@ -19,7 +19,7 @@ docker run --rm -p 80:80 --name fastapi -v $(pwd):/app -v $(pwd)/files:/genomes 
 ```
 new way of running the server which uses the server's CLI:
 ```
-docker run --rm -p 80:80 --name fastapi -v $(pwd):/app -v $(pwd)/files:/genomes fastapi python3 main.py -c refgenie.yaml
+docker run --rm -p 80:80 --name fastapi -v $(pwd):/app -v $(pwd)/files:/genomes fastapi refgenies -c refgenie.yaml
 ```
 
 ## Running container for production:
