@@ -15,10 +15,6 @@ docker build -t fastapi .
 Mount a directory of files to serve at `/genomes`:
 
 ```
-docker run --rm -p 80:80 --name fastapi -v $(pwd):/app -v $(pwd)/files:/genomes fastapi /start-reload.sh
-```
-new way of running the server which uses the server's CLI:
-```
 docker run --rm -p 80:80 --name fastapi -v $(pwd):/app -v $(pwd)/files:/genomes fastapi refgenies -c refgenie.yaml
 ```
 
@@ -27,7 +23,7 @@ docker run --rm -p 80:80 --name fastapi -v $(pwd):/app -v $(pwd)/files:/genomes 
 2. Run the container from the image you just built:
 
 ```
-docker run --rm -d -p 80:80 -v $GENOMES:/genomes --name fastapi fastapi
+docker run --rm -d -p 80:80 -v $GENOMES:/genomes --name fastapi fastapi 
 ```
 
 We use `-d` to detach so it's in background. Terminate container when finished:
