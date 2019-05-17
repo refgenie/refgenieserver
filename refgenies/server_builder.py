@@ -7,6 +7,7 @@ import os
 from shutil import rmtree
 
 
+# TODO: dont stop at genomes level, check for assets and add if not available. leave the force option?
 def main():
     parser = BuilderParser()
     args = parser.parse_args()

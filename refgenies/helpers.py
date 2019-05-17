@@ -1,7 +1,7 @@
 import argparse
 from const import DEFAULT_PORT
 
-
+# TODO: merge into one parser with two positional args: serve and archive
 class Parser(argparse.ArgumentParser):
     """ CLI parser tailored for this project """
 

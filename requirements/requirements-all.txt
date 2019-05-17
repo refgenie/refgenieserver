@@ -1,0 +1,6 @@
+starlette
+fastapi
+uvicorn
+#TODO: uncomment ones below after the release
+#yacman
+#refgenieconf
