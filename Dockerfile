@@ -18,4 +18,5 @@ COPY files /genomes
 
 
 COPY . /app
+RUN pip install .
 # RUN pip install -r /app/requirements.txt

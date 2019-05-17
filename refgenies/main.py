@@ -10,13 +10,11 @@ from starlette.templating import Jinja2Templates
 from fastapi import FastAPI, HTTPException
 from refgenconf import RefGenomeConfiguration, select_genome_config
 
-from _version import __version__ as v
-from const import *
-from helpers import Parser
+from ._version import __version__ as v
+from .const import *
+from .helpers import Parser
 
 app = FastAPI()
-
-
 app.mount("/" + STATIC_DIRNAME, StaticFiles(directory=STATIC_PATH), name=STATIC_DIRNAME)
 templates = Jinja2Templates(directory=TEMPLATES_PATH)
 
@@ -77,7 +75,7 @@ def download_genome(genome: str):
         print("local genome file: ", genome_file)
         raise HTTPException(status_code=404, detail="No such genome on server")
 
-
+# TODO: remove the endpoint and place the text on the landing page instead
 @app.get("/what")
 async def what(request: Request):
     return templates.TemplateResponse("what.html", {"request": request, "version": v})
@@ -88,12 +86,7 @@ def main():
     parser = Parser()
     args = parser.parse_args()
     rgc = RefGenomeConfiguration(select_genome_config(args.config))
-    print(args)
-    print(rgc)
-    print("Genomes: {}".format(rgc.genomes_str()))
-    print("Indexes:\n{}".format(rgc.assets_str()))
     uvicorn.run(app, host="0.0.0.0", port=args.port)
-    print("test")
 
 
 if __name__ == "__main__":
