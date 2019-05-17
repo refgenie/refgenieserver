@@ -17,6 +17,10 @@ Mount a directory of files to serve at `/genomes`:
 ```
 docker run --rm -p 80:80 --name fastapi -v $(pwd):/app -v $(pwd)/files:/genomes fastapi /start-reload.sh
 ```
+new way of running the server which uses the server's CLI:
+```
+docker run --rm -p 80:80 --name fastapi -v $(pwd):/app -v $(pwd)/files:/genomes fastapi python3 main.py -c refgenie.yaml
+```
 
 ## Running container for production:
 
