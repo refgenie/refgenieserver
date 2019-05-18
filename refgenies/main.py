@@ -6,7 +6,7 @@ from starlette.responses import FileResponse
 from starlette.staticfiles import StaticFiles
 from starlette.templating import Jinja2Templates
 from fastapi import FastAPI, HTTPException
-from refgenconf import RefGenomeConfiguration, select_genome_config
+from refgenconf import RefGenomeConfiguration, select_genome_config, CONFIG_ENV_VARS
 
 from _version import __version__ as v
 from const import *
@@ -88,6 +88,8 @@ def main():
     elif args.command == "serve":
         global rgc
         rgc = RefGenomeConfiguration(select_genome_config(args.config))
+        assert len(rgc) > 0, "You must provide a config file or set the '{}' " \
+                             "environment variable".format(", ".join(CONFIG_ENV_VARS))
         uvicorn.run(app, host="0.0.0.0", port=args.port)
 
 
