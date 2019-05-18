@@ -1,5 +1,4 @@
-from helpers import BuilderParser
-from const import CFG_GENOMES_KEY, BASE_FOLDER
+from .const import CFG_GENOMES_KEY, BASE_FOLDER
 from refgenconf import select_genome_config
 from yacman import load_yaml
 from subprocess import run
@@ -8,9 +7,7 @@ from shutil import rmtree
 
 
 # TODO: dont stop at genomes level, check for assets and add if not available. leave the force option?
-def main():
-    parser = BuilderParser()
-    args = parser.parse_args()
+def archive(args):
     cfg_file = select_genome_config(args.config)
     # print("got config: {}".format(cfg_file))
     # print("got genomes: {}".format(args.genome))
@@ -51,7 +48,3 @@ def check_tar(path, output, flags):
     assert all(os.path.exists(x) for x in path), "one of the files ({}) does not exist".format(path)
     run("tar {} {} {}".format(flags, output, " ".join(path)), shell=True)
     return output
-
-
-if __name__ == "__main__":
-    main()

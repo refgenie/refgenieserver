@@ -1,50 +1,69 @@
 import argparse
-from .const import DEFAULT_PORT
-
-# TODO: merge into one parser with two positional args: serve and archive
-class Parser(argparse.ArgumentParser):
-    """ CLI parser tailored for this project """
-
-    def __init__(self):
-
-        super(Parser, self).__init__(
-            description="%(prog)s - run a refgenie web server",
-            epilog="See docs at: http://refgenie.databio.org/",
-            formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-        self.add_argument(
-            "-c", "--config",
-            dest="config",
-            help="A path to the refgenie config file (YAML)",
-            default=None)
-        self.add_argument(
-            "-p", "--port",
-            dest="port",
-            type=int,
-            help="The port the webserver should be run on.", default=DEFAULT_PORT)
+from const import DEFAULT_PORT
+from _version import __version__ as v
+from refgenconf import CONFIG_ENV_VARS
+from yacman import get_first_env_var
 
 
-class BuilderParser(argparse.ArgumentParser):
-    """ CLI parser tailored for this project """
+class _VersionInHelpParser(argparse.ArgumentParser):
+    def format_help(self):
+        """ Add version information to help text. """
+        return "version: {}\n".format(v) + super(_VersionInHelpParser, self).format_help()
 
-    def __init__(self):
 
-        super(BuilderParser, self).__init__(
-            description="%(prog)s - builds a file tree for refgenie_server",
-            formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-        self.add_argument(
-            "-c", "--config",
-            dest="config",
-            help="a path to the refgenie config file (YAML)",
-            default=None)
-        self.add_argument(
-            "-g", "--genome",
-            dest="genome",
-            help="genomes to build the server for. If provided, rebuild for these will be forced",
-            default=None,
-            nargs="*")
-        self.add_argument(
-            "-f", "--force",
-            action="store_true",
-            dest="force",
-            help="whether the server file tree should be rebuilt even if exists")
+def build_parser():
+    """
+    Building argument parser
 
+    :return argparse.ArgumentParser
+    """
+    env_var_val = get_first_env_var(CONFIG_ENV_VARS)[1] if get_first_env_var(CONFIG_ENV_VARS) is not None else "not set"
+    banner = "%(prog)s - refgenie web server utilities"
+    additional_description = "For subcommand-specific options, type: '%(prog)s <subcommand> -h'"
+    additional_description += "\nhttps://github.com/databio/refgenies"
+
+    parser = _VersionInHelpParser(
+        description=banner,
+        epilog=additional_description)
+
+    parser.add_argument(
+        "-V", "--version",
+        action="version",
+        version="%(prog)s {v}".format(v=v))
+    parser.add_argument(
+        "-c", "--config",
+        dest="config",
+        help="A path to the refgenie config file (YAML). If not provided, the first available environment variable "
+             "among: \'{}\' will be used if set. Currently {}".format(", ".join(CONFIG_ENV_VARS), env_var_val),
+        default=None)
+
+    msg_by_cmd = {
+        "serve": "run the server",
+        "archive": "prepare servable archives"}
+
+    subparsers = parser.add_subparsers(dest="command")
+
+    def add_subparser(cmd):
+        message = msg_by_cmd[cmd]
+        return subparsers.add_parser(cmd, description=message, help=message)
+
+    # Run and rerun command
+    serve_subparser = add_subparser("serve")
+    archive_subparser = add_subparser("archive")
+    serve_subparser.add_argument(
+        "-p", "--port",
+        dest="port",
+        type=int,
+        help="The port the webserver should be run on.", default=DEFAULT_PORT)
+    archive_subparser.add_argument(
+        "-g", "--genome",
+        dest="genome",
+        help="genomes to build the server for. If provided, rebuild for these will be forced",
+        default=None,
+        nargs="*")
+    archive_subparser.add_argument(
+        "-f", "--force",
+        action="store_true",
+        dest="force",
+        help="whether the server file tree should be rebuilt even if exists")
+    return parser

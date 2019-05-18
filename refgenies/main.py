@@ -1,18 +1,17 @@
 import os
+import sys
 import uvicorn
-from pydantic import BaseModel
 from starlette.requests import Request
-from starlette.responses import Response
 from starlette.responses import FileResponse
-from starlette.responses import StreamingResponse
 from starlette.staticfiles import StaticFiles
 from starlette.templating import Jinja2Templates
 from fastapi import FastAPI, HTTPException
 from refgenconf import RefGenomeConfiguration, select_genome_config
 
-from ._version import __version__ as v
-from .const import *
-from .helpers import Parser
+from _version import __version__ as v
+from const import *
+from helpers import build_parser
+from server_builder import archive
 
 app = FastAPI()
 app.mount("/" + STATIC_DIRNAME, StaticFiles(directory=STATIC_PATH), name=STATIC_DIRNAME)
@@ -82,12 +81,19 @@ async def what(request: Request):
 
 
 def main():
-    global rgc
-    parser = Parser()
+    parser = build_parser()
     args = parser.parse_args()
-    rgc = RefGenomeConfiguration(select_genome_config(args.config))
-    uvicorn.run(app, host="0.0.0.0", port=args.port)
+    if args.command == "archive":
+        archive(args)
+    elif args.command == "serve":
+        global rgc
+        rgc = RefGenomeConfiguration(select_genome_config(args.config))
+        uvicorn.run(app, host="0.0.0.0", port=args.port)
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        sys.exit(main())
+    except KeyboardInterrupt:
+        print("Program canceled by user")
+        sys.exit(1)
