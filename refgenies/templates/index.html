@@ -13,4 +13,15 @@
     </li>
 {% endfor %}
 </ul>
+<hr class="featurette-divider">
+<h3>What is this?</h3>
+<p><i>refgenomes.org</i> is a web server where we host genome assets for several popular reference assemblies.
+This server provides both a web interface and a RESTful API. Users may explore and download archived indexes from the
+web interface or develop tools that programmatically query the API. Our API is built to OpenAPI 3.0 standards,
+so it includes <a href="/docs">self-documenting interface</a> that will allow other tools to discover and automatically
+    use the API.</p>
+<p>For example, the <a href="http://refgenie.databio.org/en/latest/">refgenie CLI</a> uses the <i>refgenomes.org</i> API to query and download remote genome assets. When invoked
+    with <code>refgenie pull ...</code>, the CLI uses a configurable URL to retrieve an archived tarball from the server, which it then unpacks and places in the appropriate folder location. </p>
+<p>This server is a containerized, portable open-source application so that it can be run independently run by others:
+<p><code>docker run -p 80:80 -v refgenies:/app -v genomes_folder:/genomes refgenies serve -c refgnie_config.yaml</code></p>
 {% endblock %}

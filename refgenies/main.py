@@ -74,11 +74,6 @@ def download_genome(genome: str):
         print("local genome file: ", genome_file)
         raise HTTPException(status_code=404, detail="No such genome on server")
 
-# TODO: remove the endpoint and place the text on the landing page instead
-@app.get("/what")
-async def what(request: Request):
-    return templates.TemplateResponse("what.html", {"request": request, "version": v})
-
 
 def main():
     parser = build_parser()
