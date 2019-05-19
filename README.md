@@ -15,7 +15,7 @@ docker build -t fastapi .
 Mount a directory of files to serve at `/genomes`:
 
 ```
-docker run --rm -p 80:80 --name fastapi -v $(pwd):/app -v $(pwd)/files:/genomes fastapi refgenies serve -c refgenie.yaml
+docker run --rm -p 80:80 --name fastapi -v $(pwd):/app -v $(pwd)/files:/genomes fastapi refgenies -c refgenie.yaml serve
 ```
 
 ## Running container for production:

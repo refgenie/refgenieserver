@@ -22,10 +22,11 @@ templates = Jinja2Templates(directory=TEMPLATES_PATH)
 # app.mount("/static", StaticFiles(directory=base_folder), name="static")
 global rgc
 
+
 @app.get("/")
 @app.get("/index")
 async def index(request: Request):
-    # print(rgc.genomes)
+    print(rgc.genomes)
     return templates.TemplateResponse("index.html", {"request": request, "version": v, "genomes": rgc.assets_dict()})
 
 
@@ -78,13 +79,13 @@ def download_genome(genome: str):
 def main():
     parser = build_parser()
     args = parser.parse_args()
+    global rgc
+    rgc = RefGenomeConfiguration(select_genome_config(args.config))
+    assert len(rgc) > 0, "You must provide a config file or set the '{}' " \
+                         "environment variable".format(", ".join(CONFIG_ENV_VARS))
     if args.command == "archive":
-        archive(args)
+        archive(rgc, args)
     elif args.command == "serve":
-        global rgc
-        rgc = RefGenomeConfiguration(select_genome_config(args.config))
-        assert len(rgc) > 0, "You must provide a config file or set the '{}' " \
-                             "environment variable".format(", ".join(CONFIG_ENV_VARS))
         uvicorn.run(app, host="0.0.0.0", port=args.port)
 
 

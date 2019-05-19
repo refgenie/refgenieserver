@@ -1,37 +1,39 @@
-from .const import CFG_GENOMES_KEY, BASE_FOLDER
-from refgenconf import select_genome_config
-from yacman import load_yaml
+from const import CFG_GENOMES_KEY, CFG_FOLDER_KEY, CFG_ARCHIVE_KEY, TAR, TGZ
 from subprocess import run
 import os
-from shutil import rmtree
 
 
-# TODO: dont stop at genomes level, check for assets and add if not available. leave the force option?
-def archive(args):
-    cfg_file = select_genome_config(args.config)
-    # print("got config: {}".format(cfg_file))
-    # print("got genomes: {}".format(args.genome))
-    cfg = load_yaml(cfg_file)
-    for k, v in cfg[CFG_GENOMES_KEY].items():
-        if args.genome is not None and k not in args.genome:
-            print("'{}' not in: '{}'. Skipping".format(k, ", ".join(args.genome)))
-            continue
-        genome_dir = os.path.join(BASE_FOLDER, k)
-        if args.force or not os.path.exists(genome_dir) or args.genome is not None:
-                if args.force or args.genome is not None:
-                    print("Forced build; recreating dir: '{}'".format(genome_dir))
-                    rmtree(genome_dir)
-                os.makedirs(genome_dir)
-                outputs = []
-                for n, f in v.items():
-                    output = os.path.join(genome_dir, n + ".tgz")
-                    input_file = os.path.join(k, f)
-                    print("creating '{}' from '{}'".format(output, input_file))
-                    outputs.append(check_tar([input_file], output, "-cvzf"))
-                print("creating parent tarball '{}.tar' from: {}".format(genome_dir, ", ".join(outputs)))
-                check_tar(outputs, genome_dir + ".tar", "-cvf")
-        else:
-            print("'{}' exists. Nothing to be done".format(genome_dir))
+def archive(rgc, args):
+    """
+    takes the refgenie.yaml config file and builds the individual tar archives
+    that can be then served with 'refgenies serve'
+
+    :param RefGenomeConfiguration rgc:
+    :param argparse.Namespace args: arguments from the refgenies CLI
+    """
+    if args.force:
+        print("build forced; file existence will be ignored")
+    genomes = rgc.genomes_list()
+    for genome in genomes:
+        genome_dir = os.path.join(rgc[CFG_FOLDER_KEY], genome)
+        target_dir = os.path.join(rgc[CFG_ARCHIVE_KEY], genome)
+        genome_tarball = target_dir + TAR["ext"]
+        if not os.path.exists(target_dir):
+            os.makedirs(target_dir)
+        changed = False
+        for asset_name, file_name in rgc.genomes[genome].items():
+            target_file = os.path.join(target_dir, asset_name + TGZ["ext"])
+            if not os.path.exists(target_file) or args.force:
+                changed = True
+                input_file = os.path.join(genome_dir, file_name)
+                print("creating asset '{}' from '{}'".format(target_file, input_file))
+                check_tar([input_file], target_file, TGZ["flags"])
+            else:
+                print("'{}' exists. Nothing to be done".format(target_file))
+        if changed or not os.path.exists(genome_tarball):
+            print("creating genome tarball '{}' from: {}".format(genome_tarball, genome_dir))
+            check_tar([target_dir], genome_tarball, TAR["flags"])
+    print("builder finished")
 
 
 def check_tar(path, output, flags):
@@ -47,4 +49,3 @@ def check_tar(path, output, flags):
     assert isinstance(path, list), "path argument has to be a list"
     assert all(os.path.exists(x) for x in path), "one of the files ({}) does not exist".format(path)
     run("tar {} {} {}".format(flags, output, " ".join(path)), shell=True)
-    return output

@@ -56,12 +56,6 @@ def build_parser():
         type=int,
         help="The port the webserver should be run on.", default=DEFAULT_PORT)
     archive_subparser.add_argument(
-        "-g", "--genome",
-        dest="genome",
-        help="genomes to build the server for. If provided, rebuild for these will be forced",
-        default=None,
-        nargs="*")
-    archive_subparser.add_argument(
         "-f", "--force",
         action="store_true",
         dest="force",
