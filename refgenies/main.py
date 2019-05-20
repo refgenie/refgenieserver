@@ -50,7 +50,7 @@ def list_assets_by_genome():
     return rgc.assets_dict()
 
 
-@app.get("/asset/{genome}/{asset}")
+@app.get("/asset/{genome}/{asset}/archive")
 def download_asset(genome: str, asset: str):
     ext = "tgz"
     asset_file = "{base}/{genome}/{asset}.{ext}".format(base=BASE_FOLDER, genome=genome, asset=asset, ext=ext)
@@ -61,6 +61,12 @@ def download_asset(genome: str, asset: str):
     else:
         print("local asset file: ", asset_file)
         raise HTTPException(status_code=404, detail="No such asset on server")
+
+
+@app.get("/asset/{genome}/{asset}")
+def download_asset_attributes(genome: str, asset: str):
+    print("attributes returned for asset '{}' and genome '{}'".format(asset, genome))
+    return rgc[CFG_GENOMES_KEY][genome][asset]
 
 
 @app.get("/genome/{genome}")

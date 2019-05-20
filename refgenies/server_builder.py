@@ -4,8 +4,7 @@ from subprocess import run
 from hashlib import md5
 from warnings import warn
 
-from const import CFG_PATH_KEY, CFG_ARCHIVE_KEY, CFG_FOLDER_KEY, CFG_GENOMES_KEY, CFG_ARCHIVE_SIZE_KEY, \
-    CFG_CHECKSUM_KEY, CFG_ASSET_SIZE_KEY, TAR, TGZ
+from const import *
 
 
 def archive(rgc, args):
@@ -113,7 +112,7 @@ def _size_str(size):
     :return str: file size string
     """
     if isinstance(size, (int, float)):
-        for unit in ['B', 'KB', 'MB', 'GB', 'TB']:
+        for unit in FILE_SIZE_UNITS:
             if size < 1024:
                 return "{}{}".format(round(size, 1), unit)
             size /= 1024
