@@ -1,16 +1,20 @@
-from const import CFG_PATH_KEY, CFG_ARCHIVE_KEY, CFG_FOLDER_KEY, CFG_GENOMES_KEY, CFG_ARCHIVE_SIZE_KEY, CFG_CHECKSUM_KEY, CFG_ASSET_SIZE_KEY, TAR, TGZ
-from subprocess import run
 import os
+
+from subprocess import run
 from hashlib import md5
 from warnings import warn
+
+from const import CFG_PATH_KEY, CFG_ARCHIVE_KEY, CFG_FOLDER_KEY, CFG_GENOMES_KEY, CFG_ARCHIVE_SIZE_KEY, \
+    CFG_CHECKSUM_KEY, CFG_ASSET_SIZE_KEY, TAR, TGZ
 
 
 def archive(rgc, args):
     """
-    takes the refgenie.yaml config file and builds the individual tar archives
-    that can be then served with 'refgenies serve'
+    Takes the RefGenomeConfiguration object and builds the individual tar archives
+    that can be then served with 'refgenies serve'. Additionally determines their md5 checksums, file sizes and
+    updates the original refgenie config with these data
 
-    :param RefGenomeConfiguration rgc:
+    :param RefGenomeConfiguration rgc: configuration object with the data to build the servable archives for
     :param argparse.Namespace args: arguments from the refgenies CLI
     """
     if args.force:
@@ -30,22 +34,22 @@ def archive(rgc, args):
                 changed = True
                 input_file = os.path.join(genome_dir, file_name)
                 print("creating asset '{}' from '{}'".format(target_file, input_file))
-                check_tar([input_file], target_file, TGZ["flags"])
-                rgc.genomes[genome][asset_name][CFG_CHECKSUM_KEY] = checksum(target_file)
-                rgc.genomes[genome][asset_name][CFG_ARCHIVE_SIZE_KEY] = size(target_file)
-                rgc.genomes[genome][asset_name][CFG_ASSET_SIZE_KEY] = size(input_file)
+                _check_tar([input_file], target_file, TGZ["flags"])
+                rgc.genomes[genome][asset_name][CFG_CHECKSUM_KEY] = _checksum(target_file)
+                rgc.genomes[genome][asset_name][CFG_ARCHIVE_SIZE_KEY] = _size(target_file)
+                rgc.genomes[genome][asset_name][CFG_ASSET_SIZE_KEY] = _size(input_file)
             else:
                 print("'{}' exists. Nothing to be done".format(target_file))
         if changed or not os.path.exists(genome_tarball):
             print("creating genome tarball '{}' from: {}".format(genome_tarball, genome_dir))
-            check_tar([target_dir], genome_tarball, TAR["flags"])
+            _check_tar([target_dir], genome_tarball, TAR["flags"])
     rgc_pth = rgc.write(args.config)
     print("builder finished; updated refgenie config file: '{}'".format(rgc_pth))
 
 
-def check_tar(path, output, flags):
+def _check_tar(path, output, flags):
     """
-    checks if file exists and tars it
+    Checks if file exists and tars it
 
     :param list[str] path: path to the file to be tarred
     :param str output: path to the result file
@@ -58,9 +62,9 @@ def check_tar(path, output, flags):
     run("tar {} {} {}".format(flags, output, " ".join(path)), shell=True)
 
 
-def checksum(path):
+def _checksum(path):
     """
-    generates a md5 checksum for the file contents in the provided path
+    Generates a md5 checksum for the file contents in the provided path
 
     :param str path: path to the file to generate checksum for
     :return str: checksum hash
@@ -73,15 +77,15 @@ def checksum(path):
     return cs
 
 
-def size(path):
+def _size(path):
     """
-    gets the size the file or directory in the provided path
+    Gets the size the file or directory in the provided path
 
     :param str path: path to the file to check size of
     :return int: file size
     """
     if os.path.isfile(path):
-        s = size_str(os.path.getsize(path))
+        s = _size_str(os.path.getsize(path))
     elif os.path.isdir(path):
         s = 0
         symlinks = []
@@ -98,12 +102,12 @@ def size(path):
     else:
         warn("size could not be determined for: '{}'".format(path))
         s = None
-    return size_str(s)
+    return _size_str(s)
 
 
-def size_str(size):
+def _size_str(size):
     """
-    converts the numeric bytes to the size string
+    Converts the numeric bytes to the size string
 
     :param int|float size: file size to convert
     :return str: file size string
