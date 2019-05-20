@@ -27,7 +27,8 @@ global rgc
 @app.get("/index")
 async def index(request: Request):
     print(rgc.genomes)
-    return templates.TemplateResponse("index.html", {"request": request, "version": v, "genomes": rgc.assets_dict()})
+    vars = {"request": request, "version": v, "genomes": rgc.assets_dict(), "rgc": rgc[CFG_GENOMES_KEY]}
+    return templates.TemplateResponse("index.html", vars)
 
 
 @app.get("/genomes")
@@ -59,7 +60,7 @@ def download_asset(genome: str, asset: str):
     if os.path.isfile(asset_file):
         return FileResponse(asset_file)
     else:
-        print("local asset file: ", asset_file)
+        print("local asset file: " + asset_file)
         raise HTTPException(status_code=404, detail="No such asset on server")
 
 
@@ -82,7 +83,7 @@ def download_genome(genome: str):
     if os.path.isfile(genome_file):
         return FileResponse(genome_file)
     else:
-        print("local genome file: ", genome_file)
+        print("local genome file: " + genome_file)
         raise HTTPException(status_code=404, detail="No such genome on server")
 
 

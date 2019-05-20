@@ -7,7 +7,7 @@
     <li class="list-group-item"><a href="/genome/{{ genome_name }}"><b>{{ genome_name }}</b></a>
         <ul>
             {% for asset in assets %}
-                <li class="list-group-item"><a href="/asset/{{ genome_name }}/{{ asset }}/archive">{{ asset }}</a></li>
+                <li class="list-group-item"><a href="/asset/{{ genome_name }}/{{ asset }}/archive">{{ asset }}</a><span id='file_size' class="badge badge-secondary">asset: {{ rgc[genome_name][asset]["asset_size"] }}; archive: {{ rgc[genome_name][asset]["archive_size"] }}</span></li>
             {% endfor %}
         </ul>
     </li>

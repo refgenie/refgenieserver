@@ -134,3 +134,10 @@ div#navbar_links {
   margin-left: 5px; margin-bottom: 10px;
   display: inline-block;
 }
+
+#file_size {
+    float:right;
+    margin-left:15px;
+    line-height:unset;
+    padding: .25em .5em;
+}
