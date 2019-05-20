@@ -65,8 +65,12 @@ def download_asset(genome: str, asset: str):
 
 @app.get("/asset/{genome}/{asset}")
 def download_asset_attributes(genome: str, asset: str):
-    print("attributes returned for asset '{}' and genome '{}'".format(asset, genome))
-    return rgc[CFG_GENOMES_KEY][genome][asset]
+    try:
+        attrs = rgc[CFG_GENOMES_KEY][genome][asset]
+        print("attributes returned for asset '{}' and genome '{}': \n{}".format(asset, genome, attrs))
+        return attrs
+    except KeyError:
+        raise HTTPException(status_code=404, detail="No such asset or genome on server")
 
 
 @app.get("/genome/{genome}")
