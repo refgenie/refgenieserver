@@ -87,6 +87,16 @@ def download_genome(genome: str):
         raise HTTPException(status_code=404, detail="No such genome on server")
 
 
+@app.get("/genomes/{asset}")
+def list_genomes_by_asset(asset: str):
+    """
+    Returns a list of genomes on this server that define the requested asset
+    """
+    genomes = rgc.list_genomes_by_asset(asset)
+    print("Genomes by '{}' asset: {}".format(asset, genomes))
+    return genomes
+
+
 def main():
     parser = build_parser()
     args = parser.parse_args()
