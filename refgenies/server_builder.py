@@ -1,10 +1,11 @@
 import os
+import sys
 
 from subprocess import run
 from hashlib import md5
 from warnings import warn
 
-from const import *
+from .const import *
 
 
 def archive(rgc, args):
@@ -19,6 +20,7 @@ def archive(rgc, args):
     if args.force:
         print("build forced; file existence will be ignored")
     genomes = rgc.genomes_list()
+
     for genome in genomes:
         genome_dir = os.path.join(rgc[CFG_FOLDER_KEY], genome)
         target_dir = os.path.join(rgc[CFG_ARCHIVE_KEY], genome)
@@ -33,7 +35,7 @@ def archive(rgc, args):
                 changed = True
                 input_file = os.path.join(genome_dir, file_name)
                 print("creating asset '{}' from '{}'".format(target_file, input_file))
-                _check_tar([input_file], target_file, TGZ["flags"])
+                _check_tar(input_file, target_file, TGZ["flags"])
                 rgc.genomes[genome][asset_name][CFG_CHECKSUM_KEY] = _checksum(target_file)
                 rgc.genomes[genome][asset_name][CFG_ARCHIVE_SIZE_KEY] = _size(target_file)
                 rgc.genomes[genome][asset_name][CFG_ASSET_SIZE_KEY] = _size(input_file)
@@ -41,9 +43,9 @@ def archive(rgc, args):
                 print("'{}' exists. Nothing to be done".format(target_file))
         if changed or not os.path.exists(genome_tarball):
             print("creating genome tarball '{}' from: {}".format(genome_tarball, genome_dir))
-            _check_tar([target_dir], genome_tarball, TAR["flags"])
-    rgc_pth = rgc.write(args.config)
-    print("builder finished; updated refgenie config file: '{}'".format(rgc_pth))
+            _check_tar(target_dir, genome_tarball, TAR["flags"])
+    print("builder finished; server config file saved to:"
+          " '{}'".format(rgc.write(os.path.join(rgc[CFG_ARCHIVE_KEY], os.path.basename(args.config)))))
 
 
 def _check_tar(path, output, flags):
@@ -55,25 +57,30 @@ def _check_tar(path, output, flags):
     :param str flags: tar command flags to use
     :return:
     """
-    assert isinstance(flags, str), "flags are not string"
-    assert isinstance(path, list), "path argument has to be a list"
-    assert all(os.path.exists(x) for x in path), "one of the files ({}) does not exist".format(path)
-    run("tar {} {} {}".format(flags, output, " ".join(path)), shell=True)
+    # TODO: maybe use the tarfile package (it is much slower than shell), some example code below:
+    # import tarfile
+    # with tarfile.open(output, "w:gz") as tar:
+    #     tar.add(path, arcname=os.path.basename(path))
+    assert os.path.exists(path), "entity '{}' does not exist".format(path)
+    run("tar {} {} {}".format(flags, output, path), shell=True)
 
 
-def _checksum(path):
+def _checksum(path, blocksize=2 ** 20):
     """
     Generates a md5 checksum for the file contents in the provided path
 
     :param str path: path to the file to generate checksum for
     :return str: checksum hash
     """
-    try:
-        cs = md5(open(path, 'rb').read()).hexdigest()
-    except:
-        warn("checksum could not be calculated for file: '{}'".format(path))
-        cs = None
-    return cs
+    m = md5()
+    with open(path, "rb") as f:
+        # gotta split the file into blocks since some of the archives are to big to be read and checksummed
+        while True:
+            buf = f.read(blocksize)
+            if not buf:
+                break
+            m.update(buf)
+    return m.hexdigest()
 
 
 def _size(path):
