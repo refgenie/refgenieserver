@@ -1,6 +1,13 @@
 {% extends "template.html" %}
 {% block title %}Index{% endblock %}
 {% block content %}
+{% macro safe_show_asset_attr(x) %}
+    {% if x is none or not x|length %}
+        NA
+    {% else %}
+        {{ x }}
+    {% endif %}
+{% endmacro %}
 {% for genome_name, assets in genomes.items() %}
 <div class="row align-items-center">
     <div class="col-2" id="genome_title">
@@ -17,29 +24,14 @@
                 </tr>
             </thead>
             {% for asset in assets %}
-                {% if not rgc[genome_name][asset]["asset_size"]|length %}
-                    {% set asset_size = 'NA' %}
-                {% else %}
-                    {% set asset_size = rgc[genome_name][asset]["asset_size"] %}
-                {% endif %}
-                {% if not rgc[genome_name][asset]["archive_size"]|length %}
-                    {% set archive_size = 'NA' %}
-                {% else %}
-                    {% set archive_size = rgc[genome_name][asset]["archive_size"] %}
-                {% endif %}
-                {% if not rgc[genome_name][asset]["archive_checksum"]|length %}
-                    {% set archive_checksum = 'NA' %}
-                {% else %}
-                    {% set archive_checksum = rgc[genome_name][asset]["archive_checksum"] %}
-                {% endif %}
                 <tbody>
                     <tr>
                         <td style="cursor:pointer" onclick="location.href='/asset/{{ genome_name }}/{{ asset }}/archive'">
                             <b>{{ asset }}</b> <i class="fa fa-download" aria-hidden="true"></i>
                         </td>
-                        <td>{{ asset_size }} </td>
-                        <td>{{ archive_size }}</td>
-                        <td><code>{{ archive_checksum }}</code></td>
+                        <td>{{ safe_show_asset_attr(rgc[genome_name][asset]["asset_size"]) }}</td>
+                        <td>{{ safe_show_asset_attr(rgc[genome_name][asset]["archive_size"]) }}</td>
+                        <td><code>{{ safe_show_asset_attr(rgc[genome_name][asset]["archive_checksum"]) }}</code></td>
                     </tr>
                 </tbody>
             {% endfor %}
