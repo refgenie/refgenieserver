@@ -14,6 +14,7 @@ body {
 
 #wrap {
   min-height: 100%;
+  min-width: 800px;
   padding: 20px;
 }
 
@@ -46,24 +47,6 @@ body {
 .divider-vertical {
   margin-top:15px;
   /*margin-bottom:15px;*/
-}
-
-th.footer {
-  font-size:12px;
-  padding: 3px;
-  font-weight: bold;
-  text-align: center;
-  background-color: #464c56;
-  color: white
-}
-
-td.footer {
-  font-size:12px;
-  padding: 3px;
-  text-align: center;
-  color: #464c56;
-  font-weight: bold;
-  font-family: Courier New
 }
 
 code.footer {
@@ -126,18 +109,21 @@ div#navbar_links {
   display: flex;
 }
 
-.list-group-item {
-  padding: 3px 10px
+table#asset_table{
+    width: auto;
+    min-width: 570px;
 }
 
-.list-group {
-  margin-left: 5px; margin-bottom: 10px;
-  display: inline-block;
+h4#genome_title{
+    cursor: pointer;
+    min-width: 100px;
 }
 
-#file_size {
-    float:right;
-    margin-left:15px;
-    line-height:unset;
-    padding: .25em .5em;
+div.col-2#genome_title{
+    min-width: 110px;
+    max-width: 200px;
+}
+
+div.col-10#asset_table{
+    min-width: 600px;
 }

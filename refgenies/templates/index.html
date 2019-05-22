@@ -1,11 +1,21 @@
 {% extends "template.html" %}
 {% block title %}Index{% endblock %}
 {% block content %}
-<h3>Genomes</h3>
-<ul class="list-group">
 {% for genome_name, assets in genomes.items() %}
-    <li class="list-group-item"><a href="/genome/{{ genome_name }}"><b>{{ genome_name }}</b></a>
-        <ul>
+<div class="row align-items-center">
+    <div class="col-2" id="genome_title">
+        <h4 id="genome_title" onclick="location.href='/genome/{{ genome_name }}'">{{ genome_name }} <i class="fa fa-download" aria-hidden="true"></i></h4>
+    </div>
+    <div class="col-10" id="asset_table">
+        <table class="table table-sm" id="asset_table">
+            <thead class="thead-light">
+                <tr>
+                    <th scope="col">asset name</th>
+                    <th scope="col">asset size</th>
+                    <th scope="col">archive size</th>
+                    <th scope="col">archive checksum</th>
+                </tr>
+            </thead>
             {% for asset in assets %}
                 {% if not rgc[genome_name][asset]["asset_size"]|length %}
                     {% set asset_size = 'NA' %}
@@ -17,12 +27,26 @@
                 {% else %}
                     {% set archive_size = rgc[genome_name][asset]["archive_size"] %}
                 {% endif %}
-                <li class="list-group-item"><a href="/asset/{{ genome_name }}/{{ asset }}/archive">{{ asset }}</a><span id='file_size' class="badge badge-secondary">asset: {{ asset_size }}; archive: {{ archive_size }}</span></li>
+                {% if not rgc[genome_name][asset]["archive_checksum"]|length %}
+                    {% set archive_checksum = 'NA' %}
+                {% else %}
+                    {% set archive_checksum = rgc[genome_name][asset]["archive_checksum"] %}
+                {% endif %}
+                <tbody>
+                    <tr>
+                        <td style="cursor:pointer" onclick="location.href='/asset/{{ genome_name }}/{{ asset }}/archive'">
+                            <b>{{ asset }}</b> <i class="fa fa-download" aria-hidden="true"></i>
+                        </td>
+                        <td>{{ asset_size }} </td>
+                        <td>{{ archive_size }}</td>
+                        <td><code>{{ archive_checksum }}</code></td>
+                    </tr>
+                </tbody>
             {% endfor %}
-        </ul>
-    </li>
+        </table>
+    </div>
+</div>
 {% endfor %}
-</ul>
 <hr class="featurette-divider">
 <h3>What is this?</h3>
 <p><i>refgenomes.org</i> is a web server where we host genome assets for several popular reference assemblies.
