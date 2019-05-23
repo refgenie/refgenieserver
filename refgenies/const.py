@@ -20,6 +20,7 @@ TGZ = dict(ext=".tgz", flags="-cvzf")
 TAR = dict(ext=".tar", flags="-cvf")
 FILE_SIZE_UNITS = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB']
 LOG_FORMAT = "%(levelname)s in %(funcName)s: %(message)s"
+msg_404 = "No such {} on server"
 
 CFG_KEYS = ["CFG_ARCHIVE_KEY", "CFG_FOLDER_KEY", "CFG_GENOMES_KEY", "CFG_ARCHIVE_SIZE_KEY",
             "CFG_CHECKSUM_KEY", "CFG_ASSET_SIZE_KEY", "CFG_PATH_KEY"]
