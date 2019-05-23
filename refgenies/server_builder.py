@@ -137,7 +137,7 @@ def _get_server_rgc(path):
     Checks of existence of the produced server config file and returns a RefGenomeConfiguration representing
     it if path does exist
 
-    :param path:
+    :param str path: path to the produced server config file
     :return RefGenomeConfiguration|NoneType: config
     """
     global _LOGGER
