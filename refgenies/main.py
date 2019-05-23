@@ -48,9 +48,8 @@ def list_assets_by_genome():
     """
     List all assets that can be downloaded for a given genome.
 
-    - **genome**: 
     """
-    _LOGGER.info("serving assets string: '{}'".format(rgc.assets_str()))
+    _LOGGER.info("serving assets dict: '{}'".format(rgc.assets_dict()))
     return rgc.assets_dict()
 
 

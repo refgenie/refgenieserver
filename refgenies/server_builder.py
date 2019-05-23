@@ -56,7 +56,7 @@ def _check_tar(path, output, flags):
     """
     Checks if file exists and tars it
 
-    :param list[str] path: path to the file to be tarred
+    :param str path: path to the file to be tarred
     :param str output: path to the result file
     :param str flags: tar command flags to use
     :return:
@@ -66,7 +66,10 @@ def _check_tar(path, output, flags):
     # with tarfile.open(output, "w:gz") as tar:
     #     tar.add(path, arcname=os.path.basename(path))
     assert os.path.exists(path), "entity '{}' does not exist".format(path)
-    run("tar {} {} {}".format(flags, output, path), shell=True)
+    enclosing_dir = os.path.dirname(path)
+    entity_name = os.path.basename(path)
+    # use -C (cd to the specified dir before taring) option not to include the directory structure in the archive
+    run("tar -C {} {} {} {}".format(enclosing_dir, flags, output, entity_name), shell=True)
 
 
 def _checksum(path, blocksize=int(2e+9)):
@@ -110,7 +113,7 @@ def _size(path):
                     s += os.lstat(fp).st_size
                     symlinks.append(fp)
         if len(symlinks) > 0:
-            _LOGGER.warning("{} symlinks were found: '{}'".format(len(symlinks), "\n".join(symlinks)))
+            _LOGGER.info("{} symlinks were found: '{}'".format(len(symlinks), "\n".join(symlinks)))
     else:
         _LOGGER.warning("size could not be determined for: '{}'".format(path))
         s = None
