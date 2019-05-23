@@ -3,7 +3,7 @@ import sys
 
 from subprocess import run
 from hashlib import md5
-from warnings import warn
+import logmuse
 
 from .const import *
 
@@ -17,10 +17,12 @@ def archive(rgc, args):
     :param RefGenomeConfiguration rgc: configuration object with the data to build the servable archives for
     :param argparse.Namespace args: arguments from the refgenies CLI
     """
+    global _LOGGER
+    _LOGGER = logmuse.logger_via_cli(args)
+    _LOGGER.debug("Args: {}".format(args))
     if args.force:
-        print("build forced; file existence will be ignored")
+        _LOGGER.info("build forced; file existence will be ignored")
     genomes = rgc.genomes_list()
-
     for genome in genomes:
         genome_dir = os.path.join(rgc[CFG_FOLDER_KEY], genome)
         target_dir = os.path.join(rgc[CFG_ARCHIVE_KEY], genome)
@@ -34,18 +36,18 @@ def archive(rgc, args):
             if not os.path.exists(target_file) or args.force:
                 changed = True
                 input_file = os.path.join(genome_dir, file_name)
-                print("creating asset '{}' from '{}'".format(target_file, input_file))
+                _LOGGER.info("creating asset '{}' from '{}'".format(target_file, input_file))
                 _check_tar(input_file, target_file, TGZ["flags"])
                 rgc.genomes[genome][asset_name][CFG_CHECKSUM_KEY] = _checksum(target_file)
                 rgc.genomes[genome][asset_name][CFG_ARCHIVE_SIZE_KEY] = _size(target_file)
                 rgc.genomes[genome][asset_name][CFG_ASSET_SIZE_KEY] = _size(input_file)
             else:
-                print("'{}' exists. Nothing to be done".format(target_file))
+                _LOGGER.info("'{}' exists. Nothing to be done".format(target_file))
         if changed or not os.path.exists(genome_tarball):
-            print("creating genome tarball '{}' from: {}".format(genome_tarball, genome_dir))
+            _LOGGER.info("creating genome tarball '{}' from: {}".format(genome_tarball, genome_dir))
             _check_tar(target_dir, genome_tarball, TAR["flags"])
-    print("builder finished; server config file saved to:"
-          " '{}'".format(rgc.write(os.path.join(rgc[CFG_ARCHIVE_KEY], os.path.basename(args.config)))))
+    _LOGGER.info("builder finished; server config file saved to: '{}'".format(
+        rgc.write(os.path.join(rgc[CFG_ARCHIVE_KEY], os.path.basename(args.config)))))
 
 
 def _check_tar(path, output, flags):
@@ -91,6 +93,7 @@ def _size(path):
     :param str path: path to the file to check size of
     :return int: file size
     """
+    global _LOGGER
     if os.path.isfile(path):
         s = _size_str(os.path.getsize(path))
     elif os.path.isdir(path):
@@ -105,9 +108,9 @@ def _size(path):
                     s += os.lstat(fp).st_size
                     symlinks.append(fp)
         if len(symlinks) > 0:
-            warn("{} symlinks were found: '{}'".format(len(symlinks), "\n".join(symlinks)))
+            _LOGGER.warning("{} symlinks were found: '{}'".format(len(symlinks), "\n".join(symlinks)))
     else:
-        warn("size could not be determined for: '{}'".format(path))
+        _LOGGER.warning("size could not be determined for: '{}'".format(path))
         s = None
     return _size_str(s)
 

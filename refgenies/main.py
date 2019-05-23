@@ -1,6 +1,7 @@
 import os
 import sys
 import uvicorn
+import logmuse
 from starlette.requests import Request
 from starlette.responses import FileResponse
 from starlette.staticfiles import StaticFiles
@@ -8,10 +9,10 @@ from starlette.templating import Jinja2Templates
 from fastapi import FastAPI, HTTPException
 from refgenconf import RefGenomeConfiguration, select_genome_config, CONFIG_ENV_VARS
 
-from _version import __version__ as v
-from const import *
-from helpers import build_parser
-from server_builder import archive
+from ._version import __version__ as v
+from .const import *
+from .helpers import build_parser
+from .server_builder import archive
 
 app = FastAPI()
 app.mount("/" + STATIC_DIRNAME, StaticFiles(directory=STATIC_PATH), name=STATIC_DIRNAME)
@@ -26,7 +27,6 @@ global rgc
 @app.get("/")
 @app.get("/index")
 async def index(request: Request):
-    print(rgc.genomes)
     vars = {"request": request, "version": v, "genomes": rgc.assets_dict(), "rgc": rgc[CFG_GENOMES_KEY]}
     return templates.TemplateResponse("index.html", vars)
 
@@ -98,9 +98,9 @@ def list_genomes_by_asset(asset: str):
 
 
 def main():
-    parser = build_parser()
-    args = parser.parse_args()
     global rgc
+    parser = logmuse.add_logging_options(build_parser())
+    args = parser.parse_args()
     rgc = RefGenomeConfiguration(select_genome_config(args.config))
     assert len(rgc) > 0, "You must provide a config file or set the '{}' " \
                          "environment variable".format(", ".join(CONFIG_ENV_VARS))
