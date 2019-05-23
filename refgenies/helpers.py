@@ -36,6 +36,11 @@ def build_parser():
         help="A path to the refgenie config file (YAML). If not provided, the first available environment variable "
              "among: \'{}\' will be used if set. Currently {}".format(", ".join(CONFIG_ENV_VARS), env_var_val),
         default=None)
+    parser.add_argument(
+        "-d", "--dbg",
+        action="store_true",
+        dest="debug",
+        help="Set logger verbosity to debug")
 
     msg_by_cmd = {
         "serve": "run the server",

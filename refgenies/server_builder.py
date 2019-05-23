@@ -4,8 +4,9 @@ import sys
 from subprocess import run
 from hashlib import md5
 import logmuse
+import logging
 
-from .const import *
+from const import *
 
 
 def archive(rgc, args):
@@ -17,8 +18,7 @@ def archive(rgc, args):
     :param RefGenomeConfiguration rgc: configuration object with the data to build the servable archives for
     :param argparse.Namespace args: arguments from the refgenies CLI
     """
-    global _LOGGER
-    _LOGGER = logmuse.logger_via_cli(args)
+    _LOGGER = logging.getLogger(PKG_NAME)
     _LOGGER.debug("Args: {}".format(args))
     if args.force:
         _LOGGER.info("build forced; file existence will be ignored")
