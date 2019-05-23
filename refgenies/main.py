@@ -63,8 +63,8 @@ def download_asset(genome: str, asset: str):
     if os.path.isfile(asset_file):
         return FileResponse(asset_file, filename=file_name)
     else:
-        _LOGGER.warning(msg_404.format("asset"))
-        raise HTTPException(status_code=404, detail=msg_404.format("asset"))
+        _LOGGER.warning(MSG_404.format("asset"))
+        raise HTTPException(status_code=404, detail=MSG_404.format("asset"))
 
 
 @app.get("/asset/{genome}/{asset}")
@@ -74,8 +74,8 @@ def download_asset_attributes(genome: str, asset: str):
         _LOGGER.info("attributes returned for asset '{}' and genome '{}': \n{}".format(asset, genome, attrs))
         return attrs
     except KeyError:
-        _LOGGER.warning(_LOGGER.warning(msg_404.format("genome or asset")))
-        raise HTTPException(status_code=404, detail=msg_404.format("genome or asset"))
+        _LOGGER.warning(_LOGGER.warning(MSG_404.format("genome or asset")))
+        raise HTTPException(status_code=404, detail=MSG_404.format("genome or asset"))
 
 
 @app.get("/genome/{genome}")
@@ -87,8 +87,8 @@ def download_genome(genome: str):
     if os.path.isfile(genome_file):
         return FileResponse(genome_file, filename=file_name)
     else:
-        _LOGGER.warning(msg_404.format("genome"))
-        raise HTTPException(status_code=404, detail=msg_404.format("genome"))
+        _LOGGER.warning(MSG_404.format("genome"))
+        raise HTTPException(status_code=404, detail=MSG_404.format("genome"))
 
 
 @app.get("/genomes/{asset}")
