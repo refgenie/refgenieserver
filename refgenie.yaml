@@ -11,7 +11,7 @@ genomes:
     hisat2: 
       path: indexed_hisat2
     gtf: 
-      path: blah.gtf
+      path: hg38.gtf
   mm10:
     bowtie2: 
       path: indexed_bowtie2
