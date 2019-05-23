@@ -41,7 +41,13 @@ def archive(rgc, args):
                 input_file = os.path.join(genome_dir, file_name)
                 _LOGGER.info("creating asset '{}' from '{}'".format(target_file, input_file))
                 _check_tar(input_file, target_file, TGZ["flags"])
-                server_rgc.genomes[genome][asset_name][CFG_CHECKSUM_KEY] = _checksum(target_file)
+                try:
+                    # handles the situation when the server config is being updated and the asset key is missing,
+                    # but the attributes have to be added. Therefore it is necessary to initialize with an empty dict
+                    server_rgc.genomes[genome][asset_name][CFG_CHECKSUM_KEY] = _checksum(target_file)
+                except KeyError:
+                    server_rgc.genomes[genome][asset_name] = dict()
+                    server_rgc.genomes[genome][asset_name][CFG_CHECKSUM_KEY] = _checksum(target_file)
                 server_rgc.genomes[genome][asset_name][CFG_ARCHIVE_SIZE_KEY] = _size(target_file)
                 server_rgc.genomes[genome][asset_name][CFG_ASSET_SIZE_KEY] = _size(input_file)
             else:
