@@ -1,17 +1,23 @@
 # Genome configuration
 
 genome_folder: $GENOMES
-genome_archive: /project/shefflab/refgenomes_archive
+genome_archive: ~/Desktop/server_archive
 genome_server: http://localhost
-
 genomes:
   hg38:
-    bowtie2: 
-      path: indexed_bowtie2
-    hisat2: 
-      path: indexed_hisat2
-    gtf: 
+    gtf:
       path: hg38.gtf
-  mm10:
-    bowtie2: 
-      path: indexed_bowtie2
+      archive_checksum: ac466117cb89d7079b707d5130f8c7bc
+      archive_size: 193B
+      asset_size: 45B
+    epilog:
+      path: indexed_epilog
+      archive_checksum: 63fc07ad82f19fc432d693cd80ac9b33
+      archive_size: 168.8MB
+      asset_size: 174.4MB
+  rCRSd:
+    chrSizes:
+      path: rCRSd.chrom.sizes
+      archive_checksum: 97e9c21b91c094ad4681046435e66be0
+      archive_size: 164B
+      asset_size: 12B

@@ -1,6 +1,6 @@
 import argparse
-from const import *
-from _version import __version__ as v
+from .const import *
+from ._version import __version__ as v
 from yacman import get_first_env_var
 
 

@@ -1,6 +1,9 @@
 starlette
 fastapi
 uvicorn
+jinja2
+aiofiles
+logmuse
 #TODO: uncomment ones below after the release
 #yacman
 #refgenieconf
