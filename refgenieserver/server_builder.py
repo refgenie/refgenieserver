@@ -6,7 +6,7 @@ from hashlib import md5
 import logging
 from refgenconf import RefGenomeConfiguration
 
-from const import *
+from .const import *
 
 
 def archive(rgc, args):
@@ -33,7 +33,7 @@ def archive(rgc, args):
             os.makedirs(target_dir)
         changed = False
         for asset_name in rgc.genomes[genome].keys():
-            file_name = rgc.genomes[genome][asset_name][CFG_PATH_KEY]
+            file_name = rgc.genomes[genome][asset_name][CFG_ASSET_PATH_KEY]
             target_file = os.path.join(target_dir, asset_name + TGZ["ext"])
             input_file = os.path.join(genome_dir, file_name)
             if not os.path.exists(target_file) or args.force:
@@ -41,7 +41,8 @@ def archive(rgc, args):
                 _LOGGER.info("creating asset '{}' from '{}'".format(target_file, input_file))
                 _check_tar(input_file, target_file, TGZ["flags"])
             else:
-                _LOGGER.info("'{}' exists. Nothing to be done".format(target_file))
+                _LOGGER.info("'{}' exists".format(target_file))
+            _LOGGER.info("updating '{}: {}' attributes...".format(genome, asset_name))
             asset_attrs = {CFG_CHECKSUM_KEY: _checksum(target_file),
                            CFG_ARCHIVE_SIZE_KEY: _size(target_file),
                            CFG_ASSET_SIZE_KEY: _size(input_file)}

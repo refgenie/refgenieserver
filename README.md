@@ -1,4 +1,4 @@
-# refgenies
+# refgenieserver
 
 This folder contains code for an API to provide reference genomes.
 
@@ -15,7 +15,7 @@ docker build -t fastapi .
 Mount a directory of files to serve at `/genomes`:
 
 ```
-docker run --rm -p 80:80 --name fastapi -v $(pwd):/app -v $(pwd)/files:/genomes fastapi refgenies -c refgenie.yaml serve
+docker run --rm -p 80:80 --name fastapi -v $(pwd):/app -v $(pwd)/files:/genomes fastapi refgenieserver -c refgenie.yaml serve
 ```
 
 ## Running container for production:
@@ -23,7 +23,7 @@ docker run --rm -p 80:80 --name fastapi -v $(pwd):/app -v $(pwd)/files:/genomes 
 2. Run the container from the image you just built:
 
 ```
-docker run --rm -d -p 80:80 -v $GENOMES:/genomes --name fastapi fastapi 
+docker run --rm -d -p 80:80 -v $GENOMES:/genomes --name fastapi refgenieserver -c refgenie.yaml serve 
 ```
 
 We use `-d` to detach so it's in background. Terminate container when finished:

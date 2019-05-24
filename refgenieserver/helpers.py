@@ -1,7 +1,6 @@
 import argparse
-from const import DEFAULT_PORT
+from const import *
 from _version import __version__ as v
-from refgenconf import CONFIG_ENV_VARS
 from yacman import get_first_env_var
 
 
@@ -17,7 +16,7 @@ def build_parser():
 
     :return argparse.ArgumentParser
     """
-    env_var_val = get_first_env_var(CONFIG_ENV_VARS)[1] if get_first_env_var(CONFIG_ENV_VARS) is not None else "not set"
+    env_var_val = get_first_env_var(CFG_ENV_VARS)[1] if get_first_env_var(CFG_ENV_VARS) is not None else "not set"
     banner = "%(prog)s - refgenie web server utilities"
     additional_description = "For subcommand-specific options, type: '%(prog)s <subcommand> -h'"
     additional_description += "\nhttps://github.com/databio/refgenieserver"
@@ -34,7 +33,7 @@ def build_parser():
         "-c", "--config",
         dest="config",
         help="A path to the refgenie config file (YAML). If not provided, the first available environment variable "
-             "among: \'{}\' will be used if set. Currently {}".format(", ".join(CONFIG_ENV_VARS), env_var_val),
+             "among: \'{}\' will be used if set. Currently {}".format(", ".join(CFG_ENV_VARS), env_var_val),
         default=None)
     parser.add_argument(
         "-d", "--dbg",

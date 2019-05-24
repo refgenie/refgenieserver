@@ -7,12 +7,12 @@ from starlette.responses import FileResponse
 from starlette.staticfiles import StaticFiles
 from starlette.templating import Jinja2Templates
 from fastapi import FastAPI, HTTPException
-from refgenconf import RefGenomeConfiguration, select_genome_config, CONFIG_ENV_VARS
+from refgenconf import RefGenomeConfiguration, select_genome_config
 
-from _version import __version__ as v
-from const import *
-from helpers import build_parser
-from server_builder import archive
+from ._version import __version__ as v
+from .const import *
+from .helpers import build_parser
+from .server_builder import archive
 import logging
 
 app = FastAPI()
@@ -56,9 +56,8 @@ def list_assets_by_genome():
 @app.get("/asset/{genome}/{asset}/archive")
 def download_asset(genome: str, asset: str):
     file_name = "{}{}".format(asset, TGZ["ext"])
-    asset_file = "{base}/{genome}/{file_name}".format(base=rgc[CFG_ARCHIVE_KEY], genome=genome, file_name=file_name)
+    asset_file = "{base}/{genome}/{file_name}".format(base=BASE_DIR, genome=genome, file_name=file_name)
     _LOGGER.info("serving asset file: '{}'".format(asset_file))
-    # url = "{base}/{genome}/{asset}.{ext}".format(base=BASE_URL, genome="example_data", asset="rCRS.fa.gz", ext=ext)
     if os.path.isfile(asset_file):
         return FileResponse(asset_file, filename=file_name)
     else:
