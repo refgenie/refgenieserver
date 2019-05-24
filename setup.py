@@ -3,7 +3,7 @@
 from setuptools import setup
 import sys
 
-PACKAGE = "refgenies"
+PACKAGE = "refgenieserver"
 
 # Additional keyword arguments for setup().
 extra = {}
@@ -54,9 +54,7 @@ setup(
     license="BSD2",
     entry_points={
         "console_scripts": [
-            # TODO:remove server_builder after parsers merge
             "{p} = {p}.main:main".format(p=PACKAGE),
-            "server_builder = {p}.server_builder:main".format(p=PACKAGE)
         ],
     },
     package_data={PACKAGE: ['templates/*', 'static/*']},

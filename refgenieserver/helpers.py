@@ -20,7 +20,7 @@ def build_parser():
     env_var_val = get_first_env_var(CONFIG_ENV_VARS)[1] if get_first_env_var(CONFIG_ENV_VARS) is not None else "not set"
     banner = "%(prog)s - refgenie web server utilities"
     additional_description = "For subcommand-specific options, type: '%(prog)s <subcommand> -h'"
-    additional_description += "\nhttps://github.com/databio/refgenies"
+    additional_description += "\nhttps://github.com/databio/refgenieserver"
 
     parser = _VersionInHelpParser(
         description=banner,

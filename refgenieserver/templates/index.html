@@ -49,5 +49,5 @@ so it includes <a href="/docs">self-documenting interface</a> that will allow ot
 <p>For example, the <a href="http://refgenie.databio.org/en/latest/">refgenie CLI</a> uses the <i>refgenomes.org</i> API to query and download remote genome assets. When invoked
     with <code>refgenie pull ...</code>, the CLI uses a configurable URL to retrieve an archived tarball from the server, which it then unpacks and places in the appropriate folder location. </p>
 <p>This server is a containerized, portable open-source application so that it can be independently run by others:
-<p><code>docker run -p 80:80 -v refgenies:/app -v genomes_folder:/genomes refgenies -c refgnie_config.yaml serve</code></p>
+<p><code>docker run -p 80:80 -v refgenieserver:/app -v genomes_folder:/genomes refgenieserver -c refgnie_config.yaml serve</code></p>
 {% endblock %}
