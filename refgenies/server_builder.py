@@ -13,7 +13,7 @@ def archive(rgc, args):
     """
     Takes the RefGenomeConfiguration object and builds the individual tar archives
     that can be then served with 'refgenies serve'. Additionally determines their md5 checksums, file sizes and
-    updates the original refgenie config with these data
+    updates the original refgenie config with these data.
 
     :param RefGenomeConfiguration rgc: configuration object with the data to build the servable archives for
     :param argparse.Namespace args: arguments from the refgenies CLI
@@ -24,7 +24,6 @@ def archive(rgc, args):
     if args.force:
         _LOGGER.info("build forced; file existence will be ignored")
     server_rgc_path = os.path.join(rgc[CFG_ARCHIVE_KEY], os.path.basename(args.config))
-    server_rgc = _get_server_rgc(server_rgc_path) or rgc
     genomes = rgc.genomes_list()
     for genome in genomes:
         genome_dir = os.path.join(rgc[CFG_FOLDER_KEY], genome)
@@ -36,26 +35,22 @@ def archive(rgc, args):
         for asset_name in rgc.genomes[genome].keys():
             file_name = rgc.genomes[genome][asset_name][CFG_PATH_KEY]
             target_file = os.path.join(target_dir, asset_name + TGZ["ext"])
+            input_file = os.path.join(genome_dir, file_name)
             if not os.path.exists(target_file) or args.force:
                 changed = True
-                input_file = os.path.join(genome_dir, file_name)
                 _LOGGER.info("creating asset '{}' from '{}'".format(target_file, input_file))
                 _check_tar(input_file, target_file, TGZ["flags"])
-                try:
-                    # handles the situation when the server config is being updated and the asset key is missing,
-                    # but the attributes have to be added. Therefore it is necessary to initialize with an empty dict
-                    server_rgc.genomes[genome][asset_name][CFG_CHECKSUM_KEY] = _checksum(target_file)
-                except KeyError:
-                    server_rgc.genomes[genome][asset_name] = dict()
-                    server_rgc.genomes[genome][asset_name][CFG_CHECKSUM_KEY] = _checksum(target_file)
-                server_rgc.genomes[genome][asset_name][CFG_ARCHIVE_SIZE_KEY] = _size(target_file)
-                server_rgc.genomes[genome][asset_name][CFG_ASSET_SIZE_KEY] = _size(input_file)
             else:
                 _LOGGER.info("'{}' exists. Nothing to be done".format(target_file))
+            asset_attrs = {CFG_CHECKSUM_KEY: _checksum(target_file),
+                           CFG_ARCHIVE_SIZE_KEY: _size(target_file),
+                           CFG_ASSET_SIZE_KEY: _size(input_file)}
+            rgc.update_genomes(genome, asset_name, asset_attrs)
+            rgc.write(server_rgc_path)
         if changed or not os.path.exists(genome_tarball):
             _LOGGER.info("creating genome tarball '{}' from: {}".format(genome_tarball, genome_dir))
             _check_tar(target_dir, genome_tarball, TAR["flags"])
-    _LOGGER.info("builder finished; server config file saved to: '{}'".format(server_rgc.write(server_rgc_path)))
+    _LOGGER.info("builder finished; server config file saved to: '{}'".format(rgc.write(server_rgc_path)))
 
 
 def _check_tar(path, output, flags):
@@ -139,20 +134,3 @@ def _size_str(size):
                 return "{}{}".format(round(size, 1), unit)
             size /= 1024
     return size
-
-
-def _get_server_rgc(path):
-    """
-    Checks of existence of the produced server config file and returns a RefGenomeConfiguration representing
-    it if path does exist
-
-    :param str path: path to the produced server config file
-    :return RefGenomeConfiguration|NoneType: config
-    """
-    global _LOGGER
-    if os.path.exists(path):
-        _LOGGER.debug("'{}' exists, updating existing server config file...".format(path))
-        return RefGenomeConfiguration(path)
-    else:
-        _LOGGER.debug("'{}' does not exist, creating new server config file...".format(path))
-        return None
