@@ -39,7 +39,11 @@ def archive(rgc, args):
             if not os.path.exists(target_file) or args.force:
                 changed = True
                 _LOGGER.info("creating asset '{}' from '{}'".format(target_file, input_file))
-                _check_tar(input_file, target_file, TGZ["flags"])
+                try:
+                    _check_tar(input_file, target_file, TGZ["flags"])
+                except OSError as e:
+                    _LOGGER.warning(e)
+                    continue
             else:
                 _LOGGER.info("'{}' exists".format(target_file))
             _LOGGER.info("updating '{}: {}' attributes...".format(genome, asset_name))
@@ -49,8 +53,12 @@ def archive(rgc, args):
             rgc.update_genomes(genome, asset_name, asset_attrs)
             rgc.write(server_rgc_path)
         if changed or not os.path.exists(genome_tarball):
-            _LOGGER.info("creating genome tarball '{}' from: {}".format(genome_tarball, genome_dir))
-            _check_tar(target_dir, genome_tarball, TAR["flags"])
+            _LOGGER.info("creating genome tarball '{}' from '{}'".format(genome_tarball, genome_dir))
+            try:
+                _check_tar(target_dir, genome_tarball, TAR["flags"])
+            except OSError as e:
+                _LOGGER.warning(e)
+                continue
     _LOGGER.info("builder finished; server config file saved to: '{}'".format(rgc.write(server_rgc_path)))
 
 
@@ -67,11 +75,14 @@ def _check_tar(path, output, flags):
     # import tarfile
     # with tarfile.open(output, "w:gz") as tar:
     #     tar.add(path, arcname=os.path.basename(path))
-    assert os.path.exists(path), "entity '{}' does not exist".format(path)
-    enclosing_dir = os.path.dirname(path)
-    entity_name = os.path.basename(path)
-    # use -C (cd to the specified dir before taring) option not to include the directory structure in the archive
-    run("tar -C {} {} {} {}".format(enclosing_dir, flags, output, entity_name), shell=True)
+    global _LOGGER
+    if os.path.exists(path):
+        enclosing_dir = os.path.dirname(path)
+        entity_name = os.path.basename(path)
+        # use -C (cd to the specified dir before taring) option not to include the directory structure in the archive
+        run("tar -C {} {} {} {}".format(enclosing_dir, flags, output, entity_name), shell=True)
+    else:
+        raise OSError("entity '{}' does not exist".format(path))
 
 
 def _checksum(path, blocksize=int(2e+9)):
