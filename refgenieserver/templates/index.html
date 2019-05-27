@@ -10,10 +10,10 @@
 {% endmacro %}
 {% for genome_name, assets in genomes.items() %}
 <div class="row align-items-center">
-    <div class="col-2" id="genome_title">
+    <div class="col-3" id="genome_title">
         <h4 id="genome_title" onclick="location.href='/genome/{{ genome_name }}'">{{ genome_name }} <i class="fa fa-download" aria-hidden="true"></i></h4>
     </div>
-    <div class="col-10" id="asset_table">
+    <div class="col-9" id="asset_table">
         <table class="table table-sm" id="asset_table">
             <thead class="thead-light">
                 <tr>

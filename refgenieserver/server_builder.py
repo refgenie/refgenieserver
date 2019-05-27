@@ -75,7 +75,6 @@ def _check_tar(path, output, flags):
     # import tarfile
     # with tarfile.open(output, "w:gz") as tar:
     #     tar.add(path, arcname=os.path.basename(path))
-    global _LOGGER
     if os.path.exists(path):
         enclosing_dir = os.path.dirname(path)
         entity_name = os.path.basename(path)
