@@ -1,6 +1,6 @@
 starlette
 fastapi
-uvicorn
+uvicorn>=0.7.1
 jinja2
 aiofiles
 logmuse
