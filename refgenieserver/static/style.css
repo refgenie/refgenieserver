@@ -127,3 +127,11 @@ div.col-2#genome_title{
 div.col-10#asset_table{
     min-width: 600px;
 }
+
+th#asset_name {
+    width: 195px;
+}
+
+th#size {
+    width: 110px;
+}
