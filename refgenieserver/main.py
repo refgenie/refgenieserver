@@ -107,7 +107,7 @@ def main():
     _LOGGER = logmuse.setup_logger(**logger_args)
     rgc = RefGenomeConfiguration(select_genome_config(args.config))
     assert len(rgc) > 0, "You must provide a config file or set the '{}' " \
-                         "environment variable".format(", ".join(CONFIG_ENV_VARS))
+                         "environment variable".format(", ".join(CFG_ENV_VARS))
     if args.command == "archive":
         archive(rgc, args)
     elif args.command == "serve":
