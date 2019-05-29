@@ -9,7 +9,6 @@ from starlette.templating import Jinja2Templates
 from fastapi import FastAPI, HTTPException
 from refgenconf import RefGenomeConfiguration, select_genome_config
 
-from ._version import __version__ as v
 from .const import *
 from .helpers import build_parser
 from .server_builder import archive
@@ -30,8 +29,9 @@ _LOGGER = logging.getLogger(PKG_NAME)
 @app.get("/index")
 async def index(request: Request):
     _LOGGER.debug("RefGenomeConfiguration object:\n{}".format(rgc))
-    vars = {"request": request, "version": v, "genomes": rgc.assets_dict(), "rgc": rgc[CFG_GENOMES_KEY]}
-    return templates.TemplateResponse("index.html", vars)
+    vars = {"request": request, "genomes": rgc.assets_dict(), "rgc": rgc[CFG_GENOMES_KEY]}
+    _LOGGER.debug("merged vars: {}".format(dict(vars, **ALL_VERSIONS)))
+    return templates.TemplateResponse("index.html", dict(vars, **ALL_VERSIONS))
 
 
 @app.get("/genomes")

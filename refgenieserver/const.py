@@ -1,6 +1,10 @@
 """ Package constants """
 import os
 from refgenconf.const import *
+from refgenconf._version import __version__ as rgc_v
+from ._version import __version__ as server_v
+from platform import python_version
+ALL_VERSIONS = {"server_version": server_v, "rgc_version": rgc_v, "python_version": python_version()}
 PKG_NAME = "refgenieserver"
 DEFAULT_PORT = 80
 BASE_DIR = "/genomes"

@@ -1,4 +1,4 @@
-{% extends "template.html" %}
+{% extends "base.html" %}
 {% block title %}Index{% endblock %}
 {% block content %}
 {% macro safe_show_asset_attr(x) %}
@@ -33,15 +33,14 @@
 {% for genome_name, assets in genomes.items() %}
     <div class="row align-items-center">
         <div class="col-12" id="genome_title">
-            <h4>Reference genome: {{ genome_name }}</h4>
+            <h4>Reference genome: <b>{{ genome_name }}</b></h4>
         </div>
         <div class="col-12" id="asset_table">
             <table class="table table-sm" id="asset_table">
                 <thead class="thead-light">
                     <tr>
-                        <th class="asset_name" scope="col">genome</th>
                         <th class="asset_name" scope="col">asset name</th>
-                        <th class="asset_name" scope="col">asset description</th>
+                        <th class="asset_desc" scope="col">asset description</th>
                         <th class="size" scope="col">asset size</th>
                         <th class="size" scope="col">archive size</th>
                         <th class="checksum" scope="col">archive checksum</th>
@@ -49,7 +48,6 @@
                 </thead>
                 <tbody>
                         <tr>
-                            <td>{{ genome_name }}</a></td>
                             <td style="cursor:pointer" onclick="location.href='/asset/{{ genome_name }}/{{ asset }}/archive'">
                                 <b>all assets</b> <i class="fa fa-download" aria-hidden="true"></i>
                             </td>
@@ -60,7 +58,6 @@
                         </tr>            
                     {% for asset in assets %}
                         <tr>
-                            <td>{{ genome_name }}</td>
                             <td style="cursor:pointer" onclick="location.href='/asset/{{ genome_name }}/{{ asset }}/archive'">
                                 <b>{{ asset }}</b> <i class="fa fa-download" aria-hidden="true"></i>
                             </td>

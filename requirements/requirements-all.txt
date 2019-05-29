@@ -6,4 +6,4 @@ aiofiles
 logmuse
 #TODO: uncomment ones below after the release
 #yacman
-#refgenieconf
+#refgenconf
