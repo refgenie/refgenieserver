@@ -127,6 +127,11 @@ th.asset_name {
     width: 195px;
 }
 
+th.asset_desc {
+    width: 300px;
+}
+
+
 th.size {
     width: 110px;
 }
@@ -134,3 +139,27 @@ th.size {
 th.checksum {
     width: 280px;
 }
+
+th.footer {
+  font-size:12px;
+  padding: 3px;
+  font-weight: bold;
+  text-align: center;
+  background-color: #464c56;
+  color: white;
+  min-width: 90px;
+}
+
+td.footer {
+  font-size:12px;
+  padding: 3px;
+  text-align: center;
+  color: #464c56;
+  font-weight: bold;
+  font-family: Courier New;
+}
+
+code.footer {
+  color:#464c56
+}
+
