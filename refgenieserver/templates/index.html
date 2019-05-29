@@ -8,47 +8,72 @@
         {{ x }}
     {% endif %}
 {% endmacro %}
-<h2>What is this?</h2>
-<p><i>refgenomes.org</i> is a web server where we host genome assets for several popular reference assemblies.
-This server provides both a web interface and a RESTful API. Users may explore and download archived indexes from the
-web interface or develop tools that programmatically query the API. Our API is built to OpenAPI 3.0 standards,
-so it includes <a href="/docs">self-documenting interface</a> that will allow other tools to discover and automatically
-    use the API.</p>
-<p>For example, the <a href="http://refgenie.databio.org/en/latest/">refgenie CLI</a> uses the <i>refgenomes.org</i> API to query and download remote genome assets. When invoked
-    with <code>refgenie pull ...</code>, the CLI uses a configurable URL to retrieve an archived tarball from the server, which it then unpacks and places in the appropriate folder location. </p>
-<p>This server is a containerized, portable open-source application so that it can be independently run by others:
-<p><code>docker run -p 80:80 -v refgenieserver:/app -v genomes_folder:/genomes refgenieserver -c refgnie_config.yaml serve</code></p>
-<hr class="featurette-divider">
-<h2>Available data</h2>
-{% for genome_name, assets in genomes.items() %}
-<div class="row align-items-center">
-    <div class="col-3" id="genome_title">
-        <h4 id="genome_title" onclick="location.href='/genome/{{ genome_name }}'">{{ genome_name }} <i class="fa fa-download" aria-hidden="true"></i></h4>
-    </div>
-    <div class="col-9" id="asset_table">
-        <table class="table table-sm" id="asset_table">
-            <thead class="thead-light">
-                <tr>
-                    <th class="asset_name" scope="col">asset name</th>
-                    <th class="size" scope="col">asset size</th>
-                    <th class="size" scope="col">archive size</th>
-                    <th class="checksum" scope="col">archive checksum</th>
-                </tr>
-            </thead>
-            {% for asset in assets %}
-                <tbody>
-                    <tr>
-                        <td style="cursor:pointer" onclick="location.href='/asset/{{ genome_name }}/{{ asset }}/archive'">
-                            <b>{{ asset }}</b> <i class="fa fa-download" aria-hidden="true"></i>
-                        </td>
-                        <td>{{ safe_show_asset_attr(rgc[genome_name][asset]["asset_size"]) }}</td>
-                        <td>{{ safe_show_asset_attr(rgc[genome_name][asset]["archive_size"]) }}</td>
-                        <td><code>{{ safe_show_asset_attr(rgc[genome_name][asset]["archive_checksum"]) }}</code></td>
-                    </tr>
-                </tbody>
-            {% endfor %}
-        </table>
+<div class="container">
+    <div class="row">
+        <div class="col-sm-8">
+        <p>Welcome to <i>refgenomes.databio.org</i>. Here we provide a web interface and a RESTful API to access genome assets for popular reference genome assemblies. This server is running <i>refgenieserver</i>. You may use the <a href="http://refgenie.databio.org">refgenie CLI</a> to automate downloading and organizing these assets using <code>refgenie pull ...</code> from the command line to retrieve archived genome assets.</p>
+
+        <p>Below is a list of assets hosted by this server:</p>
+
+        </div>
+        <div class="col-sm-4">
+        <h2>Refgenie links</h2>
+        <ul>
+        <li><a href="/docs">API documentation</a></li>
+        <li><a href="/openapi.json">OpenAPI 3.0 server JSON docs</a></li>
+        <li><a href="https://github.com/databio/refgenieserver">Refgenieserver on GitHub</a></li>
+        <li><a href="http://refgenie.databio.org">Refgenie command-line interface</a></li>
+        </ul>
+        </div>
     </div>
 </div>
+<hr class="featurette-divider">
+<div class="container">
+<h2>Available data</h2>
+{% for genome_name, assets in genomes.items() %}
+    <div class="row align-items-center">
+        <div class="col-3" id="genome_title">
+            <h4 id="genome_title">Reference genome: {{ genome_name }}</h4>
+        </div>
+        <div class="col-12" id="asset_table">
+            <table class="table table-sm" id="asset_table">
+                <thead class="thead-light">
+                    <tr>
+                        <th class="asset_name" scope="col">genome</th>
+                        <th class="asset_name" scope="col">asset name</th>
+                        <th class="asset_name" scope="col">asset description</th>
+                        <th class="size" scope="col">asset size</th>
+                        <th class="size" scope="col">archive size</th>
+                        <th class="checksum" scope="col">archive checksum</th>
+                    </tr>
+                </thead>
+                <tbody>
+                        <tr>
+                            <td>{{ genome_name }}</a></td>
+                            <td style="cursor:pointer" onclick="location.href='/asset/{{ genome_name }}/{{ asset }}/archive'">
+                                <b>all assets</b> <i class="fa fa-download" aria-hidden="true"></i>
+                            </td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td><code></code></td>
+                        </tr>            
+                    {% for asset in assets %}
+                        <tr>
+                            <td>{{ genome_name }}</td>
+                            <td style="cursor:pointer" onclick="location.href='/asset/{{ genome_name }}/{{ asset }}/archive'">
+                                <b>{{ asset }}</b> <i class="fa fa-download" aria-hidden="true"></i>
+                            </td>
+                            <td>{{ safe_show_asset_attr(rgc[genome_name][asset]["asset_description"]) }}</td>
+                            <td>{{ safe_show_asset_attr(rgc[genome_name][asset]["asset_size"]) }}</td>
+                            <td>{{ safe_show_asset_attr(rgc[genome_name][asset]["archive_size"]) }}</td>
+                            <td><code>{{ safe_show_asset_attr(rgc[genome_name][asset]["archive_checksum"]) }}</code></td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
 {% endfor %}
+</div>
 {% endblock %}

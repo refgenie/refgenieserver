@@ -11,11 +11,12 @@
 		<title>refgenie server - {% block title %}{% endblock %}</title>
 	{% endblock %}
 	</head>
+
 	{% include "navbar.html" %}
 	<div id="wrap">
 		<div id="main">
 			<body>
-				<div class="divider-15">
+				<div class="divider-12">
 					{% block body %}{% endblock %}
 					{% block content %}{% endblock %}
 				</div>
@@ -26,4 +27,5 @@
 	<footer class="text-muted">
 		{% include "footer.html" %}
 	</footer>
+
 </html>
