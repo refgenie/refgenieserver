@@ -4,18 +4,18 @@ import sys
 from subprocess import run
 from hashlib import md5
 import logging
-from refgenconf import RefGenomeConfiguration
+from refgenconf import RefGenConf
 
 from .const import *
 
 
 def archive(rgc, args):
     """
-    Takes the RefGenomeConfiguration object and builds the individual tar archives
+    Takes the RefGenConf object and builds the individual tar archives
     that can be then served with 'refgenieserver serve'. Additionally determines their md5 checksums, file sizes and
     updates the original refgenie config with these data.
 
-    :param RefGenomeConfiguration rgc: configuration object with the data to build the servable archives for
+    :param RefGenConf rgc: configuration object with the data to build the servable archives for
     :param argparse.Namespace args: arguments from the refgenieserver CLI
     """
     global _LOGGER

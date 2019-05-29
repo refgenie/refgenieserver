@@ -7,7 +7,7 @@ from starlette.responses import FileResponse
 from starlette.staticfiles import StaticFiles
 from starlette.templating import Jinja2Templates
 from fastapi import FastAPI, HTTPException
-from refgenconf import RefGenomeConfiguration, select_genome_config
+from refgenconf import RefGenConf, select_genome_config
 
 from .const import *
 from .helpers import build_parser
@@ -28,7 +28,7 @@ _LOGGER = logging.getLogger(PKG_NAME)
 @app.get("/")
 @app.get("/index")
 async def index(request: Request):
-    _LOGGER.debug("RefGenomeConfiguration object:\n{}".format(rgc))
+    _LOGGER.debug("RefGenConf object:\n{}".format(rgc))
     vars = {"request": request, "genomes": rgc.assets_dict(), "rgc": rgc[CFG_GENOMES_KEY]}
     _LOGGER.debug("merged vars: {}".format(dict(vars, **ALL_VERSIONS)))
     return templates.TemplateResponse("index.html", dict(vars, **ALL_VERSIONS))
@@ -105,7 +105,7 @@ def main():
     args = parser.parse_args()
     logger_args = dict(name=PKG_NAME, fmt=LOG_FORMAT, level=5) if args.debug else dict(name=PKG_NAME, fmt=LOG_FORMAT)
     _LOGGER = logmuse.setup_logger(**logger_args)
-    rgc = RefGenomeConfiguration(select_genome_config(args.config))
+    rgc = RefGenConf(select_genome_config(args.config))
     assert len(rgc) > 0, "You must provide a config file or set the '{}' " \
                          "environment variable".format(", ".join(CFG_ENV_VARS))
     if args.command == "archive":
