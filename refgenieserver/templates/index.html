@@ -32,10 +32,7 @@
 <h2>Available assets</h2>
 {% for genome_name, assets in genomes.items() %}
     <div class="row align-items-center">
-        <div class="col-12" id="genome_title">
-            <h4>Reference genome: <b>{{ genome_name }}</b></h4>
-        </div>
-        <div class="col-12" id="asset_table">
+        <div class="col-12">
             <table class="table table-sm" id="asset_table">
                 <thead class="thead-light">
                     <tr>
@@ -47,19 +44,10 @@
                     </tr>
                 </thead>
                 <tbody>
-                        <tr>
-                            <td style="cursor:pointer" onclick="location.href='/asset/{{ genome_name }}/{{ asset }}/archive'">
-                                <b>all assets</b> <i class="fa fa-download" aria-hidden="true"></i>
-                            </td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td><code></code></td>
-                        </tr>            
                     {% for asset in assets %}
                         <tr>
                             <td style="cursor:pointer" onclick="location.href='/asset/{{ genome_name }}/{{ asset }}/archive'">
-                                <b>{{ asset }}</b> <i class="fa fa-download" aria-hidden="true"></i>
+                                <b>{{genome_name}}/{{ asset }}</b> <i class="fa fa-download" aria-hidden="true"></i>
                             </td>
                             <td>{{ safe_show_asset_attr(rgc[genome_name][asset]["asset_description"]) }}</td>
                             <td>{{ safe_show_asset_attr(rgc[genome_name][asset]["asset_size"]) }}</td>
