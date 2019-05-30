@@ -5,6 +5,7 @@ from subprocess import run
 from hashlib import md5
 import logging
 from refgenconf import RefGenConf
+from ubiquerg.files import checksum
 
 from .const import *
 
@@ -47,7 +48,7 @@ def archive(rgc, args):
             else:
                 _LOGGER.info("'{}' exists".format(target_file))
             _LOGGER.info("updating '{}: {}' attributes...".format(genome, asset_name))
-            asset_attrs = {CFG_CHECKSUM_KEY: _checksum(target_file),
+            asset_attrs = {CFG_CHECKSUM_KEY: checksum(target_file),
                            CFG_ARCHIVE_SIZE_KEY: _size(target_file),
                            CFG_ASSET_SIZE_KEY: _size(input_file)}
             rgc.update_genomes(genome, asset_name, asset_attrs)
@@ -82,25 +83,6 @@ def _check_tar(path, output, flags):
         run("tar -C {} {} {} {}".format(enclosing_dir, flags, output, entity_name), shell=True)
     else:
         raise OSError("entity '{}' does not exist".format(path))
-
-
-def _checksum(path, blocksize=int(2e+9)):
-    """
-    Generates a md5 checksum for the file contents in the provided path
-
-    :param str path: path to the file to generate checksum for
-    :param int blocksize: number of bytes to read per iteration, default: 2GB
-    :return str: checksum hash
-    """
-    m = md5()
-    with open(path, "rb") as f:
-        # gotta split the file into blocks since some of the archives are to big to be read and checksummed
-        while True:
-            buf = f.read(blocksize)
-            if not buf:
-                break
-            m.update(buf)
-    return m.hexdigest()
 
 
 def _size(path):
