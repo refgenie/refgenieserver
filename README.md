@@ -45,7 +45,7 @@ You can see the automatic docs and interactive swagger openAPI interface at [htt
 Attach to container to see debug output:
 
 ```
-docker attach fastapi
+docker attach refgenieservercon
 ```
 
 Grab errors:
@@ -63,5 +63,5 @@ docker logs <error_code>
 Enter an interactive shell to explore the container contents:
 
 ```
-docker exec -it fastapi sh
+docker exec -it refgenieservercon sh
 ```
