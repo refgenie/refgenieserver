@@ -44,6 +44,7 @@
                         <th class="size" scope="col">asset size</th>
                         <th class="size" scope="col">archive size</th>
                         <th class="checksum" scope="col">archive checksum</th>
+                        <th class="attrs" scope="col">all attributes</th>
                     </tr>
                 </thea
                 <tbody>
@@ -56,6 +57,7 @@
                             <td class="size">{{ safe_show_asset_attr(rgc[genome_name][asset]["asset_size"]) }}</td>
                             <td class="size">{{ safe_show_asset_attr(rgc[genome_name][asset]["archive_size"]) }}</td>
                             <td class="checksum"><code>{{ safe_show_asset_attr(rgc[genome_name][asset]["archive_checksum"]) }}</code></td>
+                            <td class="attrs"><a href='/asset/{{ genome_name }}/{{ asset }}'><button class="btn btn-secondary btn-sm" id="json_btn">Get JSON</button></a></td>
                         </tr>
                     {% endfor %}
                 </tbody>

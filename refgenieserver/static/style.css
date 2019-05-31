@@ -139,6 +139,10 @@ div.col-9#asset_table {
     width: 280px;
 }
 
+.attrs {
+    width: 110px;
+}
+
 th.footer {
   font-size:12px;
   padding: 3px;
@@ -159,6 +163,10 @@ td.footer {
 }
 
 code.footer {
-  color:#464c56
+  color:#464c56;
+}
+
+#json_btn {
+  margin-left: 8px;
 }
 
