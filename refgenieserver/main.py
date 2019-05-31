@@ -28,6 +28,9 @@ _LOGGER = logging.getLogger(PKG_NAME)
 @app.get("/")
 @app.get("/index")
 async def index(request: Request):
+    """
+    Returns a landing page HTML with the server resources ready do download. No inputs required.
+    """
     _LOGGER.debug("RefGenConf object:\n{}".format(rgc))
     vars = {"request": request, "genomes": rgc.assets_dict(), "rgc": rgc[CFG_GENOMES_KEY]}
     _LOGGER.debug("merged vars: {}".format(dict(vars, **ALL_VERSIONS)))
@@ -44,10 +47,9 @@ def list_available_genomes():
 
 
 @app.get("/assets")
-def list_assets_by_genome():
+def list_available_assets():
     """
-    List all assets that can be downloaded for a given genome.
-
+    Returns a list of all assets that can be downloaded. No inputs required.
     """
     _LOGGER.info("serving assets dict: '{}'".format(rgc.assets_dict()))
     return rgc.assets_dict()
@@ -55,6 +57,9 @@ def list_assets_by_genome():
 
 @app.get("/asset/{genome}/{asset}/archive")
 def download_asset(genome: str, asset: str):
+    """
+    Returns an archive. Requires the genome name and the asset name as an input.
+    """
     file_name = "{}{}".format(asset, TGZ["ext"])
     asset_file = "{base}/{genome}/{file_name}".format(base=BASE_DIR, genome=genome, file_name=file_name)
     _LOGGER.info("serving asset file: '{}'".format(asset_file))
@@ -67,6 +72,10 @@ def download_asset(genome: str, asset: str):
 
 @app.get("/asset/{genome}/{asset}")
 def download_asset_attributes(genome: str, asset: str):
+    """
+    Returns a dictionary of asset attributes, like archive size, archive checksum etc.
+    Requires the genome name and the asset name as an input.
+    """
     try:
         attrs = rgc[CFG_GENOMES_KEY][genome][asset]
         _LOGGER.info("attributes returned for asset '{}' and genome '{}': \n{}".format(asset, genome, attrs))
@@ -78,6 +87,9 @@ def download_asset_attributes(genome: str, asset: str):
 
 @app.get("/genome/{genome}")
 def download_genome(genome: str):
+    """
+    Returns a tarball with **all** the archived assets available for the genome. Requires the genome name as an input.
+    """
     file_name = "{}{}".format(genome, TAR["ext"])
     genome_file = "{base}/{file_name}".format(base=rgc[CFG_ARCHIVE_KEY], file_name=file_name)
     _LOGGER.info("serving genome archive: '{}'".format(genome_file))
@@ -92,7 +104,7 @@ def download_genome(genome: str):
 @app.get("/genomes/{asset}")
 def list_genomes_by_asset(asset: str):
     """
-    Returns a list of genomes on this server that define the requested asset
+    Returns a list of genomes that have the requested asset defined. Requires the asset name as an input.
     """
     genomes = rgc.list_genomes_by_asset(asset)
     _LOGGER.info("serving genomes by '{}' asset: {}".format(asset, genomes))
