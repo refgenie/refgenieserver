@@ -123,20 +123,19 @@ div.col-9#asset_table {
     min-width: 600px;
 }
 
-th.asset_name {
+.asset_name {
     width: 195px;
 }
 
-th.asset_desc {
+.asset_desc {
     width: 300px;
 }
 
-
-th.size {
+.size {
     width: 110px;
 }
 
-th.checksum {
+.checksum {
     width: 280px;
 }
 
