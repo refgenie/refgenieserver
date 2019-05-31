@@ -1,9 +1,10 @@
-starlette
-fastapi
-uvicorn>=0.7.1
-jinja2
 aiofiles
+fastapi
+jinja2
 logmuse
+starlette
+ubiquerg>=0.4
+uvicorn>=0.7.1
 #TODO: uncomment ones below after the release
 #yacman
 #refgenconf
