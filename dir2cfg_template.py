@@ -71,7 +71,7 @@ def main():
                 rgc = {
                     CFG_FOLDER_KEY: None,
                     CFG_SERVER_KEY: "http://www.refgenomes.databio.org",
-                    CFG_ARCHIVE_KEY: p,
+                    CFG_ARCHIVE_KEY: None,
                     CFG_GENOMES_KEY: None
                 }
                 rgc[CFG_GENOMES_KEY] = dir_as_dict(p)[os.path.basename(p)]
