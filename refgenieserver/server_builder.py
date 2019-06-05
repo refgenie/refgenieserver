@@ -1,9 +1,8 @@
 import os
 import sys
+import logging
 
 from subprocess import run
-from hashlib import md5
-import logging
 from refgenconf import RefGenConf
 from ubiquerg import checksum
 
