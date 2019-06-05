@@ -1,10 +1,10 @@
 aiofiles
 fastapi
 jinja2
-logmuse
+logmuse>=0.2
 starlette
-ubiquerg>=0.4
+ubiquerg>=0.4.1
 uvicorn>=0.7.1
+yacman>=0.3
 #TODO: uncomment ones below after the release
-#yacman
 #refgenconf
