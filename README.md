@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/databio/refgenieserver.svg?branch=master)](https://travis-ci.org/databio/refgenieserver)
+
 # refgenieserver
 
 This folder contains code for an API to provide reference genomes.
