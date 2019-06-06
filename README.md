@@ -23,10 +23,12 @@ docker run --rm -p 80:80 --name refgenieservercon -v $(pwd):/app -v $(pwd)/files
 2. Run the container from the image you just built:
 
 ```
-docker run --rm -d -p 80:80 -v /path/to/refgenieserver:/app -v /path/to/genomes_archive:/genomes --name refgenieservercon refgenieserver -c /genomes/genome_config.yaml serve 
+docker run --rm -d -p 80:80 -v /path/to/genomes_archive:/genomes --name refgenieservercon refgenieserver -c /genomes/genome_config.yaml serve 
 ```
 
 Make sure the `genome_config.yaml` filename matches what you've named your configuration file! We use `-d` to detach so it's in background. Terminate container when finished:
+
+You shouldn't need to mount the app (`-v /path/to/refgenieserver:/app`) because in this case we're running it directly.
 
 ```
 docker stop refgenieservercon
