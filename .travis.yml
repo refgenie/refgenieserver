@@ -26,3 +26,5 @@ notifications:
     on_failure: always
     recipients:
     - nem2p@virginia.edu
+    - nathan@virginia.edu
+    - mjs5kd@virginia.edu
