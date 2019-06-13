@@ -56,7 +56,7 @@ def list_available_assets():
 
 
 @app.get("/asset/{genome}/{asset}/archive")
-def download_asset(genome: str, asset: str):
+async def download_asset(genome: str, asset: str):
     """
     Returns an archive. Requires the genome name and the asset name as an input.
     """
@@ -64,7 +64,8 @@ def download_asset(genome: str, asset: str):
     asset_file = "{base}/{genome}/{file_name}".format(base=BASE_DIR, genome=genome, file_name=file_name)
     _LOGGER.info("serving asset file: '{}'".format(asset_file))
     if os.path.isfile(asset_file):
-        return FileResponse(asset_file, filename=file_name)
+        response = FileResponse(asset_file, filename=file_name)
+        await response(receive, send)
     else:
         _LOGGER.warning(MSG_404.format("asset"))
         raise HTTPException(status_code=404, detail=MSG_404.format("asset"))
