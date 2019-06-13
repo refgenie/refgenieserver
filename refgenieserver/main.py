@@ -64,7 +64,7 @@ async def download_asset(genome: str, asset: str):
     asset_file = "{base}/{genome}/{file_name}".format(base=BASE_DIR, genome=genome, file_name=file_name)
     _LOGGER.info("serving asset file: '{}'".format(asset_file))
     if os.path.isfile(asset_file):
-        return FileResponse(asset_file, filename=file_name)
+        return FileResponse(asset_file, filename=file_name, media_type="application/octet-stream")
         
     else:
         _LOGGER.warning(MSG_404.format("asset"))
