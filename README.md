@@ -17,7 +17,7 @@ docker build -t refgenieserverim .
 Mount a directory of files to serve at `/genomes`:
 
 ```
-docker run --rm -p 80:80 --name refgenieservercon -v $(pwd):/app -v $(pwd)/files:/genomes refgenieserverim refgenieserver -c refgenie.yaml serve
+docker run --rm -p 80:80 --name refgenieservercon -v $(pwd)/files:/genomes refgenieserverim refgenieserver -c refgenie.yaml serve
 ```
 
 ## Running container for production:
