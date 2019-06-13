@@ -86,7 +86,7 @@ def download_asset_attributes(genome: str, asset: str):
 
 
 @app.get("/genome/{genome}")
-def download_genome(genome: str):
+async def download_genome(genome: str):
     """
     Returns a tarball with **all** the archived assets available for the genome. Requires the genome name as an input.
     """
@@ -95,7 +95,8 @@ def download_genome(genome: str):
     _LOGGER.info("serving genome archive: '{}'".format(genome_file))
     # url = "{base}/{genome}/{asset}.{ext}".format(base=BASE_URL, genome="example_data", asset="rCRS.fa.gz", ext=ext)
     if os.path.isfile(genome_file):
-        return FileResponse(genome_file, filename=file_name)
+        response = FileResponse(genome_file, filename=file_name, media_type="octet/stream")
+        await response(recieve, send)
     else:
         _LOGGER.warning(MSG_404.format("genome"))
         raise HTTPException(status_code=404, detail=MSG_404.format("genome"))
