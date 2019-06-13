@@ -64,8 +64,8 @@ async def download_asset(genome: str, asset: str):
     asset_file = "{base}/{genome}/{file_name}".format(base=BASE_DIR, genome=genome, file_name=file_name)
     _LOGGER.info("serving asset file: '{}'".format(asset_file))
     if os.path.isfile(asset_file):
-        response = FileResponse(asset_file, filename=file_name)
-        await response(receive, send)
+        return FileResponse(asset_file, filename=file_name)
+        
     else:
         _LOGGER.warning(MSG_404.format("asset"))
         raise HTTPException(status_code=404, detail=MSG_404.format("asset"))
@@ -96,8 +96,7 @@ async def download_genome(genome: str):
     _LOGGER.info("serving genome archive: '{}'".format(genome_file))
     # url = "{base}/{genome}/{asset}.{ext}".format(base=BASE_URL, genome="example_data", asset="rCRS.fa.gz", ext=ext)
     if os.path.isfile(genome_file):
-        response = FileResponse(genome_file, filename=file_name, media_type="application/octet-stream")
-        await response(recieve, send)
+        return FileResponse(genome_file, filename=file_name, media_type="application/octet-stream")
     else:
         _LOGGER.warning(MSG_404.format("genome"))
         raise HTTPException(status_code=404, detail=MSG_404.format("genome"))
