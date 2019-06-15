@@ -128,7 +128,7 @@ div.col-9#asset_table {
 }
 
 .asset_desc {
-    width: 350px;
+    width: 250px;
 }
 
 .size {
@@ -141,6 +141,10 @@ div.col-9#asset_table {
 
 .attrs {
     width: 110px;
+}
+
+.smaller-txt {
+  font-size: 0.8rem;
 }
 
 th.footer {
