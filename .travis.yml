@@ -18,6 +18,7 @@ install:
     docker build --no-cache -t databio/refgenieserver:latest . || exit 1;
     docker push databio/refgenieserver:latest || exit 1;
     aws sqs send-message --queue-url 'https://queue.amazonaws.com/474683445819/dcos-refresh' --message-body 'shefflab/refgenieserver' || exit 1;
+    aws sqs send-message --queue-url 'https://queue.amazonaws.com/474683445819/refgenie-refresh' --message-body 'master' || exit 1;
     fi
 
 notifications:
