@@ -18,4 +18,3 @@ TAR = dict(ext=".tar", flags="-cvf")
 FILE_SIZE_UNITS = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB']
 LOG_FORMAT = "%(levelname)s in %(funcName)s: %(message)s"
 MSG_404 = "No such {} on server"
-DOWNLOADS_COUNT_KEY = "downloads"

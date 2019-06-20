@@ -10,7 +10,7 @@ from fastapi import FastAPI, HTTPException
 from refgenconf import RefGenConf, select_genome_config
 
 from .const import *
-from .helpers import build_parser, update_stats
+from .helpers import build_parser
 from .server_builder import archive
 import logging
 
@@ -64,9 +64,6 @@ async def download_asset(genome: str, asset: str):
     asset_file = "{base}/{genome}/{file_name}".format(base=BASE_DIR, genome=genome, file_name=file_name)
     _LOGGER.info("serving asset file: '{}'".format(asset_file))
     if os.path.isfile(asset_file):
-        update_stats(rgc, genome, asset)
-        _LOGGER.info("'{}/{}' download count updated to: {}".format(
-            genome, asset, rgc.genomes[genome][asset][DOWNLOADS_COUNT_KEY]))
         return FileResponse(asset_file, filename=file_name, media_type="application/octet-stream")
     else:
         _LOGGER.warning(MSG_404.format("asset"))

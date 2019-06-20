@@ -2,10 +2,7 @@ import argparse
 from .const import *
 from ._version import __version__ as v
 from yacman import get_first_env_var
-from collections import OrderedDict
-import logging
 
-_LOGGER = logging.getLogger(PKG_NAME)
 
 class _VersionInHelpParser(argparse.ArgumentParser):
     def format_help(self):
@@ -68,29 +65,3 @@ def build_parser():
         dest="force",
         help="whether the server file tree should be rebuilt even if exists")
     return parser
-
-
-def update_stats(rgc, genome, asset):
-    """
-    Increment or initialize downloads counter for an asset
-
-    :param RefGenConf rgc: configuration object
-    :param str genome: genome name
-    :param str asset: asset name
-    """
-    init_dict = OrderedDict({DOWNLOADS_COUNT_KEY: "1"})
-    update_error = "Could not increment current downloads count, see details below. Initializing...\n{}"
-    try:
-        downloads = rgc.genomes[genome][asset][DOWNLOADS_COUNT_KEY]
-    except Exception as e:
-        _LOGGER.warning(update_error.format(e))
-        rgc.update_genomes(genome, asset, init_dict)
-    else:
-        try:
-            incremented_count = str(int(downloads) + 1)
-        except Exception as e:
-            _LOGGER.warning(update_error.format(e))
-            rgc.update_genomes(genome, asset, init_dict)
-        else:
-            rgc.update_genomes(genome, asset, OrderedDict({DOWNLOADS_COUNT_KEY: incremented_count}))
-    rgc.write()

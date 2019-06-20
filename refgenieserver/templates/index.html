@@ -1,14 +1,9 @@
 {% extends "base.html" %}
 {% block title %}Index{% endblock %}
 {% block content %}
-{% macro safe_show_asset_attr(x, zero=false) %}
-    {% set x = x|string %}
+{% macro safe_show_asset_attr(x) %}
     {% if x is none or not x|length %}
-        {% if zero %}
-            0
-        {% else %}
-            NA
-        {% endif %}
+        NA
     {% else %}
         {{ x }}
     {% endif %}
@@ -49,21 +44,19 @@
                         <th class="size" scope="col">asset size</th>
                         <th class="size" scope="col">archive size</th>
                         <th class="checksum" scope="col">archive checksum</th>
-                        <th class="asset_downloads" scope="col">downloads</th>
                         <th class="attrs" scope="col">all attributes</th>
                     </tr>
-                </thead>
+                </thea
                 <tbody>
                     {% for asset in assets %}
                         <tr>
-                            <td class="asset_name" style="cursor:pointer" onclick="location.href='/asset/{{ genome_name }}/{{ asset }}/archive';">
+                            <td class="asset_name" style="cursor:pointer" onclick="location.href='/asset/{{ genome_name }}/{{ asset }}/archive'">
                                 <b>{{ asset }}</b> <i class="fa fa-download" aria-hidden="true"></i>
                             </td>
-                            <td class="smaller-txt">{{ safe_show_asset_attr(rgc[genome_name][asset]["asset_description"]) }}</td>
+                            <td class="asset_desc">{{ safe_show_asset_attr(rgc[genome_name][asset]["asset_description"]) }}</td>
                             <td class="size">{{ safe_show_asset_attr(rgc[genome_name][asset]["asset_size"]) }}</td>
                             <td class="size">{{ safe_show_asset_attr(rgc[genome_name][asset]["archive_size"]) }}</td>
                             <td class="checksum"><code>{{ safe_show_asset_attr(rgc[genome_name][asset]["archive_checksum"]) }}</code></td>
-                            <td class="asset_downloads">{{ safe_show_asset_attr(x=rgc[genome_name][asset]["downloads"], zero=true) }}</td>
                             <td class="attrs"><a href='/asset/{{ genome_name }}/{{ asset }}'><button class="btn btn-secondary btn-sm" id="json_btn">Get JSON</button></a></td>
                         </tr>
                     {% endfor %}
