@@ -124,11 +124,11 @@ div.col-9#asset_table {
 }
 
 .asset_name {
-    width: 150px;
+    width: 200px;
 }
 
 .asset_desc {
-    width: 350px;
+    width: 300px;
 }
 
 .size {
