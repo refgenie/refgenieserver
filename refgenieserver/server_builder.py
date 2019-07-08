@@ -21,10 +21,20 @@ def archive(rgc, args):
     global _LOGGER
     _LOGGER = logging.getLogger(PKG_NAME)
     _LOGGER.debug("Args: {}".format(args))
+    if args.asset and not args.genome:
+        _LOGGER.error("You need to specify a genome (--genome) to request a specific asset build (--asset)")
+        sys.exit(1)
     if args.force:
         _LOGGER.info("build forced; file existence will be ignored")
+    if args.genome:
+        _LOGGER.info("specific build requested for a genome: {}".format(args.genome))
+        genomes = args.genome
+        if args.asset:
+            _LOGGER.info("specific build requested for assets: {}".format(args.asset))
+    else:
+        genomes = rgc.genomes_list()
+
     server_rgc_path = os.path.join(rgc[CFG_ARCHIVE_KEY], os.path.basename(args.config))
-    genomes = rgc.genomes_list()
     for genome in genomes:
         genome_dir = os.path.join(rgc[CFG_FOLDER_KEY], genome)
         target_dir = os.path.join(rgc[CFG_ARCHIVE_KEY], genome)
@@ -32,7 +42,8 @@ def archive(rgc, args):
         if not os.path.exists(target_dir):
             os.makedirs(target_dir)
         changed = False
-        for asset_name in rgc.genomes[genome].keys():
+        assets = args.asset or rgc.genomes[genome].keys()
+        for asset_name in assets:
             file_name = rgc.genomes[genome][asset_name][CFG_ASSET_PATH_KEY]
             target_file = os.path.join(target_dir, asset_name + TGZ["ext"])
             input_file = os.path.join(genome_dir, file_name)
@@ -86,7 +97,7 @@ def _check_tar(path, output, flags):
 
 def _size(path):
     """
-    Gets the size the file or directory in the provided path
+    Gets the size of the file or directory in the provided path
 
     :param str path: path to the file to check size of
     :return int: file size
