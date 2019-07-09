@@ -52,6 +52,7 @@ def archive(rgc, args):
         assets = args.asset or rgc.genomes[genome].keys()
         for asset_name in assets:
             file_name = rgc.genomes[genome][asset_name][CFG_ASSET_PATH_KEY]
+            asset_desc = rgc.genomes[genome][asset_name][CFG_ASSET_DESC_KEY]
             target_file = os.path.join(target_dir, asset_name + TGZ["ext"])
             input_file = os.path.join(genome_dir, file_name)
             if not os.path.exists(target_file) or args.force:
@@ -65,7 +66,9 @@ def archive(rgc, args):
             else:
                 _LOGGER.info("'{}' exists".format(target_file))
             _LOGGER.info("updating '{}: {}' attributes...".format(genome, asset_name))
-            asset_attrs = {CFG_CHECKSUM_KEY: checksum(target_file),
+            asset_attrs = {CFG_ASSET_PATH_KEY: file_name,
+                           CFG_ASSET_DESC_KEY: asset_desc,
+                           CFG_CHECKSUM_KEY: checksum(target_file),
                            CFG_ARCHIVE_SIZE_KEY: _size(target_file),
                            CFG_ASSET_SIZE_KEY: _size(input_file)}
             rgc_server.update_genomes(genome, asset_name, asset_attrs)
