@@ -52,7 +52,10 @@ def archive(rgc, args):
         assets = args.asset or rgc.genomes[genome].keys()
         for asset_name in assets:
             file_name = rgc.genomes[genome][asset_name][CFG_ASSET_PATH_KEY]
-            asset_desc = rgc.genomes[genome][asset_name][CFG_ASSET_DESC_KEY]
+            try:
+                asset_desc = rgc.genomes[genome][asset_name][CFG_ASSET_DESC_KEY]
+            except KeyError:
+                asset_desc = "NA"
             target_file = os.path.join(target_dir, asset_name + TGZ["ext"])
             input_file = os.path.join(genome_dir, file_name)
             if not os.path.exists(target_file) or args.force:
