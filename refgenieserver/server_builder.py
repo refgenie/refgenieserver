@@ -13,7 +13,9 @@ def archive(rgc, args):
     """
     Takes the RefGenConf object and builds the individual tar archives
     that can be then served with 'refgenieserver serve'. Additionally determines their md5 checksums, file sizes and
-    updates the original refgenie config with these data.
+    updates the original refgenie config with these data. If the --asset and/or --genome options  are used (specific
+    build is requested) the archiver will check for the existence of config file saved in the path provided in
+    `genome_server` in the original config and update it so that no archive metadata is lost
 
     :param RefGenConf rgc: configuration object with the data to build the servable archives for
     :param argparse.Namespace args: arguments from the refgenieserver CLI
@@ -21,6 +23,7 @@ def archive(rgc, args):
     global _LOGGER
     _LOGGER = logging.getLogger(PKG_NAME)
     _LOGGER.debug("Args: {}".format(args))
+    server_rgc_path = os.path.join(rgc[CFG_ARCHIVE_KEY], os.path.basename(args.config))
     if args.asset and not args.genome:
         _LOGGER.error("You need to specify a genome (--genome) to request a specific asset build (--asset)")
         sys.exit(1)
@@ -31,10 +34,14 @@ def archive(rgc, args):
         genomes = args.genome
         if args.asset:
             _LOGGER.info("specific build requested for assets: {}".format(args.asset))
+        if os.path.exists(server_rgc_path):
+            _LOGGER.info("'{}' file was found and will be updated".format(server_rgc_path))
+            rgc_server = RefGenConf(server_rgc_path)
+        else:
+            rgc_server = rgc
     else:
         genomes = rgc.genomes_list()
 
-    server_rgc_path = os.path.join(rgc[CFG_ARCHIVE_KEY], os.path.basename(args.config))
     for genome in genomes:
         genome_dir = os.path.join(rgc[CFG_FOLDER_KEY], genome)
         target_dir = os.path.join(rgc[CFG_ARCHIVE_KEY], genome)
@@ -61,8 +68,8 @@ def archive(rgc, args):
             asset_attrs = {CFG_CHECKSUM_KEY: checksum(target_file),
                            CFG_ARCHIVE_SIZE_KEY: _size(target_file),
                            CFG_ASSET_SIZE_KEY: _size(input_file)}
-            rgc.update_genomes(genome, asset_name, asset_attrs)
-            rgc.write(server_rgc_path)
+            rgc_server.update_genomes(genome, asset_name, asset_attrs)
+            rgc_server.write(server_rgc_path)
         if changed or not os.path.exists(genome_tarball):
             _LOGGER.info("creating genome tarball '{}' from '{}'".format(genome_tarball, genome_dir))
             try:
@@ -70,7 +77,7 @@ def archive(rgc, args):
             except OSError as e:
                 _LOGGER.warning(e)
                 continue
-    _LOGGER.info("builder finished; server config file saved to: '{}'".format(rgc.write(server_rgc_path)))
+    _LOGGER.info("builder finished; server config file saved to: '{}'".format(rgc_server.write(server_rgc_path)))
 
 
 def _check_tar(path, output, flags):
