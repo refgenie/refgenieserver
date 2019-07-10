@@ -35,10 +35,7 @@ def archive(rgc, args):
         if args.asset:
             _LOGGER.info("specific build requested for assets: {}".format(args.asset))
         if os.path.exists(server_rgc_path):
-            _LOGGER.info("'{}' file was found and will be updated".format(server_rgc_path))
-            rgc_server = RefGenConf(server_rgc_path)
-        else:
-            rgc_server = rgc
+            _LOGGER.debug("'{}' file was found and will be updated".format(server_rgc_path))
     else:
         genomes = rgc.genomes_list()
 
@@ -74,6 +71,7 @@ def archive(rgc, args):
                            CFG_CHECKSUM_KEY: checksum(target_file),
                            CFG_ARCHIVE_SIZE_KEY: _size(target_file),
                            CFG_ASSET_SIZE_KEY: _size(input_file)}
+            rgc_server = RefGenConf(server_rgc_path) if os.path.exists(server_rgc_path) else rgc
             rgc_server.update_genomes(genome, asset_name, asset_attrs)
             rgc_server.write(server_rgc_path)
         if changed or not os.path.exists(genome_tarball):
