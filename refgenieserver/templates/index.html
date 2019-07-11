@@ -30,10 +30,11 @@
 <hr class="featurette-divider">
 <div class="container">
 <h2>Available assets</h2>
-{% for genome_name, assets in genomes.items() %}
+{% for genome_name, values in genomes.items() %}
     <div class="row align-items-center">
         <div class="col-12" id="genome_title">
             <h4>Reference genome: <b>{{ genome_name }}</b></h4>
+            <p><i>{{ genomes[genome_name].genome_description }}</i></p>
         </div>
         <div class="col-12">
             <table class="table table-sm" id="asset_table">
@@ -46,17 +47,17 @@
                         <th class="checksum" scope="col">archive checksum</th>
                         <th class="attrs" scope="col">all attributes</th>
                     </tr>
-                </thea
+                </thead>
                 <tbody>
-                    {% for asset in assets %}
+                    {% for asset in values.assets %}
                         <tr>
                             <td class="asset_name" style="cursor:pointer" onclick="location.href='/asset/{{ genome_name }}/{{ asset }}/archive'">
                                 <b>{{ asset }}</b> <i class="fa fa-download" aria-hidden="true"></i>
                             </td>
-                            <td class="asset_desc">{{ safe_show_asset_attr(rgc[genome_name][asset]["asset_description"]) }}</td>
-                            <td class="size">{{ safe_show_asset_attr(rgc[genome_name][asset]["asset_size"]) }}</td>
-                            <td class="size">{{ safe_show_asset_attr(rgc[genome_name][asset]["archive_size"]) }}</td>
-                            <td class="checksum"><code>{{ safe_show_asset_attr(rgc[genome_name][asset]["archive_checksum"]) }}</code></td>
+                            <td class="asset_desc">{{ safe_show_asset_attr(rgc[genome_name].assets[asset]["asset_description"]) }}</td>
+                            <td class="size">{{ safe_show_asset_attr(rgc[genome_name].assets[asset]["asset_size"]) }}</td>
+                            <td class="size">{{ safe_show_asset_attr(rgc[genome_name].assets[asset]["archive_size"]) }}</td>
+                            <td class="checksum"><code>{{ safe_show_asset_attr(rgc[genome_name].assets[asset]["archive_checksum"]) }}</code></td>
                             <td class="attrs"><a href='/asset/{{ genome_name }}/{{ asset }}'><button class="btn btn-secondary btn-sm" id="json_btn">Get JSON</button></a></td>
                         </tr>
                     {% endfor %}

@@ -46,13 +46,11 @@ def archive(rgc, args):
         if not os.path.exists(target_dir):
             os.makedirs(target_dir)
         changed = False
-        assets = args.asset or rgc.genomes[genome].keys()
+        assets = args.asset or rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY].keys()
         for asset_name in assets:
-            file_name = rgc.genomes[genome][asset_name][CFG_ASSET_PATH_KEY]
-            try:
-                asset_desc = rgc.genomes[genome][asset_name][CFG_ASSET_DESC_KEY]
-            except KeyError:
-                asset_desc = "NA"
+            file_name = rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][asset_name][CFG_ASSET_PATH_KEY]
+            asset_desc = rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][asset_name].set_default(CFG_ASSET_DESC_KEY, "NA")
+            genome_desc = rgc[CFG_GENOMES_KEY][genome].set_default(CFG_GENOME_DESC_KEY, "NA")
             target_file = os.path.join(target_dir, asset_name + TGZ["ext"])
             input_file = os.path.join(genome_dir, file_name)
             if not os.path.exists(target_file) or args.force:
@@ -66,13 +64,15 @@ def archive(rgc, args):
             else:
                 _LOGGER.info("'{}' exists".format(target_file))
             _LOGGER.info("updating '{}: {}' attributes...".format(genome, asset_name))
+            genome_attrs = {CFG_GENOME_DESC_KEY: genome_desc}
             asset_attrs = {CFG_ASSET_PATH_KEY: file_name,
                            CFG_ASSET_DESC_KEY: asset_desc,
                            CFG_CHECKSUM_KEY: checksum(target_file),
                            CFG_ARCHIVE_SIZE_KEY: _size(target_file),
                            CFG_ASSET_SIZE_KEY: _size(input_file)}
             rgc_server = RefGenConf(server_rgc_path) if os.path.exists(server_rgc_path) else rgc
-            rgc_server.update_genomes(genome, asset_name, asset_attrs)
+            rgc_server.update_genomes(genome, genome_attrs)
+            rgc_server.update_assets(genome, asset_name, asset_attrs)
             rgc_server.write(server_rgc_path)
         if changed or not os.path.exists(genome_tarball):
             _LOGGER.info("creating genome tarball '{}' from '{}'".format(genome_tarball, genome_dir))
