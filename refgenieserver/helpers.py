@@ -64,4 +64,16 @@ def build_parser():
         action="store_true",
         dest="force",
         help="whether the server file tree should be rebuilt even if exists")
+    archive_subparser.add_argument(
+        "-g", "--genome",
+        dest="genome",
+        nargs=1,
+        type=str,
+        help="request a specific genome build")
+    archive_subparser.add_argument(
+        "-a", "--asset",
+        type=str,
+        nargs="*",
+        dest="asset",
+        help="request a specific asset build")
     return parser
