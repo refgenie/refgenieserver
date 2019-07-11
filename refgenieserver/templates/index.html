@@ -10,30 +10,20 @@
 {% endmacro %}
 <div class="container">
     <div class="row">
-        <div class="col-sm-9">
+        <div class="col">
         <p class="text-justify">Welcome to <i>refgenomes.databio.org</i>. Here we provide a web interface and a RESTful API to access genome assets for popular reference genome assemblies. This server is running <i>refgenieserver</i>. You may use the <a href="http://refgenie.databio.org">refgenie CLI</a> to automate downloading and organizing these assets using <code>refgenie pull ...</code> from the command line to retrieve archived genome assets.</p>
-
         <p>Below is a list of assets hosted by this server:</p>
-
-        </div>
-        <div class="col-sm-3">
-        <h2>Refgenie links</h2>
-        <ul>
-        <li><a href="/docs">Server API documentation</a></li>
-        <li><a href="/openapi.json">OpenAPI 3.0 description</a></li>
-        <li><a href="https://github.com/databio/refgenieserver">Refgenieserver on GitHub</a></li>
-        <li><a href="http://refgenie.databio.org">Refgenie command-line interface</a></li>
-        </ul>
         </div>
     </div>
 </div>
 <hr class="featurette-divider">
 <div class="container">
 <h2>Available assets</h2>
-{% for genome_name, assets in genomes.items() %}
+{% for genome_name, values in genomes.items() %}
     <div class="row align-items-center">
         <div class="col-12" id="genome_title">
             <h4>Reference genome: <b>{{ genome_name }}</b></h4>
+            <p><i>{{ genomes[genome_name].genome_description }}</i></p>
         </div>
         <div class="col-12">
             <table class="table table-sm" id="asset_table">
@@ -46,17 +36,17 @@
                         <th class="checksum" scope="col">archive checksum</th>
                         <th class="attrs" scope="col">all attributes</th>
                     </tr>
-                </thea
+                </thead>
                 <tbody>
-                    {% for asset in assets %}
+                    {% for asset in values.assets %}
                         <tr>
                             <td class="asset_name" style="cursor:pointer" onclick="location.href='/asset/{{ genome_name }}/{{ asset }}/archive'">
                                 <b>{{ asset }}</b> <i class="fa fa-download" aria-hidden="true"></i>
                             </td>
-                            <td class="asset_desc">{{ safe_show_asset_attr(rgc[genome_name][asset]["asset_description"]) }}</td>
-                            <td class="size">{{ safe_show_asset_attr(rgc[genome_name][asset]["asset_size"]) }}</td>
-                            <td class="size">{{ safe_show_asset_attr(rgc[genome_name][asset]["archive_size"]) }}</td>
-                            <td class="checksum"><code>{{ safe_show_asset_attr(rgc[genome_name][asset]["archive_checksum"]) }}</code></td>
+                            <td class="asset_desc">{{ safe_show_asset_attr(rgc[genome_name].assets[asset]["asset_description"]) }}</td>
+                            <td class="size">{{ safe_show_asset_attr(rgc[genome_name].assets[asset]["asset_size"]) }}</td>
+                            <td class="size">{{ safe_show_asset_attr(rgc[genome_name].assets[asset]["archive_size"]) }}</td>
+                            <td class="checksum"><code>{{ safe_show_asset_attr(rgc[genome_name].assets[asset]["archive_checksum"]) }}</code></td>
                             <td class="attrs"><a href='/asset/{{ genome_name }}/{{ asset }}'><button class="btn btn-secondary btn-sm" id="json_btn">Get JSON</button></a></td>
                         </tr>
                     {% endfor %}

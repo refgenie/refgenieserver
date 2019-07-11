@@ -77,21 +77,21 @@ label.col-form-label {
   }
 
 .left_footer {
-  width: 45%;
+  width: 40%;
   float: left;
   text-align:left;
   display: inline-block;
 }
 
 .right_footer {
-  width: 45%;
+  width: 40%;
   float: right;
   text-align:right;
   display: inline-block;
 }
 
 .center_footer {
-  width: 10%;
+  width: 20%;
   overflow: hidden;
   display: inline-block;
   text-align: center;
@@ -124,11 +124,11 @@ div.col-9#asset_table {
 }
 
 .asset_name {
-    width: 150px;
+    width: 200px;
 }
 
 .asset_desc {
-    width: 350px;
+    width: 300px;
 }
 
 .size {

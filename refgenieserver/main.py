@@ -32,7 +32,7 @@ async def index(request: Request):
     Returns a landing page HTML with the server resources ready do download. No inputs required.
     """
     _LOGGER.debug("RefGenConf object:\n{}".format(rgc))
-    vars = {"request": request, "genomes": rgc.assets_dict(), "rgc": rgc[CFG_GENOMES_KEY]}
+    vars = {"request": request, "genomes": rgc[CFG_GENOMES_KEY], "rgc": rgc[CFG_GENOMES_KEY]}
     _LOGGER.debug("merged vars: {}".format(dict(vars, **ALL_VERSIONS)))
     return templates.TemplateResponse("index.html", dict(vars, **ALL_VERSIONS))
 
@@ -77,7 +77,7 @@ def download_asset_attributes(genome: str, asset: str):
     Requires the genome name and the asset name as an input.
     """
     try:
-        attrs = rgc[CFG_GENOMES_KEY][genome][asset]
+        attrs = rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][asset]
         _LOGGER.info("attributes returned for asset '{}' and genome '{}': \n{}".format(asset, genome, attrs))
         return attrs
     except KeyError:
