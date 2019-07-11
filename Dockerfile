@@ -4,7 +4,7 @@ MAINTAINER "nathan@code.databio.org"
 # TODO: Replace with pypi when refgenconf and yacman are stable
 # RUN pip install refgenconf
 RUN pip install yacman
-RUN pip install https://github.com/databio/refgenconf/archive/master.zip
+RUN pip install https://github.com/databio/refgenconf/archive/dev.zip
 
 # This adds in some dummy demo files to be served in tested.
 # In production, you should mount your refgenie server genomes in /genomes
