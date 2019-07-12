@@ -49,8 +49,8 @@ def archive(rgc, args):
         assets = args.asset or rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY].keys()
         for asset_name in assets:
             file_name = rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][asset_name][CFG_ASSET_PATH_KEY]
-            asset_desc = rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][asset_name].set_default(CFG_ASSET_DESC_KEY, "NA")
-            genome_desc = rgc[CFG_GENOMES_KEY][genome].set_default(CFG_GENOME_DESC_KEY, "NA")
+            asset_desc = _set_default_desc(rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][asset_name], CFG_ASSET_DESC_KEY)
+            genome_desc = _set_default_desc(rgc[CFG_GENOMES_KEY][genome], CFG_GENOME_DESC_KEY)
             target_file = os.path.join(target_dir, asset_name + TGZ["ext"])
             input_file = os.path.join(genome_dir, file_name)
             if not os.path.exists(target_file) or args.force:
@@ -82,6 +82,10 @@ def archive(rgc, args):
                 _LOGGER.warning(e)
                 continue
     _LOGGER.info("builder finished; server config file saved to: '{}'".format(rgc_server.write(server_rgc_path)))
+
+
+def _set_default_desc(obj, attr, default=DESC_PLACEHOLDER):
+    return obj[attr] if hasattr(obj, attr) else default
 
 
 def _check_tar(path, output, flags):
