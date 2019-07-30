@@ -29,17 +29,6 @@ def build_parser():
         "-V", "--version",
         action="version",
         version="%(prog)s {v}".format(v=v))
-    parser.add_argument(
-        "-c", "--config",
-        dest="config",
-        help="A path to the refgenie config file (YAML). If not provided, the first available environment variable "
-             "among: \'{}\' will be used if set. Currently {}".format(", ".join(CFG_ENV_VARS), env_var_val),
-        default=None)
-    parser.add_argument(
-        "-d", "--dbg",
-        action="store_true",
-        dest="debug",
-        help="Set logger verbosity to debug")
 
     msg_by_cmd = {
         "serve": "run the server",
@@ -47,30 +36,41 @@ def build_parser():
 
     subparsers = parser.add_subparsers(dest="command")
 
-    def add_subparser(cmd):
-        message = msg_by_cmd[cmd]
-        return subparsers.add_parser(cmd, description=message, help=message)
+    def add_subparser(cmd, description):
+        return subparsers.add_parser(
+            cmd, description=description, help=description)
 
-    # Run and rerun command
-    serve_subparser = add_subparser("serve")
-    archive_subparser = add_subparser("archive")
-    serve_subparser.add_argument(
+    sps = {}
+    # add arguments that are common for both subparsers
+    for cmd, desc in msg_by_cmd.items():
+        sps[cmd] = add_subparser(cmd, desc)
+        sps[cmd].add_argument(
+            '-c', '--config', required=False, dest="config",
+            help="A path to the refgenie config file (YAML). If not provided, the first available environment variable "
+                 "among: \'{}\' will be used if set. Currently: {}".format(", ".join(CFG_ENV_VARS), env_var_val))
+        sps[cmd].add_argument(
+            "-d", "--dbg",
+            action="store_true",
+            dest="debug",
+            help="Set logger verbosity to debug")
+    # add subparser-specific arguments
+    sps["serve"].add_argument(
         "-p", "--port",
         dest="port",
         type=int,
         help="The port the webserver should be run on.", default=DEFAULT_PORT)
-    archive_subparser.add_argument(
+    sps["archive"].add_argument(
         "-f", "--force",
         action="store_true",
         dest="force",
         help="whether the server file tree should be rebuilt even if exists")
-    archive_subparser.add_argument(
+    sps["archive"].add_argument(
         "-g", "--genome",
         dest="genome",
         nargs=1,
         type=str,
         help="request a specific genome build")
-    archive_subparser.add_argument(
+    sps["archive"].add_argument(
         "-a", "--asset",
         type=str,
         nargs="*",
