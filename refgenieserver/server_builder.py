@@ -19,6 +19,7 @@ def archive(rgc, args, cfg_path):
 
     :param RefGenConf rgc: configuration object with the data to build the servable archives for
     :param argparse.Namespace args: arguments from the refgenieserver CLI
+    :param str cfg_path: config file path
     """
     global _LOGGER
     _LOGGER = logging.getLogger(PKG_NAME)
