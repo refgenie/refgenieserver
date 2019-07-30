@@ -117,11 +117,12 @@ def main():
     args = parser.parse_args()
     logger_args = dict(name=PKG_NAME, fmt=LOG_FORMAT, level=5) if args.debug else dict(name=PKG_NAME, fmt=LOG_FORMAT)
     _LOGGER = logmuse.setup_logger(**logger_args)
-    rgc = RefGenConf(select_genome_config(args.config))
+    selected_cfg = select_genome_config(args.config)
+    rgc = RefGenConf(selected_cfg)
     assert len(rgc) > 0, "You must provide a config file or set the '{}' " \
                          "environment variable".format(", ".join(CFG_ENV_VARS))
     if args.command == "archive":
-        archive(rgc, args)
+        archive(rgc, args, selected_cfg)
     elif args.command == "serve":
         uvicorn.run(app, host="0.0.0.0", port=args.port)
 

@@ -9,7 +9,7 @@ from ubiquerg import checksum
 from .const import *
 
 
-def archive(rgc, args):
+def archive(rgc, args, cfg_path):
     """
     Takes the RefGenConf object and builds the individual tar archives
     that can be then served with 'refgenieserver serve'. Additionally determines their md5 checksums, file sizes and
@@ -23,7 +23,7 @@ def archive(rgc, args):
     global _LOGGER
     _LOGGER = logging.getLogger(PKG_NAME)
     _LOGGER.debug("Args: {}".format(args))
-    server_rgc_path = os.path.join(rgc[CFG_ARCHIVE_KEY], os.path.basename(args.config))
+    server_rgc_path = os.path.join(rgc[CFG_ARCHIVE_KEY], os.path.basename(cfg_path))
     if args.asset and not args.genome:
         _LOGGER.error("You need to specify a genome (--genome) to request a specific asset build (--asset)")
         sys.exit(1)
