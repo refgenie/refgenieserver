@@ -2,13 +2,13 @@
 
 # refgenieserver
 
-This folder contains code for an API to provide reference genomes.
+This folder contains code for an API to provide reference genomes. `refgenieserver` can do 2 things: `archive` an existing refgenie folder, and then `serve` it. 
 
 ## How to `serve`
 
 ### Building container
 
-1. In the same directory as the `Dockerfile`:
+In the same directory as the `Dockerfile`:
 
 ```
 docker build -t refgenieserverim .
@@ -25,8 +25,7 @@ docker run --rm -p 80:80 --name refgenieservercon \
 ```
 
 ### Running container for production:
-
-2. Run the container from the image you just built:
+Run the container from the image you just built:
 
 ```
 docker run --rm -d -p 80:80 \
@@ -35,9 +34,7 @@ docker run --rm -d -p 80:80 \
   refgenieserverim refgenieserver serve -c /genomes/genome_config.yaml 
 ```
 
-Make sure the `genome_config.yaml` filename matches what you've named your configuration file! We use `-d` to detach so it's in background. Terminate container when finished:
-
-You shouldn't need to mount the app (`-v /path/to/refgenieserver:/app`) because in this case we're running it directly.
+Make sure the `genome_config.yaml` filename matches what you've named your configuration file! We use `-d` to detach so it's in background. You shouldn't need to mount the app (`-v /path/to/refgenieserver:/app`) because in this case we're running it directly. Terminate container when finished:
 
 ```
 docker stop refgenieservercon
@@ -79,20 +76,19 @@ docker exec -it refgenieservercon sh
 
 ## How to `archive`
 
-Another functionality of the package is archivization of the assets (creating a directory structure and asset archives needed for the server)
+Refgenieserver can also archive your assets, creating the directory for asset archives needed to `serve`.
 
-In order to do this just make sure the config points to the directory where you want to store the servable archives -- it's `genome_archive` key in the YAML file (it is __not__ added automatically by [`refgenie init`](http://refgenie.databio.org/en/latest/usage/#refgenie-init-help)). 
+First, make sure the config points has a `genome_archive` key that points to the directory where you want to store the servable archives (`genome_archive` is __not__ added automatically by [`refgenie init`](http://refgenie.databio.org/en/latest/usage/#refgenie-init-help)). Your first time you will need to manually add this to tell refgenieserver where to store the archives.
 
-And then run: 
+Then run: 
 ```
 refgenieserver archive -c CONFIG
 ````
-It just requires a `-c` argument or `$REFGENIE` environment variable to be set that point to the config file listing the assets the are to be archived.
+It just requires a `-c` argument or `$REFGENIE` environment variable.
 
-This command will result in:
-- creation of the `genome_archive` directory
-- creation of a server config file in that directory. With couple of extra asset attributes, like `checksum` or `size`
-- creation of a directory structure that can be then used to serve the assets
+This command will:
+- create the `genome_archive` directory and structure that can be used to serve the assets
+- create a server config file in that directory, which includes a couple of extra asset attributes, like `checksum` and `size`. 
 
 In case you already have some of the assets archived and just want to add a new one, use:
 
