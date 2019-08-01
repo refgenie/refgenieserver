@@ -69,6 +69,7 @@ def archive(rgc, args, cfg_path):
             asset_attrs = {CFG_ASSET_PATH_KEY: file_name,
                            CFG_ASSET_DESC_KEY: asset_desc,
                            CFG_CHECKSUM_KEY: checksum(target_file),
+                           # TODO: use ubiquerg.size after ubiquerg v0.4.6 release
                            CFG_ARCHIVE_SIZE_KEY: _size(target_file),
                            CFG_ASSET_SIZE_KEY: _size(input_file)}
             rgc_server = RefGenConf(server_rgc_path) if os.path.exists(server_rgc_path) else rgc
