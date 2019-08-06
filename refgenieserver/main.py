@@ -85,20 +85,33 @@ def download_asset_attributes(genome: str, asset: str):
         raise HTTPException(status_code=404, detail=MSG_404.format("genome or asset"))
 
 
-@app.get("/genome/{genome}")
-async def download_genome(genome: str):
+@app.get("/genome/{genome}/checksum")
+async def download_genome_checksum(genome: str):
     """
-    Returns a tarball with **all** the archived assets available for the genome. Requires the genome name as an input.
+    Returns the genome checksum. Requires the genome name as an input
     """
-    file_name = "{}{}".format(genome, TAR["ext"])
-    genome_file = "{base}/{file_name}".format(base=rgc[CFG_ARCHIVE_KEY], file_name=file_name)
-    _LOGGER.info("serving genome archive: '{}'".format(genome_file))
-    # url = "{base}/{genome}/{asset}.{ext}".format(base=BASE_URL, genome="example_data", asset="rCRS.fa.gz", ext=ext)
-    if os.path.isfile(genome_file):
-        return FileResponse(genome_file, filename=file_name, media_type="application/octet-stream")
-    else:
+    try:
+        checksum = rgc[CFG_GENOMES_KEY][genome][CFG_CHECKSUM_KEY]
+        _LOGGER.info("checksum returned for '{}': {}".format(genome, checksum))
+        return checksum
+    except KeyError:
         _LOGGER.warning(MSG_404.format("genome"))
         raise HTTPException(status_code=404, detail=MSG_404.format("genome"))
+
+
+@app.get("/genome/{genome}")
+async def download_genome_attributes(genome: str):
+    """
+    Returns a dictionary of genome attributes, like archive size, archive checksum etc.
+    Requires the genome name name as an input.
+    """
+    try:
+        attrs = rgc.get_genome_attibutes(genome)
+        _LOGGER.info("attributes returned for genome '{}': \n{}".format(genome, str(attrs)))
+        return attrs
+    except KeyError:
+        _LOGGER.warning(MSG_404.format("genome"))
+        raise HTTPException(status_code=404, detail=MSG_404.format("genome or asset"))
 
 
 @app.get("/genomes/{asset}")
