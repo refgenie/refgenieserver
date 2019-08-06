@@ -39,7 +39,11 @@ def archive(rgc, args, cfg_path):
             _LOGGER.debug("'{}' file was found and will be updated".format(server_rgc_path))
     else:
         genomes = rgc.genomes_list()
-
+    if not genomes:
+        _LOGGER.error("No genomes found")
+        exit(1)
+    else:
+        _LOGGER.debug("Genomes to be processed: {}".format(str(genomes)))
     for genome in genomes:
         genome_dir = os.path.join(rgc[CFG_FOLDER_KEY], genome)
         target_dir = os.path.join(rgc[CFG_ARCHIVE_KEY], genome)
@@ -47,11 +51,19 @@ def archive(rgc, args, cfg_path):
         if not os.path.exists(target_dir):
             os.makedirs(target_dir)
         changed = False
+        genome_desc = rgc[CFG_GENOMES_KEY][genome].setdefault(CFG_GENOME_DESC_KEY, DESC_PLACEHOLDER)
+        genome_contents = rgc[CFG_GENOMES_KEY][genome].setdefault(CFG_CONTENTS_KEY, CONTENTS_PLACEHOLDER)
+        genome_checksum = rgc[CFG_GENOMES_KEY][genome].setdefault(CFG_CHECKSUM_KEY, CHECKSUM_PLACEHOLDER)
         assets = args.asset or rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY].keys()
+        if not assets:
+            _LOGGER.error("No assets found")
+            exit(1)
+        else:
+            _LOGGER.debug("Assets to be processed: {}".format(str(assets)))
         for asset_name in assets:
             file_name = rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][asset_name][CFG_ASSET_PATH_KEY]
-            asset_desc = _set_default_desc(rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][asset_name], CFG_ASSET_DESC_KEY)
-            genome_desc = _set_default_desc(rgc[CFG_GENOMES_KEY][genome], CFG_GENOME_DESC_KEY)
+            asset_desc = rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][asset_name].setdefault(CFG_ASSET_DESC_KEY,
+                                                                                             DESC_PLACEHOLDER)
             target_file = os.path.join(target_dir, asset_name + TGZ["ext"])
             input_file = os.path.join(genome_dir, file_name)
             if not os.path.exists(target_file) or args.force:
@@ -65,10 +77,12 @@ def archive(rgc, args, cfg_path):
             else:
                 _LOGGER.info("'{}' exists".format(target_file))
             _LOGGER.info("updating '{}: {}' attributes...".format(genome, asset_name))
-            genome_attrs = {CFG_GENOME_DESC_KEY: genome_desc}
+            genome_attrs = {CFG_GENOME_DESC_KEY: genome_desc,
+                            CFG_CHECKSUM_KEY: genome_checksum,
+                            CFG_CONTENTS_KEY: genome_contents}
             asset_attrs = {CFG_ASSET_PATH_KEY: file_name,
                            CFG_ASSET_DESC_KEY: asset_desc,
-                           CFG_CHECKSUM_KEY: checksum(target_file),
+                           CFG_ARCHIVE_CHECKSUM_KEY: checksum(target_file),
                            # TODO: use ubiquerg.size after ubiquerg v0.4.6 release
                            CFG_ARCHIVE_SIZE_KEY: _size(target_file),
                            CFG_ASSET_SIZE_KEY: _size(input_file)}
@@ -84,10 +98,6 @@ def archive(rgc, args, cfg_path):
                 _LOGGER.warning(e)
                 continue
     _LOGGER.info("builder finished; server config file saved to: '{}'".format(rgc_server.write(server_rgc_path)))
-
-
-def _set_default_desc(obj, attr, default=DESC_PLACEHOLDER):
-    return obj[attr] if hasattr(obj, attr) else default
 
 
 def _check_tar(path, output, flags):

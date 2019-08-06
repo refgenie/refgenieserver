@@ -19,3 +19,5 @@ FILE_SIZE_UNITS = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB']
 LOG_FORMAT = "%(levelname)s in %(funcName)s: %(message)s"
 MSG_404 = "No such {} on server"
 DESC_PLACEHOLDER = "No description"
+CHECKSUM_PLACEHOLDER = "No checksum"
+CONTENTS_PLACEHOLDER = "No contents"
