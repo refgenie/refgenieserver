@@ -5,10 +5,14 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ## [0.2.1] -- unreleased
 
 ### Added
-- possibility to use `$REFGENIE` environment variable to provide config path in `refgenieserver archive` 
+- possibility to use `$REFGENIE` environment variable to provide config path in `refgenieserver archive`
+- new API endpoints:
+    - `/genome/{genome}` -- returns a dictionary with genome attributes (`contents`, `checksum`, `genome_description`)
+    - `/genome/{genome}/checksum` -- returns just the genome checksum 
 
 ### Changed
 - command order from `refgenieserver -c CONFIG -d archive/serve` to `refgenieserver archive/serve -c CONFIG -d`
+- `refgenieserver archive` populates newly added genome-level attributes: `contents`and `checksum`
 
 ### Fixed
 - `AttributeError` in `refgenieserver archive`; [#35](https://github.com/databio/refgenieserver/issues/35) 
