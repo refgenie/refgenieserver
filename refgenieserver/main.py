@@ -106,7 +106,7 @@ async def download_genome_attributes(genome: str):
     Requires the genome name name as an input.
     """
     try:
-        attrs = rgc.get_genome_attibutes(genome)
+        attrs = rgc.get_genome_attributes(genome)
         _LOGGER.info("attributes returned for genome '{}': \n{}".format(genome, str(attrs)))
         return attrs
     except KeyError:
