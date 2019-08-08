@@ -4,7 +4,7 @@ import logging
 
 from subprocess import run
 from refgenconf import RefGenConf
-from ubiquerg import checksum
+from ubiquerg import checksum, size
 
 from .const import *
 
@@ -83,9 +83,8 @@ def archive(rgc, args, cfg_path):
             asset_attrs = {CFG_ASSET_PATH_KEY: file_name,
                            CFG_ASSET_DESC_KEY: asset_desc,
                            CFG_ARCHIVE_CHECKSUM_KEY: checksum(target_file),
-                           # TODO: use ubiquerg.size after ubiquerg v0.4.6 release
-                           CFG_ARCHIVE_SIZE_KEY: _size(target_file),
-                           CFG_ASSET_SIZE_KEY: _size(input_file)}
+                           CFG_ARCHIVE_SIZE_KEY: size(target_file),
+                           CFG_ASSET_SIZE_KEY: size(input_file)}
             rgc_server = RefGenConf(server_rgc_path) if os.path.exists(server_rgc_path) else rgc
             rgc_server.update_genomes(genome, genome_attrs)
             rgc_server.update_assets(genome, asset_name, asset_attrs)
@@ -120,47 +119,3 @@ def _check_tar(path, output, flags):
         run("tar -C {} {} {} {}".format(enclosing_dir, flags, output, entity_name), shell=True)
     else:
         raise OSError("entity '{}' does not exist".format(path))
-
-
-def _size(path):
-    """
-    Gets the size of the file or directory in the provided path
-
-    :param str path: path to the file to check size of
-    :return int: file size
-    """
-    global _LOGGER
-    if os.path.isfile(path):
-        s = _size_str(os.path.getsize(path))
-    elif os.path.isdir(path):
-        s = 0
-        symlinks = []
-        for dirpath, dirnames, filenames in os.walk(path):
-            for f in filenames:
-                fp = os.path.join(dirpath, f)
-                if not os.path.islink(fp):
-                    s += os.path.getsize(fp)
-                else:
-                    s += os.lstat(fp).st_size
-                    symlinks.append(fp)
-        if len(symlinks) > 0:
-            _LOGGER.info("{} symlinks were found: '{}'".format(len(symlinks), "\n".join(symlinks)))
-    else:
-        _LOGGER.warning("size could not be determined for: '{}'".format(path))
-        s = None
-    return _size_str(s)
-
-
-def _size_str(size):
-    """
-    Converts the numeric bytes to the size string
-
-    :param int|float size: file size to convert
-    :return str: file size string
-    """
-    if isinstance(size, (int, float)):
-        for unit in FILE_SIZE_UNITS:
-            if size < 1024:
-                return "{}{}".format(round(size, 1), unit)
-            size /= 1024
-    return size
