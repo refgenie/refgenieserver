@@ -10,7 +10,7 @@ from fastapi import FastAPI, HTTPException
 from refgenconf import RefGenConf, select_genome_config
 
 from .const import *
-from .helpers import build_parser, parse_registry_path
+from .helpers import build_parser
 from .server_builder import archive
 import logging
 
