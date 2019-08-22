@@ -2,6 +2,7 @@ import argparse
 from .const import *
 from ._version import __version__ as v
 from yacman import get_first_env_var
+from ubiquerg import parse_registry_path as prp
 
 
 class _VersionInHelpParser(argparse.ArgumentParser):
@@ -65,6 +66,9 @@ def build_parser():
         dest="force",
         help="whether the server file tree should be rebuilt even if exists")
     sps["archive"].add_argument(
+        "asset_registry_paths", metavar="asset-registry-paths", type=str, nargs='?',
+        help="One or more registry path strings that identify assets (e.g. hg38/bowtie2_index:1.0.0)")
+    sps["archive"].add_argument(
         "-g", "--genome",
         dest="genome",
         nargs=1,
@@ -77,3 +81,12 @@ def build_parser():
         dest="asset",
         help="request a specific asset build")
     return parser
+
+
+def parse_registry_path(path):
+    return prp(path, defaults=[
+        ("protocol", None),
+        ("genome", None),
+        ("asset", None),
+        ("seek_key", None),
+        ("tag", None)])

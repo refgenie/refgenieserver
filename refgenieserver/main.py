@@ -10,7 +10,7 @@ from fastapi import FastAPI, HTTPException
 from refgenconf import RefGenConf, select_genome_config
 
 from .const import *
-from .helpers import build_parser
+from .helpers import build_parser, parse_registry_path
 from .server_builder import archive
 import logging
 
@@ -56,11 +56,14 @@ def list_available_assets():
 
 
 @app.get("/asset/{genome}/{asset}/archive")
-async def download_asset(genome: str, asset: str):
+async def download_asset(genome: str, asset: str, tag: str = None):
     """
     Returns an archive. Requires the genome name and the asset name as an input.
+
+    Optionally, 'tag' query parameter can be specified to get a tagged asset archive.
     """
-    file_name = "{}{}".format(asset, TGZ["ext"])
+    tag = tag or rgc.get_default_tag(genome, asset)  # returns 'default' for nonexistent genome/asset; no need to catch
+    file_name = "{}__{}{}".format(asset, tag, TGZ["ext"])
     asset_file = "{base}/{genome}/{file_name}".format(base=BASE_DIR, genome=genome, file_name=file_name)
     _LOGGER.info("serving asset file: '{}'".format(asset_file))
     if os.path.isfile(asset_file):
@@ -71,21 +74,23 @@ async def download_asset(genome: str, asset: str):
 
 
 @app.get("/asset/{genome}/{asset}")
-def download_asset_attributes(genome: str, asset: str):
+def download_asset_attributes(genome: str, asset: str, tag: str = None):
     """
     Returns a dictionary of asset attributes, like archive size, archive checksum etc.
     Requires the genome name and the asset name as an input.
+    Optionally, 'tag' query parameter can be specified to get a tagged asset attributes.
     """
+    tag = tag or rgc.get_default_tag(genome, asset)  # returns 'default' for nonexistent genome/asset; no need to catch
     try:
-        attrs = rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][asset]
-        _LOGGER.info("attributes returned for asset '{}' and genome '{}': \n{}".format(asset, genome, attrs))
+        attrs = rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][asset][tag]
+        _LOGGER.info("attributes returned for {}/{}:{}: \n{}".format(genome, asset, tag, attrs))
         return attrs
     except KeyError:
-        _LOGGER.warning(_LOGGER.warning(MSG_404.format("genome or asset")))
-        raise HTTPException(status_code=404, detail=MSG_404.format("genome or asset"))
+        _LOGGER.warning(_LOGGER.warning(MSG_404.format("genome, asset or tag")))
+        raise HTTPException(status_code=404, detail=MSG_404.format("genome, asset or tag"))
 
 
-@app.get("/genome/{genome}/checksum")
+@app.get("/genome/{genome}/genome_checksum")
 async def download_genome_checksum(genome: str):
     """
     Returns the genome checksum. Requires the genome name as an input
@@ -135,7 +140,7 @@ def main():
     assert len(rgc) > 0, "You must provide a config file or set the '{}' " \
                          "environment variable".format(", ".join(CFG_ENV_VARS))
     if args.command == "archive":
-        archive(rgc, args, selected_cfg)
+        archive(rgc, args.genome, args.asset, args.force, selected_cfg)
     elif args.command == "serve":
         uvicorn.run(app, host="0.0.0.0", port=args.port)
 
