@@ -69,7 +69,7 @@ def archive(rgc, genome, asset, force, cfg_path):
                 asset_desc = rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][asset_name][tag_name].\
                     setdefault(CFG_ASSET_DESC_KEY, DESC_PLACEHOLDER)
                 target_file = os.path.join(target_dir, "{}__{}".format(asset_name, tag_name) + TGZ["ext"])
-                input_file = os.path.join(genome_dir, file_name)
+                input_file = os.path.join(genome_dir, file_name, tag_name)
                 if not os.path.exists(target_file) or force:
                     changed = True
                     _LOGGER.info("creating asset '{}' from '{}'".format(target_file, input_file))
