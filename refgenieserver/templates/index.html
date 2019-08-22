@@ -39,7 +39,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% for asset_name, asset_data in values.asset_packages.items() %}
+                    {% for asset_name, asset_data in values.assets.items() %}
                         {% for tag_name, tag_data in asset_data.items() %}
                             {% if tag_name != "default_tag" %}
                                 <tr>

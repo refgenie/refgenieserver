@@ -1,4 +1,3 @@
-import os
 import sys
 import logging
 
@@ -109,7 +108,6 @@ def _check_tar(path, output, flags):
     :param str path: path to the file to be tarred
     :param str output: path to the result file
     :param str flags: tar command flags to use
-    :return:
     """
     # TODO: maybe use the tarfile package (it is much slower than shell), some example code below:
     # import tarfile

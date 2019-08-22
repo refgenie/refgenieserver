@@ -1,4 +1,3 @@
-import os
 import sys
 import uvicorn
 import logmuse
@@ -71,6 +70,14 @@ async def download_asset(genome: str, asset: str, tag: str = None):
     else:
         _LOGGER.warning(MSG_404.format("asset"))
         raise HTTPException(status_code=404, detail=MSG_404.format("asset"))
+
+
+@app.get("/asset/{genome}/{asset}/default_tag")
+async def download_asset(genome: str, asset: str):
+    """
+    Returns the default tag name. Requires genome name and asset name as an input.
+    """
+    return rgc.get_default_tag(genome, asset)
 
 
 @app.get("/asset/{genome}/{asset}")
