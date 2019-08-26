@@ -4,7 +4,7 @@ import logging
 from subprocess import run
 from refgenconf import RefGenConf
 from refgenconf.exceptions import GenomeConfigFormatError
-from ubiquerg import checksum, size
+from ubiquerg import checksum, size, is_command_callable
 
 from .const import *
 
@@ -53,7 +53,7 @@ def archive(rgc, genome, asset, force, cfg_path):
     for genome in genomes:
         genome_dir = os.path.join(rgc[CFG_FOLDER_KEY], genome)
         target_dir = os.path.join(rgc[CFG_ARCHIVE_KEY], genome)
-        genome_tarball = target_dir + TAR["ext"]
+        genome_tarball = target_dir + ".tar"
         if not os.path.exists(target_dir):
             os.makedirs(target_dir)
         changed = False
@@ -78,13 +78,13 @@ def archive(rgc, genome, asset, force, cfg_path):
             tags = rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][asset_name][CFG_ASSET_TAGS_KEY].keys()
             for tag_name in tags:
                 file_name = rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][asset_name][CFG_ASSET_TAGS_KEY][tag_name][CFG_ASSET_PATH_KEY]
-                target_file = os.path.join(target_dir, "{}__{}".format(asset_name, tag_name) + TGZ["ext"])
+                target_file = os.path.join(target_dir, "{}__{}".format(asset_name, tag_name) + ".tgz")
                 input_file = os.path.join(genome_dir, file_name, tag_name)
                 if not os.path.exists(target_file) or force:
                     changed = True
                     _LOGGER.info("creating asset '{}' from '{}'".format(target_file, input_file))
                     try:
-                        _check_tar(input_file, target_file, TGZ["flags"])
+                        _check_tar(input_file, target_file)
                     except OSError as e:
                         _LOGGER.warning(e)
                         continue
@@ -100,30 +100,27 @@ def archive(rgc, genome, asset, force, cfg_path):
         if changed or not os.path.exists(genome_tarball):
             _LOGGER.info("creating genome tarball '{}' from '{}'".format(genome_tarball, genome_dir))
             try:
-                _check_tar(target_dir, genome_tarball, TAR["flags"])
+                _check_tar(target_dir, genome_tarball, gz=False)
             except OSError as e:
                 _LOGGER.warning(e)
                 continue
     _LOGGER.info("builder finished; server config file saved to: '{}'".format(rgc_server.write(server_rgc_path)))
 
 
-def _check_tar(path, output, flags):
+def _check_tar(path, output, gz=True):
     """
-    Checks if file exists and tars it
+    Checks if file exists and archives it.
+    If gzipping is requested, the availability og pigz software is checked and used.
 
     :param str path: path to the file to be tarred
     :param str output: path to the result file
-    :param str flags: tar command flags to use
+    :param str gz: whether to gzip the tar archive
     """
-    # TODO: maybe use the tarfile package (it is much slower than shell), some example code below:
-    # import tarfile
-    # with tarfile.open(output, "w:gz") as tar:
-    #     tar.add(path, arcname=os.path.basename(path))
-    # TODO: maybe use pigz for better performance
     if os.path.exists(path):
-        enclosing_dir = os.path.dirname(path)
-        entity_name = os.path.basename(path)
-        # use -C (cd to the specified dir before taring) option not to include the directory structure in the archive
-        run("tar -C {} {} {} {}".format(enclosing_dir, flags, output, entity_name), shell=True)
+        if gz:
+            cmd = "cd {}; tar -cvf - . | pigz > {}" if is_command_callable("pigz") else "cd {}; tar -cvzf {} ."
+            run(cmd.format(path, output), shell=True)
+        else:
+            run("cd {}; tar -cvf {} .".format(path, output), shell=True)
     else:
         raise OSError("entity '{}' does not exist".format(path))
