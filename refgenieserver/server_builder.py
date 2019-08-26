@@ -3,6 +3,7 @@ import logging
 
 from subprocess import run
 from refgenconf import RefGenConf
+from refgenconf.exceptions import GenomeConfigFormatError
 from ubiquerg import checksum, size
 
 from .const import *
@@ -24,7 +25,11 @@ def archive(rgc, genome, asset, force, cfg_path):
     """
     global _LOGGER
     _LOGGER = logging.getLogger(PKG_NAME)
-    server_rgc_path = os.path.join(rgc[CFG_ARCHIVE_KEY], os.path.basename(cfg_path))
+    try:
+        server_rgc_path = os.path.join(rgc[CFG_ARCHIVE_KEY], os.path.basename(cfg_path))
+    except KeyError:
+        raise GenomeConfigFormatError("The config '{}' is missing a '{}' entry. Can't determine the desired archive.".
+                                      format(cfg_path, CFG_ARCHIVE_KEY))
     if asset and not genome:
         _LOGGER.error("You need to specify a genome (--genome) to request a specific asset build (--asset)")
         sys.exit(1)
@@ -44,6 +49,7 @@ def archive(rgc, genome, asset, force, cfg_path):
         exit(1)
     else:
         _LOGGER.debug("Genomes to be processed: {}".format(str(genomes)))
+    rgc_server = RefGenConf(server_rgc_path) if os.path.exists(server_rgc_path) else rgc
     for genome in genomes:
         genome_dir = os.path.join(rgc[CFG_FOLDER_KEY], genome)
         target_dir = os.path.join(rgc[CFG_ARCHIVE_KEY], genome)
@@ -53,6 +59,10 @@ def archive(rgc, genome, asset, force, cfg_path):
         changed = False
         genome_desc = rgc[CFG_GENOMES_KEY][genome].setdefault(CFG_GENOME_DESC_KEY, DESC_PLACEHOLDER)
         genome_checksum = rgc[CFG_GENOMES_KEY][genome].setdefault(CFG_CHECKSUM_KEY, CHECKSUM_PLACEHOLDER)
+        genome_attrs = {CFG_GENOME_DESC_KEY: genome_desc,
+                        CFG_CHECKSUM_KEY: genome_checksum}
+        rgc_server.update_genomes(genome, genome_attrs)
+        _LOGGER.debug("updating '{}' genome attributes...".format(genome))
         assets = asset or rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY].keys()
         if not assets:
             _LOGGER.error("No assets found")
@@ -60,13 +70,14 @@ def archive(rgc, genome, asset, force, cfg_path):
         else:
             _LOGGER.debug("Assets to be processed: {}".format(str(assets)))
         for asset_name in assets:
-            tags = rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][asset_name].keys()
-            # the asset level keys include the asset tags and the CFG_ASSET_DEFAULT_TAG_KEY
-            tags.remove(CFG_ASSET_DEFAULT_TAG_KEY)
+            asset_desc = rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][asset_name].setdefault(CFG_ASSET_DESC_KEY,
+                                                                                             DESC_PLACEHOLDER)
+            asset_attrs = {CFG_ASSET_DESC_KEY: asset_desc}
+            _LOGGER.debug("updating '{}/{}' asset attributes...".format(genome, asset_name))
+            rgc_server.update_assets(genome, asset_name, asset_attrs)
+            tags = rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][asset_name][CFG_ASSET_TAGS_KEY].keys()
             for tag_name in tags:
-                file_name = rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][asset_name][tag_name][CFG_ASSET_PATH_KEY]
-                asset_desc = rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][asset_name][tag_name].\
-                    setdefault(CFG_ASSET_DESC_KEY, DESC_PLACEHOLDER)
+                file_name = rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][asset_name][CFG_ASSET_TAGS_KEY][tag_name][CFG_ASSET_PATH_KEY]
                 target_file = os.path.join(target_dir, "{}__{}".format(asset_name, tag_name) + TGZ["ext"])
                 input_file = os.path.join(genome_dir, file_name, tag_name)
                 if not os.path.exists(target_file) or force:
@@ -79,17 +90,12 @@ def archive(rgc, genome, asset, force, cfg_path):
                         continue
                 else:
                     _LOGGER.debug("'{}' exists".format(target_file))
-                _LOGGER.info("updating '{}/{}:{}' attributes...".format(genome, asset_name, tag_name))
-                genome_attrs = {CFG_GENOME_DESC_KEY: genome_desc,
-                                CFG_CHECKSUM_KEY: genome_checksum}
-                asset_attrs = {CFG_ASSET_PATH_KEY: file_name,
-                               CFG_ASSET_DESC_KEY: asset_desc,
+                _LOGGER.debug("updating '{}/{}:{}' tag attributes...".format(genome, asset_name, tag_name))
+                tag_attrs = {CFG_ASSET_PATH_KEY: file_name,
                                CFG_ARCHIVE_CHECKSUM_KEY: checksum(target_file),
                                CFG_ARCHIVE_SIZE_KEY: size(target_file),
                                CFG_ASSET_SIZE_KEY: size(input_file)}
-                rgc_server = RefGenConf(server_rgc_path) if os.path.exists(server_rgc_path) else rgc
-                rgc_server.update_genomes(genome, genome_attrs)
-                rgc_server.update_assets(genome, asset_name, tag_name, asset_attrs)
+                rgc_server.update_tags(genome, asset_name, tag_name, tag_attrs)
                 rgc_server.write(server_rgc_path)
         if changed or not os.path.exists(genome_tarball):
             _LOGGER.info("creating genome tarball '{}' from '{}'".format(genome_tarball, genome_dir))
@@ -113,6 +119,7 @@ def _check_tar(path, output, flags):
     # import tarfile
     # with tarfile.open(output, "w:gz") as tar:
     #     tar.add(path, arcname=os.path.basename(path))
+    # TODO: maybe use pigz for better performance
     if os.path.exists(path):
         enclosing_dir = os.path.dirname(path)
         entity_name = os.path.basename(path)
