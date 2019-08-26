@@ -50,8 +50,9 @@ def list_available_assets():
     """
     Returns a list of all assets that can be downloaded. No inputs required.
     """
-    _LOGGER.info("serving assets dict: '{}'".format(rgc.assets_dict()))
-    return rgc.assets_dict()
+    ret_dict = rgc.assets_dict(include_tags=True)
+    _LOGGER.info("serving assets dict: '{}'".format(ret_dict))
+    return ret_dict
 
 
 @app.get("/asset/{genome}/{asset}/archive")
@@ -62,7 +63,7 @@ async def download_asset(genome: str, asset: str, tag: str = None):
     Optionally, 'tag' query parameter can be specified to get a tagged asset archive.
     """
     tag = tag or rgc.get_default_tag(genome, asset)  # returns 'default' for nonexistent genome/asset; no need to catch
-    file_name = "{}__{}{}".format(asset, tag, TGZ["ext"])
+    file_name = "{}__{}{}".format(asset, tag, ".tgz")
     asset_file = "{base}/{genome}/{file_name}".format(base=BASE_DIR, genome=genome, file_name=file_name)
     _LOGGER.info("serving asset file: '{}'".format(asset_file))
     if os.path.isfile(asset_file):
@@ -80,32 +81,44 @@ async def download_asset(genome: str, asset: str):
     return rgc.get_default_tag(genome, asset)
 
 
+@app.get("/asset/{genome}/{asset}/{tag}/asset_digest")
+async def download_asset(genome: str, asset: str, tag: str):
+    """
+    Returns the asset digest. Requires genome name asset name and tag name as an input.
+    """
+    try:
+        return rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][asset][CFG_ASSET_TAGS_KEY][tag][CFG_ASSET_CHECKSUM_KEY]
+    except KeyError:
+        _LOGGER.warning(MSG_404.format("genome/asset:tag combination"))
+        raise HTTPException(status_code=404, detail=MSG_404.format("genome/asset:tag combination"))
+
+
 @app.get("/asset/{genome}/{asset}")
 def download_asset_attributes(genome: str, asset: str, tag: str = None):
     """
-    Returns a dictionary of asset attributes, like archive size, archive checksum etc.
+    Returns a dictionary of asset attributes, like archive size, archive digest etc.
     Requires the genome name and the asset name as an input.
     Optionally, 'tag' query parameter can be specified to get a tagged asset attributes.
     """
     tag = tag or rgc.get_default_tag(genome, asset)  # returns 'default' for nonexistent genome/asset; no need to catch
     try:
-        attrs = rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][asset][tag]
+        attrs = rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][asset][CFG_ASSET_TAGS_KEY][tag]
         _LOGGER.info("attributes returned for {}/{}:{}: \n{}".format(genome, asset, tag, attrs))
         return attrs
     except KeyError:
-        _LOGGER.warning(_LOGGER.warning(MSG_404.format("genome, asset or tag")))
-        raise HTTPException(status_code=404, detail=MSG_404.format("genome, asset or tag"))
+        _LOGGER.warning(_LOGGER.warning(MSG_404.format("genome/asset:tag combination")))
+        raise HTTPException(status_code=404, detail=MSG_404.format("genome/asset:tag combination"))
 
 
-@app.get("/genome/{genome}/genome_checksum")
-async def download_genome_checksum(genome: str):
+@app.get("/genome/{genome}/genome_digest")
+async def download_genome_digest(genome: str):
     """
-    Returns the genome checksum. Requires the genome name as an input
+    Returns the genome digest. Requires the genome name as an input
     """
     try:
-        checksum = rgc[CFG_GENOMES_KEY][genome][CFG_CHECKSUM_KEY]
-        _LOGGER.info("checksum returned for '{}': {}".format(genome, checksum))
-        return checksum
+        digest = rgc[CFG_GENOMES_KEY][genome][CFG_CHECKSUM_KEY]
+        _LOGGER.info("digest returned for '{}': {}".format(genome, digest))
+        return digest
     except KeyError:
         _LOGGER.warning(MSG_404.format("genome"))
         raise HTTPException(status_code=404, detail=MSG_404.format("genome"))
@@ -114,7 +127,7 @@ async def download_genome_checksum(genome: str):
 @app.get("/genome/{genome}")
 async def download_genome_attributes(genome: str):
     """
-    Returns a dictionary of genome attributes, like archive size, archive checksum etc.
+    Returns a dictionary of genome attributes, like archive size, archive digest etc.
     Requires the genome name name as an input.
     """
     try:

@@ -24,7 +24,7 @@
         <div class="col-12" id="genome_title">
             <h4>Reference genome: <b>{{ genome_name }}</b></h4>
             <p>Description: <i>{{ genomes[genome_name].genome_description }}</i></p>
-            <p>Checksum: <code>{{ genomes[genome_name].genome_checksum }}</code></p>
+            <p>Checksum: <code>{{ genomes[genome_name].genome_digest}}</code></p>
         </div>
         <div class="col-12">
             <table class="table table-sm" id="asset_table">
@@ -34,22 +34,22 @@
                         <th class="asset_desc" scope="col">asset description</th>
                         <th class="size" scope="col">asset size</th>
                         <th class="size" scope="col">archive size</th>
-                        <th class="checksum" scope="col">archive checksum</th>
+                        <th class="checksum" scope="col">archive digest</th>
                         <th class="attrs" scope="col">all attributes</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for asset_name, asset_data in values.assets.items() %}
-                        {% for tag_name, tag_data in asset_data.items() %}
+                        {% for tag_name, tag_data in asset_data.tags.items() %}
                             {% if tag_name != "default_tag" %}
                                 <tr>
                                     <td class="asset_name" style="cursor:pointer" onclick="location.href='/asset/{{ genome_name }}/{{ asset_name }}/archive?tag={{ tag_name }}'">
                                         <b>{{ asset_name }}</b>:{{ tag_name }} <i class="fa fa-download" aria-hidden="true"></i>
                                     </td>
-                                    <td class="asset_desc">{{ safe_show_asset_attr(tag_data["asset_description"]) }}</td>
+                                    <td class="asset_desc">{{ safe_show_asset_attr(asset_data["asset_description"]) }}</td>
                                     <td class="size">{{ safe_show_asset_attr(tag_data["asset_size"]) }}</td>
                                     <td class="size">{{ safe_show_asset_attr(tag_data["archive_size"]) }}</td>
-                                    <td class="checksum"><code>{{ safe_show_asset_attr(tag_data["archive_checksum"]) }}</code></td>
+                                    <td class="checksum"><code>{{ safe_show_asset_attr(tag_data["archive_digest"]) }}</code></td>
                                     <td class="attrs"><a href='/asset/{{ genome_name }}/{{ asset_name }}?tag={{ tag_name }}'><button class="btn btn-secondary btn-sm" id="json_btn">Get JSON</button></a></td>
                                 </tr>
                             {% endif %}
