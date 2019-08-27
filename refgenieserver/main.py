@@ -17,9 +17,6 @@ app = FastAPI()
 app.mount("/" + STATIC_DIRNAME, StaticFiles(directory=STATIC_PATH), name=STATIC_DIRNAME)
 templates = Jinja2Templates(directory=TEMPLATES_PATH)
 
-# This can be used to add a simple file server to server files in a directory
-# You access these files with e.g. http://localhost/static
-# app.mount("/static", StaticFiles(directory=base_folder), name="static")
 global rgc
 _LOGGER = logging.getLogger(PKG_NAME)
 
@@ -51,7 +48,7 @@ def list_available_assets():
     Returns a list of all assets that can be downloaded. No inputs required.
     """
     ret_dict = rgc.assets_dict(include_tags=True)
-    _LOGGER.info("serving assets dict: '{}'".format(ret_dict))
+    _LOGGER.info("serving assets dict: {}".format(ret_dict))
     return ret_dict
 
 
@@ -60,7 +57,7 @@ async def download_asset(genome: str, asset: str, tag: str = None):
     """
     Returns an archive. Requires the genome name and the asset name as an input.
 
-    Optionally, 'tag' query parameter can be specified to get a tagged asset archive.
+    Optionally, 'tag' query parameter can be specified to get a tagged asset archive. Default tag is returned otherwise.
     """
     tag = tag or rgc.get_default_tag(genome, asset)  # returns 'default' for nonexistent genome/asset; no need to catch
     file_name = "{}__{}{}".format(asset, tag, ".tgz")
@@ -74,7 +71,7 @@ async def download_asset(genome: str, asset: str, tag: str = None):
 
 
 @app.get("/asset/{genome}/{asset}/default_tag")
-async def download_asset(genome: str, asset: str):
+async def get_asset_default_tag(genome: str, asset: str):
     """
     Returns the default tag name. Requires genome name and asset name as an input.
     """
@@ -82,7 +79,7 @@ async def download_asset(genome: str, asset: str):
 
 
 @app.get("/asset/{genome}/{asset}/{tag}/asset_digest")
-async def download_asset(genome: str, asset: str, tag: str):
+async def get_asset_digest(genome: str, asset: str, tag: str):
     """
     Returns the asset digest. Requires genome name asset name and tag name as an input.
     """
@@ -136,7 +133,7 @@ async def download_genome_attributes(genome: str):
         return attrs
     except KeyError:
         _LOGGER.warning(MSG_404.format("genome"))
-        raise HTTPException(status_code=404, detail=MSG_404.format("genome or asset"))
+        raise HTTPException(status_code=404, detail=MSG_404.format("genome"))
 
 
 @app.get("/genomes/{asset}")
