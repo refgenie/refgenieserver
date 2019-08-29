@@ -13,8 +13,6 @@ app = FastAPI()
 app.mount("/" + STATIC_DIRNAME, StaticFiles(directory=STATIC_PATH), name=STATIC_DIRNAME)
 templates = Jinja2Templates(directory=TEMPLATES_PATH)
 
-global rgc, _LOGGER
-
 
 def main():
     global rgc, _LOGGER
@@ -27,8 +25,12 @@ def main():
     from .routers import version1, version2
     app.include_router(version1.router)
     app.include_router(
+        version1.router,
+        prefix="/v1"
+    )
+    app.include_router(
         version2.router,
-        prefix="/v2",
+        prefix="/v2"
     )
     assert len(rgc) > 0, "You must provide a config file or set the '{}' environment variable".\
         format(", ".join(CFG_ENV_VARS))
