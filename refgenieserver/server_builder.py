@@ -109,12 +109,13 @@ def archive(rgc, genome, asset, force, cfg_path):
 
 def _check_tar(path, output, gz=True):
     """
-    Checks if file exists and archives it.
-    If gzipping is requested, the availability og pigz software is checked and used.
+    Checks if file exists and tar it.
+    If gzipping is requested, the availability of pigz software is checked and used.
 
     :param str path: path to the file to be tarred
     :param str output: path to the result file
-    :param str gz: whether to gzip the tar archive
+    :param str gz: whether to gzip the created tar archive
+    :raise OSError: if the file/directory meant to be archived does not exist
     """
     if os.path.exists(path):
         if gz:
