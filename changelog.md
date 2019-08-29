@@ -2,6 +2,24 @@
 
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) and [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) format. 
 
+## [0.3.0] -- unreleased
+
+### Added
+- possibility to use `$REFGENIE` environment variable to provide config path in `refgenieserver archive`
+- new API endpoints:
+    - `/genome/{genome}` -- returns a dictionary with genome attributes (`contents`, `checksum`, `genome_description`)
+    - `/genome/{genome}/genome_digest` -- returns just the genome digest
+    - `/asset/{genome}/{asset}/{tag}/asset_digest` -- returns just the asset digest
+    - `/asset/{genome}/{asset}/default_tag` -- returns the default tag of an asset
+- `tag` query parameter to the endpoints: `/asset/{genome}/{asset}/archive`, `/asset/{genome}/{asset}` to retrieve the archive/metadata associated with tagged asset
+- API versioning support
+- API versions: `v1` (accessible with a `v1/` prefix and without any) and `v2` (accessible with `v2/` prefix)
+    
+### Changed
+- command order from `refgenieserver -c CONFIG -d archive/serve` to `refgenieserver archive/serve -c CONFIG -d`
+
+### Fixed
+- `AttributeError` in `refgenieserver archive`; [#35](https://github.com/databio/refgenieserver/issues/35) 
 ## [0.2.0] -- 2019-07-11
 
 ### Added

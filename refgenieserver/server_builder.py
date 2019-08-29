@@ -1,150 +1,126 @@
-import os
 import sys
 import logging
 
 from subprocess import run
 from refgenconf import RefGenConf
-from ubiquerg import checksum
+from refgenconf.exceptions import GenomeConfigFormatError
+from ubiquerg import checksum, size, is_command_callable
 
 from .const import *
 
 
-def archive(rgc, args):
+def archive(rgc, genome, asset, force, cfg_path):
     """
-    Takes the RefGenConf object and builds the individual tar archives
+    Takes the RefGenConf object and builds individual tar archives
     that can be then served with 'refgenieserver serve'. Additionally determines their md5 checksums, file sizes and
     updates the original refgenie config with these data. If the --asset and/or --genome options  are used (specific
     build is requested) the archiver will check for the existence of config file saved in the path provided in
     `genome_server` in the original config and update it so that no archive metadata is lost
 
     :param RefGenConf rgc: configuration object with the data to build the servable archives for
-    :param argparse.Namespace args: arguments from the refgenieserver CLI
+    :param str genome: genome to build archives for
+    :param str asset: asset to build archives for
+    :param bool force: whether to force the build of archive, regardless of its existence
+    :param str cfg_path: config file path
     """
     global _LOGGER
     _LOGGER = logging.getLogger(PKG_NAME)
-    _LOGGER.debug("Args: {}".format(args))
-    server_rgc_path = os.path.join(rgc[CFG_ARCHIVE_KEY], os.path.basename(args.config))
-    if args.asset and not args.genome:
+    try:
+        server_rgc_path = os.path.join(rgc[CFG_ARCHIVE_KEY], os.path.basename(cfg_path))
+    except KeyError:
+        raise GenomeConfigFormatError("The config '{}' is missing a '{}' entry. Can't determine the desired archive.".
+                                      format(cfg_path, CFG_ARCHIVE_KEY))
+    if asset and not genome:
         _LOGGER.error("You need to specify a genome (--genome) to request a specific asset build (--asset)")
         sys.exit(1)
-    if args.force:
+    if force:
         _LOGGER.info("build forced; file existence will be ignored")
-    if args.genome:
-        _LOGGER.info("specific build requested for a genome: {}".format(args.genome))
-        genomes = args.genome
-        if args.asset:
-            _LOGGER.info("specific build requested for assets: {}".format(args.asset))
+    if genome:
+        _LOGGER.info("specific build requested for a genome: {}".format(genome))
+        genomes = genome
+        if asset:
+            _LOGGER.info("specific build requested for assets: {}".format(asset))
         if os.path.exists(server_rgc_path):
             _LOGGER.debug("'{}' file was found and will be updated".format(server_rgc_path))
     else:
         genomes = rgc.genomes_list()
-
+    if not genomes:
+        _LOGGER.error("No genomes found")
+        exit(1)
+    else:
+        _LOGGER.debug("Genomes to be processed: {}".format(str(genomes)))
+    rgc_server = RefGenConf(server_rgc_path) if os.path.exists(server_rgc_path) else rgc
     for genome in genomes:
         genome_dir = os.path.join(rgc[CFG_FOLDER_KEY], genome)
         target_dir = os.path.join(rgc[CFG_ARCHIVE_KEY], genome)
-        genome_tarball = target_dir + TAR["ext"]
+        genome_tarball = target_dir + ".tar"
         if not os.path.exists(target_dir):
             os.makedirs(target_dir)
         changed = False
-        assets = args.asset or rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY].keys()
+        genome_desc = rgc[CFG_GENOMES_KEY][genome].setdefault(CFG_GENOME_DESC_KEY, DESC_PLACEHOLDER)
+        genome_checksum = rgc[CFG_GENOMES_KEY][genome].setdefault(CFG_CHECKSUM_KEY, CHECKSUM_PLACEHOLDER)
+        genome_attrs = {CFG_GENOME_DESC_KEY: genome_desc,
+                        CFG_CHECKSUM_KEY: genome_checksum}
+        rgc_server.update_genomes(genome, genome_attrs)
+        _LOGGER.debug("updating '{}' genome attributes...".format(genome))
+        assets = asset or rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY].keys()
+        if not assets:
+            _LOGGER.error("No assets found")
+            exit(1)
+        else:
+            _LOGGER.debug("Assets to be processed: {}".format(str(assets)))
         for asset_name in assets:
-            file_name = rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][asset_name][CFG_ASSET_PATH_KEY]
-            asset_desc = rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][asset_name].set_default(CFG_ASSET_DESC_KEY, "NA")
-            genome_desc = rgc[CFG_GENOMES_KEY][genome].set_default(CFG_GENOME_DESC_KEY, "NA")
-            target_file = os.path.join(target_dir, asset_name + TGZ["ext"])
-            input_file = os.path.join(genome_dir, file_name)
-            if not os.path.exists(target_file) or args.force:
-                changed = True
-                _LOGGER.info("creating asset '{}' from '{}'".format(target_file, input_file))
-                try:
-                    _check_tar(input_file, target_file, TGZ["flags"])
-                except OSError as e:
-                    _LOGGER.warning(e)
-                    continue
-            else:
-                _LOGGER.info("'{}' exists".format(target_file))
-            _LOGGER.info("updating '{}: {}' attributes...".format(genome, asset_name))
-            genome_attrs = {CFG_GENOME_DESC_KEY: genome_desc}
-            asset_attrs = {CFG_ASSET_PATH_KEY: file_name,
-                           CFG_ASSET_DESC_KEY: asset_desc,
-                           CFG_CHECKSUM_KEY: checksum(target_file),
-                           CFG_ARCHIVE_SIZE_KEY: _size(target_file),
-                           CFG_ASSET_SIZE_KEY: _size(input_file)}
-            rgc_server = RefGenConf(server_rgc_path) if os.path.exists(server_rgc_path) else rgc
-            rgc_server.update_genomes(genome, genome_attrs)
+            asset_desc = rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][asset_name].setdefault(CFG_ASSET_DESC_KEY,
+                                                                                             DESC_PLACEHOLDER)
+            asset_attrs = {CFG_ASSET_DESC_KEY: asset_desc}
+            _LOGGER.debug("updating '{}/{}' asset attributes...".format(genome, asset_name))
             rgc_server.update_assets(genome, asset_name, asset_attrs)
-            rgc_server.write(server_rgc_path)
+            tags = rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][asset_name][CFG_ASSET_TAGS_KEY].keys()
+            for tag_name in tags:
+                file_name = rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][asset_name][CFG_ASSET_TAGS_KEY][tag_name][CFG_ASSET_PATH_KEY]
+                target_file = os.path.join(target_dir, "{}__{}".format(asset_name, tag_name) + ".tgz")
+                input_file = os.path.join(genome_dir, file_name, tag_name)
+                if not os.path.exists(target_file) or force:
+                    changed = True
+                    _LOGGER.info("creating asset '{}' from '{}'".format(target_file, input_file))
+                    try:
+                        _check_tar(input_file, target_file)
+                    except OSError as e:
+                        _LOGGER.warning(e)
+                        continue
+                else:
+                    _LOGGER.debug("'{}' exists".format(target_file))
+                _LOGGER.debug("updating '{}/{}:{}' tag attributes...".format(genome, asset_name, tag_name))
+                tag_attrs = {CFG_ASSET_PATH_KEY: file_name,
+                               CFG_ARCHIVE_CHECKSUM_KEY: checksum(target_file),
+                               CFG_ARCHIVE_SIZE_KEY: size(target_file),
+                               CFG_ASSET_SIZE_KEY: size(input_file)}
+                rgc_server.update_tags(genome, asset_name, tag_name, tag_attrs)
+                rgc_server.write(server_rgc_path)
         if changed or not os.path.exists(genome_tarball):
             _LOGGER.info("creating genome tarball '{}' from '{}'".format(genome_tarball, genome_dir))
             try:
-                _check_tar(target_dir, genome_tarball, TAR["flags"])
+                _check_tar(target_dir, genome_tarball, gz=False)
             except OSError as e:
                 _LOGGER.warning(e)
                 continue
     _LOGGER.info("builder finished; server config file saved to: '{}'".format(rgc_server.write(server_rgc_path)))
 
 
-def _check_tar(path, output, flags):
+def _check_tar(path, output, gz=True):
     """
-    Checks if file exists and tars it
+    Checks if file exists and archives it.
+    If gzipping is requested, the availability og pigz software is checked and used.
 
     :param str path: path to the file to be tarred
     :param str output: path to the result file
-    :param str flags: tar command flags to use
-    :return:
+    :param str gz: whether to gzip the tar archive
     """
-    # TODO: maybe use the tarfile package (it is much slower than shell), some example code below:
-    # import tarfile
-    # with tarfile.open(output, "w:gz") as tar:
-    #     tar.add(path, arcname=os.path.basename(path))
     if os.path.exists(path):
-        enclosing_dir = os.path.dirname(path)
-        entity_name = os.path.basename(path)
-        # use -C (cd to the specified dir before taring) option not to include the directory structure in the archive
-        run("tar -C {} {} {} {}".format(enclosing_dir, flags, output, entity_name), shell=True)
+        if gz:
+            cmd = "cd {}; tar -cvf - . | pigz > {}" if is_command_callable("pigz") else "cd {}; tar -cvzf {} ."
+            run(cmd.format(path, output), shell=True)
+        else:
+            run("cd {}; tar -cvf {} .".format(path, output), shell=True)
     else:
         raise OSError("entity '{}' does not exist".format(path))
-
-
-def _size(path):
-    """
-    Gets the size of the file or directory in the provided path
-
-    :param str path: path to the file to check size of
-    :return int: file size
-    """
-    global _LOGGER
-    if os.path.isfile(path):
-        s = _size_str(os.path.getsize(path))
-    elif os.path.isdir(path):
-        s = 0
-        symlinks = []
-        for dirpath, dirnames, filenames in os.walk(path):
-            for f in filenames:
-                fp = os.path.join(dirpath, f)
-                if not os.path.islink(fp):
-                    s += os.path.getsize(fp)
-                else:
-                    s += os.lstat(fp).st_size
-                    symlinks.append(fp)
-        if len(symlinks) > 0:
-            _LOGGER.info("{} symlinks were found: '{}'".format(len(symlinks), "\n".join(symlinks)))
-    else:
-        _LOGGER.warning("size could not be determined for: '{}'".format(path))
-        s = None
-    return _size_str(s)
-
-
-def _size_str(size):
-    """
-    Converts the numeric bytes to the size string
-
-    :param int|float size: file size to convert
-    :return str: file size string
-    """
-    if isinstance(size, (int, float)):
-        for unit in FILE_SIZE_UNITS:
-            if size < 1024:
-                return "{}{}".format(round(size, 1), unit)
-            size /= 1024
-    return size

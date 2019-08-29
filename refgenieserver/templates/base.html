@@ -14,15 +14,12 @@
 	</head>
 
 	{% include "navbar.html" %}
-	<div id="wrap">
-		<div id="main">
-			<body>
-				<div class="divider-12">
-					{% block body %}{% endblock %}
-					{% block content %}{% endblock %}
-				</div>
-			</body>
-		</div>
+	<div id="main">
+		<body>
+			<div class="divider-12"></div>
+				{% block body %}{% endblock %}
+				{% block content %}{% endblock %}
+		</body>
 	</div>
 	<hr class="featurette-divider">
 	<footer class="text-muted">

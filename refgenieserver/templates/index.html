@@ -1,5 +1,13 @@
 {% extends "base.html" %}
 {% block title %}Index{% endblock %}
+{% block head %}
+    {{ super() }}
+    <script>
+        $(document).ready(function(){
+          $('[data-toggle="tooltip"]').tooltip();
+        });
+    </script>
+{% endblock %}
 {% block content %}
 {% macro safe_show_asset_attr(x) %}
     {% if x is none or not x|length %}
@@ -10,50 +18,55 @@
 {% endmacro %}
 <div class="container">
     <div class="row">
-        <div class="col">
-        <p class="text-justify">Welcome to <i>refgenomes.databio.org</i>. Here we provide a web interface and a RESTful API to access genome assets for popular reference genome assemblies. This server is running <i>refgenieserver</i>. You may use the <a href="http://refgenie.databio.org">refgenie CLI</a> to automate downloading and organizing these assets using <code>refgenie pull ...</code> from the command line to retrieve archived genome assets.</p>
-        <p>Below is a list of assets hosted by this server:</p>
+        <div class="col-12" id="txt">
+            <p class="text-justify">Welcome to <i>refgenomes.databio.org</i>. Here we provide a web interface and a RESTful API to access genome assets for popular reference genome assemblies. This server is running <i>refgenieserver</i>. You may use the <a href="http://refgenie.databio.org">refgenie CLI</a> to automate downloading and organizing these assets using <code>refgenie pull ...</code> from the command line to retrieve archived genome assets.</p>
+            <p><b>Below is a list of assets hosted by this server:</b></p>
         </div>
     </div>
 </div>
 <hr class="featurette-divider">
 <div class="container">
-<h2>Available assets</h2>
-{% for genome_name, values in genomes.items() %}
-    <div class="row align-items-center">
-        <div class="col-12" id="genome_title">
-            <h4>Reference genome: <b>{{ genome_name }}</b></h4>
-            <p><i>{{ genomes[genome_name].genome_description }}</i></p>
-        </div>
-        <div class="col-12">
-            <table class="table table-sm" id="asset_table">
-                <thead class="thead-light">
-                    <tr>
-                        <th class="asset_name" scope="col">asset name</th>
-                        <th class="asset_desc" scope="col">asset description</th>
-                        <th class="size" scope="col">asset size</th>
-                        <th class="size" scope="col">archive size</th>
-                        <th class="checksum" scope="col">archive checksum</th>
-                        <th class="attrs" scope="col">all attributes</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for asset in values.assets %}
+    {% for genome_name, values in genomes.items() %}
+        <div class="row align-items-center">
+            <div class="col-12" id="genome-asset">
+                <h4>Reference genome: <b>{{ genome_name }}</b></h4>
+                <p>Description: <i>{{ genomes[genome_name].genome_description }}</i></p>
+                <p>Checksum: <code>{{ genomes[genome_name].genome_digest}}</code></p>
+                <table class="table table-sm">
+                    <thead class="thead-light">
                         <tr>
-                            <td class="asset_name" style="cursor:pointer" onclick="location.href='/asset/{{ genome_name }}/{{ asset }}/archive'">
-                                <b>{{ asset }}</b> <i class="fa fa-download" aria-hidden="true"></i>
-                            </td>
-                            <td class="asset_desc">{{ safe_show_asset_attr(rgc[genome_name].assets[asset]["asset_description"]) }}</td>
-                            <td class="size">{{ safe_show_asset_attr(rgc[genome_name].assets[asset]["asset_size"]) }}</td>
-                            <td class="size">{{ safe_show_asset_attr(rgc[genome_name].assets[asset]["archive_size"]) }}</td>
-                            <td class="checksum"><code>{{ safe_show_asset_attr(rgc[genome_name].assets[asset]["archive_checksum"]) }}</code></td>
-                            <td class="attrs"><a href='/asset/{{ genome_name }}/{{ asset }}'><button class="btn btn-secondary btn-sm" id="json_btn">Get JSON</button></a></td>
+                            <th class="actions" style="">download</a></th>
+                            <th class="asset_name" scope="col">asset name:tag</th>
+                            <th class="asset_desc" scope="col">asset description</th>
+                            <th class="size" scope="col">asset/archive size</th>
+                            <th class="checksum" scope="col">archive digest</th>
                         </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        {% for asset_name, asset_data in values.assets.items() %}
+                            {% for tag_name, tag_data in asset_data.tags.items() %}
+                                {% if tag_name != "default_tag" %}
+                                    <tr>
+                                        <td>
+                                            <a href="/v2/asset/{{ genome_name }}/{{ asset_name }}/archive?tag={{ tag_name }}" class="btn btn-outline-dark btn-sm mr-0" role="button" data-toggle="tooltip" title="Archive">
+                                                <i class="fa fa-download" aria-hidden="true"></i>
+                                            </a>
+                                            <a href="/v2/asset/{{ genome_name }}/{{ asset_name }}?tag={{ tag_name }}" class="btn btn-outline-dark btn-sm ml-0" role="button" data-toggle="tooltip" title="Attributes">
+                                                <i class="fa fa-tags" aria-hidden="true"></i>
+                                            </a>
+                                        </td>
+                                        <td class="asset_name"><b>{{ asset_name }}</b>:{{ tag_name }}</td>
+                                        <td class="asset_desc">{{ safe_show_asset_attr(asset_data["asset_description"]) }}</td>
+                                        <td class="size">{{ safe_show_asset_attr(tag_data["asset_size"]) }}/{{ safe_show_asset_attr(tag_data["archive_size"]) }}</td>
+                                        <td class="checksum"><code>{{ safe_show_asset_attr(tag_data["archive_digest"]) }}</code></td>
+                                    </tr>
+                                {% endif %}
+                            {% endfor %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
-    </div>
-{% endfor %}
+    {% endfor %}
 </div>
 {% endblock %}

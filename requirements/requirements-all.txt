@@ -3,7 +3,7 @@ fastapi
 jinja2
 logmuse>=0.2
 starlette
-ubiquerg>=0.4.1
+ubiquerg>=0.4.6
 uvicorn>=0.7.1
 yacman>=0.3
-refgenconf>=0.3.0
+#refgenconf>=0.4.1
