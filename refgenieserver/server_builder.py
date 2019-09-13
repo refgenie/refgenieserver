@@ -88,7 +88,7 @@ def archive(rgc, genome, asset, force, cfg_path):
                     changed = True
                     _LOGGER.info("creating asset '{}' from '{}'".format(target_file, input_file))
                     try:
-                        _check_tar(input_file, target_file)
+                        _check_tar(input_file, target_file, gz=True)
                     except OSError as e:
                         _LOGGER.warning(e)
                         continue
@@ -104,14 +104,14 @@ def archive(rgc, genome, asset, force, cfg_path):
         if changed or not os.path.exists(genome_tarball):
             _LOGGER.info("creating genome tarball '{}' from '{}'".format(genome_tarball, genome_dir))
             try:
-                _check_tar(target_dir, genome_tarball, gz=False)
+                _check_tar(target_dir, genome_tarball)
             except OSError as e:
                 _LOGGER.warning(e)
                 continue
     _LOGGER.info("builder finished; server config file saved to: '{}'".format(rgc_server.write(server_rgc_path)))
 
 
-def _check_tar(path, output, gz=True):
+def _check_tar(path, output, gz=False):
     """
     Checks if file exists and tar it.
     If gzipping is requested, the availability of pigz software is checked and used.
