@@ -77,6 +77,10 @@ def archive(rgc, genome, asset, force, cfg_path):
             rgc_server.update_assets(genome, asset_name, asset_attrs)
             tags = rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][asset_name][CFG_ASSET_TAGS_KEY].keys()
             for tag_name in tags:
+                if not rgc.is_asset_complete(genome, asset_name, tag_name):
+                    _LOGGER.info("'{}/{}:{}' is incomplete, skipping".format(genome, asset_name, tag_name))
+                    rgc_server.remove_assets(genome, asset_name, tag_name)
+                    continue
                 file_name = rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][asset_name][CFG_ASSET_TAGS_KEY][tag_name][CFG_ASSET_PATH_KEY]
                 target_file = os.path.join(target_dir, "{}__{}".format(asset_name, tag_name) + ".tgz")
                 input_file = os.path.join(genome_dir, file_name, tag_name)
