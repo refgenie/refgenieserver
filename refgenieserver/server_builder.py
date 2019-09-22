@@ -84,6 +84,10 @@ def archive(rgc, genome, asset, force, cfg_path):
                 file_name = rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][asset_name][CFG_ASSET_TAGS_KEY][tag_name][CFG_ASSET_PATH_KEY]
                 target_file = os.path.join(target_dir, "{}__{}".format(asset_name, tag_name) + ".tgz")
                 input_file = os.path.join(genome_dir, file_name, tag_name)
+                parents = rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][asset_name][CFG_ASSET_TAGS_KEY][tag_name].\
+                    setdefault(CFG_ASSET_PARENTS_KEY, [])
+                children = rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][asset_name][CFG_ASSET_TAGS_KEY][tag_name].\
+                    setdefault(CFG_ASSET_CHILDREN_KEY, [])
                 if not os.path.exists(target_file) or force:
                     changed = True
                     _LOGGER.info("creating asset '{}' from '{}'".format(target_file, input_file))
@@ -92,15 +96,19 @@ def archive(rgc, genome, asset, force, cfg_path):
                     except OSError as e:
                         _LOGGER.warning(e)
                         continue
+                    else:
+                        tag_attrs = {CFG_ASSET_PATH_KEY: file_name,
+                                     CFG_ARCHIVE_CHECKSUM_KEY: checksum(target_file),
+                                     CFG_ARCHIVE_SIZE_KEY: size(target_file),
+                                     CFG_ASSET_SIZE_KEY: size(input_file),
+                                     CFG_ASSET_PARENTS_KEY: parents,
+                                     CFG_ASSET_CHILDREN_KEY: children}
+                        _LOGGER.info("updating '{}/{}:{}' tag attributes".format(genome, asset_name, tag_name))
+                        _LOGGER.debug("attr dict: {}".format(tag_attrs))
+                        rgc_server.update_tags(genome, asset_name, tag_name, tag_attrs)
+                        rgc_server.write(server_rgc_path)
                 else:
                     _LOGGER.debug("'{}' exists".format(target_file))
-                _LOGGER.debug("updating '{}/{}:{}' tag attributes...".format(genome, asset_name, tag_name))
-                tag_attrs = {CFG_ASSET_PATH_KEY: file_name,
-                               CFG_ARCHIVE_CHECKSUM_KEY: checksum(target_file),
-                               CFG_ARCHIVE_SIZE_KEY: size(target_file),
-                               CFG_ASSET_SIZE_KEY: size(input_file)}
-                rgc_server.update_tags(genome, asset_name, tag_name, tag_attrs)
-                rgc_server.write(server_rgc_path)
         if changed or not os.path.exists(genome_tarball):
             _LOGGER.info("creating genome tarball '{}' from '{}'".format(genome_tarball, genome_dir))
             try:
