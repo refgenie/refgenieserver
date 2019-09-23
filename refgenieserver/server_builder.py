@@ -84,10 +84,14 @@ def archive(rgc, genome, asset, force, cfg_path):
                 file_name = rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][asset_name][CFG_ASSET_TAGS_KEY][tag_name][CFG_ASSET_PATH_KEY]
                 target_file = os.path.join(target_dir, "{}__{}".format(asset_name, tag_name) + ".tgz")
                 input_file = os.path.join(genome_dir, file_name, tag_name)
+                # these attributes have to be read from the original RefGenConf in case the archiver just increments
+                # an existing server RefGenConf
                 parents = rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][asset_name][CFG_ASSET_TAGS_KEY][tag_name].\
                     setdefault(CFG_ASSET_PARENTS_KEY, [])
                 children = rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][asset_name][CFG_ASSET_TAGS_KEY][tag_name].\
                     setdefault(CFG_ASSET_CHILDREN_KEY, [])
+                seek_keys = rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][asset_name][CFG_ASSET_TAGS_KEY][tag_name].\
+                    setdefault(CFG_SEEK_KEYS_KEY, {})
                 if not os.path.exists(target_file) or force:
                     changed = True
                     _LOGGER.info("creating asset '{}' from '{}'".format(target_file, input_file))
@@ -98,6 +102,7 @@ def archive(rgc, genome, asset, force, cfg_path):
                         continue
                     else:
                         tag_attrs = {CFG_ASSET_PATH_KEY: file_name,
+                                     CFG_SEEK_KEYS_KEY: seek_keys,
                                      CFG_ARCHIVE_CHECKSUM_KEY: checksum(target_file),
                                      CFG_ARCHIVE_SIZE_KEY: size(target_file),
                                      CFG_ASSET_SIZE_KEY: size(input_file),
