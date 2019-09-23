@@ -77,3 +77,17 @@ def build_parser():
         dest="asset",
         help="request a specific asset build")
     return parser
+
+
+def preprocess_attrs(attrs):
+    """
+    Based on the CHANGED_KEYS mapping (new_key:old_key), rename the keys in the provided one
+
+    :param yacman.yacman.YacAttMap attrs: mapping to process
+    :return yacman.yacman.YacAttMap: mapping with renamed key names
+    """
+    for new_key in CHANGED_KEYS.keys():
+        if new_key in attrs:
+            attrs[CHANGED_KEYS[new_key]] = attrs[new_key]
+            del attrs[new_key]
+    return attrs

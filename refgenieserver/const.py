@@ -17,3 +17,6 @@ LOG_FORMAT = "%(levelname)s in %(funcName)s: %(message)s"
 MSG_404 = "No such {} on server"
 DESC_PLACEHOLDER = "No description"
 CHECKSUM_PLACEHOLDER = "No digest"
+# Here we define the key name changes; format: {"new_key": "old_key"}
+# This dict is then used to pre-process the attributes dict before serving to the old versions of the client
+CHANGED_KEYS = {CFG_ASSET_PATH_KEY: "path"}

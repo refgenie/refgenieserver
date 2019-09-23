@@ -2,6 +2,7 @@ from starlette.responses import FileResponse
 from starlette.requests import Request
 from fastapi import HTTPException, APIRouter
 from ..const import *
+from ..helpers import preprocess_attrs
 from ..main import rgc, templates, _LOGGER
 
 router = APIRouter()
@@ -65,7 +66,7 @@ def download_asset_attributes(genome: str, asset: str):
     the default tag has to be selected behind the scenes
     """
     try:
-        attrs = rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][asset][CFG_ASSET_TAGS_KEY][DEFAULT_TAG]
+        attrs = preprocess_attrs(rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][asset][CFG_ASSET_TAGS_KEY][DEFAULT_TAG])
         _LOGGER.info("Attributes returned for '{}/{}:{}': \n{}".format(asset, genome, DEFAULT_TAG, attrs))
         return attrs
     except KeyError:
