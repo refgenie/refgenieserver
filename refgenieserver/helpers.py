@@ -86,8 +86,10 @@ def preprocess_attrs(attrs):
     :param yacman.yacman.YacAttMap attrs: mapping to process
     :return yacman.yacman.YacAttMap: mapping with renamed key names
     """
+    from copy import deepcopy
+    attrs_cpy = deepcopy(attrs)
     for new_key in CHANGED_KEYS.keys():
-        if new_key in attrs:
-            attrs[CHANGED_KEYS[new_key]] = attrs[new_key]
-            del attrs[new_key]
-    return attrs
+        if new_key in attrs_cpy:
+            attrs_cpy[CHANGED_KEYS[new_key]] = attrs_cpy[new_key]
+            del attrs_cpy[new_key]
+    return attrs_cpy
