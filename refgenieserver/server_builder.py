@@ -3,7 +3,7 @@ import logging
 
 from subprocess import run
 from refgenconf import RefGenConf
-from refgenconf.exceptions import GenomeConfigFormatError
+from refgenconf.exceptions import GenomeConfigFormatError, ConfigNotCompliantError
 from ubiquerg import checksum, size, is_command_callable
 
 from .const import *
@@ -25,6 +25,10 @@ def archive(rgc, genome, asset, force, cfg_path):
     """
     global _LOGGER
     _LOGGER = logging.getLogger(PKG_NAME)
+    if float(rgc[CFG_VERSION_KEY]) < float(REQ_CFG_VERSION):
+        raise ConfigNotCompliantError("You need to update the genome config to v{} in order to use the archiver. "
+                                      "The required version can be generated with refgenie >= {}".
+                                      format(REQ_CFG_VERSION, REFGENIE_BY_CFG[REQ_CFG_VERSION]))
     try:
         server_rgc_path = os.path.join(rgc[CFG_ARCHIVE_KEY], os.path.basename(cfg_path))
     except KeyError:
@@ -53,10 +57,8 @@ def archive(rgc, genome, asset, force, cfg_path):
     for genome in genomes:
         genome_dir = os.path.join(rgc[CFG_FOLDER_KEY], genome)
         target_dir = os.path.join(rgc[CFG_ARCHIVE_KEY], genome)
-        genome_tarball = target_dir + ".tar"
         if not os.path.exists(target_dir):
             os.makedirs(target_dir)
-        changed = False
         genome_desc = rgc[CFG_GENOMES_KEY][genome].setdefault(CFG_GENOME_DESC_KEY, DESC_PLACEHOLDER)
         genome_checksum = rgc[CFG_GENOMES_KEY][genome].setdefault(CFG_CHECKSUM_KEY, CHECKSUM_PLACEHOLDER)
         genome_attrs = {CFG_GENOME_DESC_KEY: genome_desc,
@@ -93,14 +95,14 @@ def archive(rgc, genome, asset, force, cfg_path):
                 seek_keys = rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][asset_name][CFG_ASSET_TAGS_KEY][tag_name].\
                     setdefault(CFG_SEEK_KEYS_KEY, {})
                 if not os.path.exists(target_file) or force:
-                    changed = True
                     _LOGGER.info("creating asset '{}' from '{}'".format(target_file, input_file))
                     try:
-                        _check_tar(input_file, target_file, gz=True)
+                        _check_tgz(input_file, target_file, asset_name)
                     except OSError as e:
                         _LOGGER.warning(e)
                         continue
                     else:
+                        _LOGGER.info("updating '{}/{}:{}' tag attributes...".format(genome, asset_name, tag_name))
                         tag_attrs = {CFG_ASSET_PATH_KEY: file_name,
                                      CFG_SEEK_KEYS_KEY: seek_keys,
                                      CFG_ARCHIVE_CHECKSUM_KEY: checksum(target_file),
@@ -108,37 +110,32 @@ def archive(rgc, genome, asset, force, cfg_path):
                                      CFG_ASSET_SIZE_KEY: size(input_file),
                                      CFG_ASSET_PARENTS_KEY: parents,
                                      CFG_ASSET_CHILDREN_KEY: children}
-                        _LOGGER.info("updating '{}/{}:{}' tag attributes".format(genome, asset_name, tag_name))
                         _LOGGER.debug("attr dict: {}".format(tag_attrs))
                         rgc_server.update_tags(genome, asset_name, tag_name, tag_attrs)
                         rgc_server.write(server_rgc_path)
                 else:
                     _LOGGER.debug("'{}' exists".format(target_file))
-        if changed or not os.path.exists(genome_tarball):
-            _LOGGER.info("creating genome tarball '{}' from '{}'".format(genome_tarball, genome_dir))
-            try:
-                _check_tar(target_dir, genome_tarball)
-            except OSError as e:
-                _LOGGER.warning(e)
-                continue
     _LOGGER.info("builder finished; server config file saved to: '{}'".format(rgc_server.write(server_rgc_path)))
 
 
-def _check_tar(path, output, gz=False):
+def _check_tgz(path, output, asset_name):
     """
-    Checks if file exists and tar it.
+    Check if file exists and tar it.
     If gzipping is requested, the availability of pigz software is checked and used.
 
     :param str path: path to the file to be tarred
     :param str output: path to the result file
-    :param str gz: whether to gzip the created tar archive
+    :param str asset_name: name of the asset
     :raise OSError: if the file/directory meant to be archived does not exist
     """
+    # since the genome directory structure changed (added tag layer) in refgenie >= 0.7.0 we need to perform some
+    # extra file manipulation before archiving to make the produced archive compatible with new and old versions
+    # of refgenie CLI. The difference is that refgenie < 0.7.0 requires the asset to be archived with the asset-named
+    # enclosing dir, but with no tag-named directory as this concept did not exist back then.
     if os.path.exists(path):
-        if gz:
-            cmd = "cd {}; tar -cvf - . | pigz > {}" if is_command_callable("pigz") else "cd {}; tar -cvzf {} ."
-            run(cmd.format(path, output), shell=True)
-        else:
-            run("cd {}; tar -cvf {} .".format(path, output), shell=True)
+        cmd = "cd {p}; mkdir {an}; mv * {an}; "  # move the asset files to asset-named dir
+        cmd += "tar -cvf - {an} | pigz > {o}; " if is_command_callable("pigz") else "tar -cvzf {o} {an}; "  # tar gzip
+        cmd += "mv {an}/* .; rm -r {an}"  # move the files back to the tag-named dir and remove asset-named dir
+        run(cmd.format(p=path, o=output, an=asset_name), shell=True)
     else:
         raise OSError("entity '{}' does not exist".format(path))
