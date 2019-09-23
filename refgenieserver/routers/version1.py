@@ -41,8 +41,11 @@ def list_available_assets():
 async def download_asset(genome: str, asset: str):
     """
     Returns an archive. Requires the genome name and the asset name as an input.
+
+    Since the refgenconf.RefGenConf object structure has changed (tags were introduced),
+    the default tag has to be selected behind the scenes
     """
-    file_name = "{}{}".format(asset, ".tgz")
+    file_name = "{}__{}{}".format(asset, DEFAULT_TAG, ".tgz")
     asset_file = "{base}/{genome}/{file_name}".format(base=BASE_DIR, genome=genome, file_name=file_name)
     _LOGGER.info("serving asset file: '{}'".format(asset_file))
     if os.path.isfile(asset_file):
@@ -57,14 +60,17 @@ def download_asset_attributes(genome: str, asset: str):
     """
     Returns a dictionary of asset attributes, like archive size, archive checksum etc.
     Requires the genome name and the asset name as an input.
+
+    Since the refgenconf.RefGenConf object structure has changed (tags were introduced),
+    the default tag has to be selected behind the scenes
     """
     try:
-        attrs = rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][asset]
-        _LOGGER.info("attributes returned for asset '{}' and genome '{}': \n{}".format(asset, genome, attrs))
+        attrs = rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][asset][CFG_ASSET_TAGS_KEY][DEFAULT_TAG]
+        _LOGGER.info("Attributes returned for '{}/{}:{}': \n{}".format(asset, genome, DEFAULT_TAG, attrs))
         return attrs
     except KeyError:
-        _LOGGER.warning(_LOGGER.warning(MSG_404.format("genome or asset")))
-        raise HTTPException(status_code=404, detail=MSG_404.format("genome or asset"))
+        _LOGGER.warning(_LOGGER.warning(MSG_404.format("genome, asset or tag")))
+        raise HTTPException(status_code=404, detail=MSG_404.format("genome, asset or tag"))
 
 
 @router.get("/genome/{genome}")
