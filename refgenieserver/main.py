@@ -21,23 +21,17 @@ def main():
     logger_args = dict(name=PKG_NAME, fmt=LOG_FORMAT, level=5) if args.debug else dict(name=PKG_NAME, fmt=LOG_FORMAT)
     _LOGGER = logmuse.setup_logger(**logger_args)
     selected_cfg = select_genome_config(args.config)
-    rgc = RefGenConf(selected_cfg)
-    assert len(rgc) > 0, "You must provide a config file or set the '{}' environment variable".\
-        format(", ".join(CFG_ENV_VARS))
+    rgc = RefGenConf(selected_cfg, ro=True)  # this RefGenConf object will be used in the server, so it's read-only
+    assert len(rgc) > 0, "You must provide a config file or set the {} environment variable".\
+        format("or ".join(CFG_ENV_VARS))
     if args.command == "archive":
         archive(rgc, args.genome, args.asset, args.force, selected_cfg)
     elif args.command == "serve":
         # the router imports need to be after the RefGenConf object is declared
         from .routers import version1, version2
         app.include_router(version1.router)
-        app.include_router(
-            version1.router,
-            prefix="/v1"
-        )
-        app.include_router(
-            version2.router,
-            prefix="/v2"
-        )
+        app.include_router(version1.router, prefix="/v1")
+        app.include_router(version2.router, prefix="/v2")
         uvicorn.run(app, host="0.0.0.0", port=args.port)
 
 
