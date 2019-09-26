@@ -14,12 +14,19 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - `tag` query parameter to the endpoints: `/asset/{genome}/{asset}/archive`, `/asset/{genome}/{asset}` to retrieve the archive/metadata associated with tagged asset
 - API versioning support
 - API versions: `v1` (accessible with a `v1/` prefix and without any) and `v2` (accessible with `v2/` prefix)
+- `pigz` support. If the command is callable, it will be used for archiving
+- incomplete assets skipping in `refgenieserver archive`
+- config manipulation support in multi-process contexts, it's racefree, uses file locks
     
 ### Changed
 - command order from `refgenieserver -c CONFIG -d archive/serve` to `refgenieserver archive/serve -c CONFIG -d`
+- the genome tarballs are not produced
+- config v0.3 is required
 
 ### Fixed
-- `AttributeError` in `refgenieserver archive`; [#35](https://github.com/databio/refgenieserver/issues/35) 
+- `AttributeError` in `refgenieserver archive`; [#35](https://github.com/databio/refgenieserver/issues/35)
+- issue with asset attributes serving in API v1 after config format change
+
 ## [0.2.0] -- 2019-07-11
 
 ### Added
