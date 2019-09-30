@@ -23,8 +23,7 @@
             <p>
                 <b>This is a list of genomes hosted by this server:</b>
                 {% for genome in  genomes.keys() | sort %}
-                    <a href="#{{ genome }}">{{ genome }}</a>
-                    {{ "," if not loop.last }}
+                    <a href="#{{ genome }}">{{ genome }}</a>{{ "," if not loop.last }}
                 {% endfor %}
             </p>
         </div>
