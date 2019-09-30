@@ -55,8 +55,8 @@ def archive(rgc, genome, asset, force, cfg_path):
         _LOGGER.debug("Genomes to be processed: {}".format(str(genomes)))
     # original RefGenConf has been created in read-only mode,
     # make it RW compatible and point to new target path for server use or initialize a new object
-    rgc_server = RefGenConf(server_rgc_path, ro=False) \
-        if os.path.exists(server_rgc_path) else rgc.make_rw(server_rgc_path)
+    rgc_server = RefGenConf(filepath=server_rgc_path, writable=True) \
+        if os.path.exists(server_rgc_path) else rgc.make_writable(server_rgc_path)
     for genome in genomes:
         genome_dir = os.path.join(rgc[CFG_FOLDER_KEY], genome)
         target_dir = os.path.join(rgc[CFG_ARCHIVE_KEY], genome)

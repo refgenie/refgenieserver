@@ -21,7 +21,8 @@ def main():
     logger_args = dict(name=PKG_NAME, fmt=LOG_FORMAT, level=5) if args.debug else dict(name=PKG_NAME, fmt=LOG_FORMAT)
     _LOGGER = logmuse.setup_logger(**logger_args)
     selected_cfg = select_genome_config(args.config)
-    rgc = RefGenConf(selected_cfg, ro=True)  # this RefGenConf object will be used in the server, so it's read-only
+    # this RefGenConf object will be used in the server, so it's read-only
+    rgc = RefGenConf(filepath=selected_cfg, writable=False)
     assert len(rgc) > 0, "You must provide a config file or set the {} environment variable".\
         format("or ".join(CFG_ENV_VARS))
     if args.command == "archive":
