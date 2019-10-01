@@ -10,6 +10,8 @@ from .const import *
 
 global _LOGGER
 _LOGGER = logging.getLogger(PKG_NAME)
+
+
 def archive(rgc, registry_paths, force, remove, cfg_path):
     """
     Takes the RefGenConf object and builds individual tar archives
@@ -60,7 +62,6 @@ def archive(rgc, registry_paths, force, remove, cfg_path):
         exit(1)
     else:
         _LOGGER.debug("Genomes to be processed: {}".format(str(genomes)))
-
     counter = 0
     for genome in genomes:
         genome_dir = os.path.join(rgc[CFG_FOLDER_KEY], genome)
@@ -77,7 +78,7 @@ def archive(rgc, registry_paths, force, remove, cfg_path):
         assets = asset or rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY].keys()
         if not assets:
             _LOGGER.error("No assets found")
-            exit(1)
+            continue
         else:
             _LOGGER.debug("Assets to be processed: {}".format(str(assets)))
         for asset_name in assets if isinstance(assets, list) else [assets]:
@@ -153,18 +154,17 @@ def _check_tgz(path, output, asset_name):
 
 
 def _remove_archive(rgc, registry_paths):
+    """
+    Remove archives and corresponding entries from the RefGenConf object
+    
+    :param refgenconf.RefGenConf rgc: object to remove the entries from
+    :param list[dict] registry_paths: entries to remove
+    :return list[str]: removed file paths
+    """
     from glob import glob
-    """
-
-    :param rgc:
-    :param registry_paths:
-    :return list:
-    """
     ret = []
     for registry_path in _correct_registry_paths(registry_paths):
-        genome = registry_path["namespace"]
-        asset = registry_path["item"]
-        tag = registry_path["tag"]
+        genome, asset, tag = registry_path["namespace"], registry_path["item"], registry_path["tag"]
         try:
             if asset is None:
                 [rgc.remove_assets(genome, x, None) for x in rgc.list_assets_by_genome(genome)]

@@ -22,7 +22,7 @@
             <p class="text-justify">Welcome to <i>refgenomes.databio.org</i>. Here we provide a web interface and a RESTful API to access genome assets for popular reference genome assemblies. This server is running <i>refgenieserver</i>. You may use the <a href="http://refgenie.databio.org">refgenie CLI</a> to automate downloading and organizing these assets using <code>refgenie pull ...</code> from the command line to retrieve archived genome assets.</p>
             <p>
                 <b>This is a list of genomes hosted by this server:</b>
-                {% for genome in  genomes.keys() | sort %}
+                {% for genome in genomes.keys() | sort %}
                     <a href="#{{ genome }}">{{ genome }}</a>{{ "," if not loop.last }}
                 {% endfor %}
             </p>
