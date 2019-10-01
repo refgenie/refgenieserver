@@ -91,7 +91,9 @@ def archive(rgc, registry_paths, force, remove, cfg_path):
         for asset_name in assets if isinstance(assets, list) else [assets]:
             asset_desc = rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][asset_name].setdefault(CFG_ASSET_DESC_KEY,
                                                                                              DESC_PLACEHOLDER)
-            asset_attrs = {CFG_ASSET_DESC_KEY: asset_desc}
+            default_tag = rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][asset_name].setdefault(CFG_ASSET_DEFAULT_TAG_KEY, DEFAULT_TAG)
+            asset_attrs = {CFG_ASSET_DESC_KEY: asset_desc,
+                           CFG_ASSET_DEFAULT_TAG_KEY: default_tag}
             _LOGGER.debug("updating '{}/{}' asset attributes...".format(genome, asset_name))
             rgc_server.update_assets(genome, asset_name, asset_attrs)
             tag = tag_list[counter] if tag_list is not None else None
@@ -134,6 +136,7 @@ def archive(rgc, registry_paths, force, remove, cfg_path):
                 else:
                     _LOGGER.debug("'{}' exists".format(target_file))
         counter += 1
+    rgc_server = _purge_nonservable(rgc_server)
     _LOGGER.info("builder finished; server config file saved to: '{}'".format(rgc_server.write(server_rgc_path)))
 
 
@@ -158,6 +161,24 @@ def _check_tgz(path, output, asset_name):
         run(cmd.format(p=path, o=output, an=asset_name), shell=True)
     else:
         raise OSError("entity '{}' does not exist".format(path))
+
+
+def _purge_nonservable(rgc):
+    """
+    Remove entries in RefGenConf object that were not processed by the archiver and should not be served
+
+    :param refgenconf.RefGenConf rgc: object to check
+    :return refgenconf.RefGenConf: object with just the servale entries
+    """
+    def _check_servable(rgc, genome, asset, tag):
+        tag_data = rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][asset][CFG_ASSET_TAGS_KEY][tag]
+        return all([r in tag_data for r in [CFG_ARCHIVE_CHECKSUM_KEY, CFG_ARCHIVE_SIZE_KEY]])
+    for genome_name, genome in rgc[CFG_GENOMES_KEY].items():
+        for asset_name, asset in genome[CFG_ASSETS_KEY].items():
+            for tag_name, tag in asset[CFG_ASSET_TAGS_KEY].items():
+                if not _check_servable(rgc, genome_name, asset_name, tag_name):
+                    rgc.remove_assets(genome_name, asset_name, tag_name)
+    return rgc
 
 
 def _remove_archive(rgc, registry_paths):
