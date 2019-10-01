@@ -9,7 +9,7 @@ from ubiquerg import checksum, size, is_command_callable
 from .const import *
 
 
-def archive(rgc, genome, asset, force, cfg_path):
+def archive(rgc, registry_paths, force, remove, cfg_path):
     """
     Takes the RefGenConf object and builds individual tar archives
     that can be then served with 'refgenieserver serve'. Additionally determines their md5 checksums, file sizes and
@@ -20,7 +20,9 @@ def archive(rgc, genome, asset, force, cfg_path):
     :param RefGenConf rgc: configuration object with the data to build the servable archives for
     :param str genome: genome to build archives for
     :param str asset: asset to build archives for
+    :param str tag: tag to build archives for
     :param bool force: whether to force the build of archive, regardless of its existence
+    :param bool remove: whether remove specified genome/asset:tag from the archive
     :param str cfg_path: config file path
     """
     global _LOGGER
@@ -34,20 +36,15 @@ def archive(rgc, genome, asset, force, cfg_path):
     except KeyError:
         raise GenomeConfigFormatError("The config '{}' is missing a '{}' entry. Can't determine the desired archive.".
                                       format(cfg_path, CFG_ARCHIVE_KEY))
-    if asset and not genome:
-        _LOGGER.error("You need to specify a genome (--genome) to request a specific asset build (--asset)")
-        sys.exit(1)
     if force:
         _LOGGER.info("build forced; file existence will be ignored")
-    if genome:
-        _LOGGER.info("specific build requested for a genome: {}".format(genome))
-        genomes = genome
-        if asset:
-            _LOGGER.info("specific build requested for assets: {}".format(asset))
         if os.path.exists(server_rgc_path):
             _LOGGER.debug("'{}' file was found and will be updated".format(server_rgc_path))
-    else:
+    if registry_paths is None:
         genomes = rgc.genomes_list()
+    else:
+        genomes, asset, tag = _get_paths_element(registry_paths, "namespace"), \
+                              _get_paths_element(registry_paths, "item"), _get_paths_element(registry_paths, "tag")
     if not genomes:
         _LOGGER.error("No genomes found")
         exit(1)
@@ -57,6 +54,7 @@ def archive(rgc, genome, asset, force, cfg_path):
     # make it RW compatible and point to new target path for server use or initialize a new object
     rgc_server = RefGenConf(filepath=server_rgc_path, writable=True) \
         if os.path.exists(server_rgc_path) else rgc.make_writable(server_rgc_path)
+    counter = 0
     for genome in genomes:
         genome_dir = os.path.join(rgc[CFG_FOLDER_KEY], genome)
         target_dir = os.path.join(rgc[CFG_ARCHIVE_KEY], genome)
@@ -68,20 +66,20 @@ def archive(rgc, genome, asset, force, cfg_path):
                         CFG_CHECKSUM_KEY: genome_checksum}
         rgc_server.update_genomes(genome, genome_attrs)
         _LOGGER.debug("updating '{}' genome attributes...".format(genome))
-        assets = asset or rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY].keys()
+        assets = asset[counter] or rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY].keys()
         if not assets:
             _LOGGER.error("No assets found")
             exit(1)
         else:
             _LOGGER.debug("Assets to be processed: {}".format(str(assets)))
-        for asset_name in assets:
+        for asset_name in assets if isinstance(assets, list) else [assets]:
             asset_desc = rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][asset_name].setdefault(CFG_ASSET_DESC_KEY,
                                                                                              DESC_PLACEHOLDER)
             asset_attrs = {CFG_ASSET_DESC_KEY: asset_desc}
             _LOGGER.debug("updating '{}/{}' asset attributes...".format(genome, asset_name))
             rgc_server.update_assets(genome, asset_name, asset_attrs)
-            tags = rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][asset_name][CFG_ASSET_TAGS_KEY].keys()
-            for tag_name in tags:
+            tags = tag[counter] or rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][asset_name][CFG_ASSET_TAGS_KEY].keys()
+            for tag_name in tags if isinstance(tags, list) else [tags]:
                 if not rgc.is_asset_complete(genome, asset_name, tag_name):
                     _LOGGER.info("'{}/{}:{}' is incomplete, skipping".format(genome, asset_name, tag_name))
                     rgc_server.remove_assets(genome, asset_name, tag_name)
@@ -118,6 +116,7 @@ def archive(rgc, genome, asset, force, cfg_path):
                         rgc_server.write()
                 else:
                     _LOGGER.debug("'{}' exists".format(target_file))
+        counter += 1
     _LOGGER.info("builder finished; server config file saved to: '{}'".format(rgc_server.write(server_rgc_path)))
 
 
@@ -142,3 +141,47 @@ def _check_tgz(path, output, asset_name):
         run(cmd.format(p=path, o=output, an=asset_name), shell=True)
     else:
         raise OSError("entity '{}' does not exist".format(path))
+
+
+def _remove_archive(rgc, genome, asset, tag):
+    """
+
+    :param rgc:
+    :param genome:
+    :param asset:
+    :param tag:
+    :return:
+    """
+
+
+def _get_paths_element(registry_paths, element):
+    """
+    Extract the specific element from a collection of registry paths
+
+    :param list[dict] registry_paths: output of parse_registry_path
+    :param str element: 'protocol', 'namespace', 'item' or 'tag'
+    :return list[str]: extracted elements
+    """
+    def _correct_registry_paths(registry_paths):
+        """
+        parse_registry_path function recognizes the 'item' as the central element of the asset registry path.
+        We require the 'namespace' to be the central one. Consequently, this function swaps them.
+
+        :param list[dict] registry_paths: output of parse_registry_path
+        :return list[dict]: corrected registry paths
+        """
+        def _swap(rp):
+            """
+            Swaps dict values of 'namespace' with 'item' keys
+
+            :param dict rp: dict to swap values for
+            :return dict: dict with swapped values
+            """
+            rp["namespace"] = rp["item"]
+            rp["item"] = None
+            return rp
+        return [_swap(x) if x["namespace"] is None else x for x in registry_paths]
+    return [x[element] for x in _correct_registry_paths(registry_paths)]
+
+
+

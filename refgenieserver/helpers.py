@@ -70,7 +70,7 @@ def build_parser():
         dest="remove",
         help="Remove selected genome, genome/asset or genome/asset:tag")
     sps["archive"].add_argument(
-        "asset_registry_paths", metavar="asset-registry-paths", type=str, nargs='+',
+        "asset_registry_paths", metavar="asset-registry-paths", type=str, nargs='*',
         help="One or more registry path strings that identify assets, e.g. hg38/fasta:tag")
     return parser
 
