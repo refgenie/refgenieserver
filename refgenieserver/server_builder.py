@@ -39,18 +39,25 @@ def archive(rgc, registry_paths, force, remove, cfg_path):
         _LOGGER.info("build forced; file existence will be ignored")
         if os.path.exists(server_rgc_path):
             _LOGGER.debug("'{}' file was found and will be updated".format(server_rgc_path))
+    _LOGGER.debug("registry_paths: {}".format(registry_paths))
+
     # original RefGenConf has been created in read-only mode,
     # make it RW compatible and point to new target path for server use or initialize a new object
-    rgc_server = RefGenConf(filepath=server_rgc_path, writable=True) \
-        if os.path.exists(server_rgc_path) else rgc.make_writable(server_rgc_path)
-    _LOGGER.debug("registry_paths: {}".format(registry_paths))
-    if remove:
-        if not registry_paths:
-            _LOGGER.error("To remove archives you have to specify them. Use 'asset_registry_path' argument.")
+    if os.path.exists(server_rgc_path):
+        rgc_server = RefGenConf(filepath=server_rgc_path, writable=True)
+        if remove:
+            if not registry_paths:
+                _LOGGER.error("To remove archives you have to specify them. Use 'asset_registry_path' argument.")
+                exit(1)
+            _remove_archive(rgc_server, registry_paths)
+            rgc_server.write()
+            exit(0)
+    else:
+        if remove:
+            _LOGGER.error("You can't remove archives since the genome_archive path does not exist yet.")
             exit(1)
-        _remove_archive(rgc_server, registry_paths)
-        rgc_server.write()
-        exit(0)
+        rgc_server = rgc.make_writable(server_rgc_path)
+
     if registry_paths:
         genomes, asset_list, tag_list = _get_paths_element(registry_paths, "namespace"), \
                               _get_paths_element(registry_paths, "item"), _get_paths_element(registry_paths, "tag")
@@ -172,12 +179,16 @@ def _remove_archive(rgc, registry_paths):
                 rgc.remove_assets(genome, asset, tag)
             _LOGGER.info("{}/{}:{} removed".format(genome, asset, tag))
         except KeyError:
-            _LOGGER.warning("{}/{}:{} not found and not removed".format(genome, asset, tag))
+            _LOGGER.warning("{}/{}:{} not found and not removed.".format(genome, asset, tag))
             continue
         ret.append(os.path.join(rgc[CFG_ARCHIVE_KEY], genome, "{}__{}".format(asset or "*", tag or "*") + ".tgz"))
         for p in ret:
             archives = glob(p)
-            [os.remove(x) for x in archives]
+            for path in archives:
+                try:
+                    os.remove(path)
+                except FileNotFoundError:
+                    _LOGGER.warning("File does not exist: {}".format(path))
     return ret
 
 
