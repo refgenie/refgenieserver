@@ -8,6 +8,7 @@ from starlette.templating import Jinja2Templates
 import logmuse
 import sys
 import uvicorn
+from ubiquerg import parse_registry_path
 
 app = FastAPI()
 app.mount("/" + STATIC_DIRNAME, StaticFiles(directory=STATIC_PATH), name=STATIC_DIRNAME)
@@ -26,7 +27,7 @@ def main():
     assert len(rgc) > 0, "You must provide a config file or set the {} environment variable".\
         format("or ".join(CFG_ENV_VARS))
     if args.command == "archive":
-        archive(rgc, args.genome, args.asset, args.force, selected_cfg)
+        archive(rgc, [parse_registry_path(x) for x in args.asset_registry_paths], args.force, args.remove, selected_cfg)
     elif args.command == "serve":
         # the router imports need to be after the RefGenConf object is declared
         from .routers import version1, version2

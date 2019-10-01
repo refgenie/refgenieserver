@@ -65,17 +65,13 @@ def build_parser():
         dest="force",
         help="whether the server file tree should be rebuilt even if exists")
     sps["archive"].add_argument(
-        "-g", "--genome",
-        dest="genome",
-        nargs=1,
-        type=str,
-        help="request a specific genome build")
+        "-r", "--remove",
+        action="store_true",
+        dest="remove",
+        help="Remove selected genome, genome/asset or genome/asset:tag")
     sps["archive"].add_argument(
-        "-a", "--asset",
-        type=str,
-        nargs="*",
-        dest="asset",
-        help="request a specific asset build")
+        "asset_registry_paths", metavar="asset-registry-paths", type=str, nargs='+',
+        help="One or more registry path strings that identify assets, e.g. hg38/fasta:tag")
     return parser
 
 
