@@ -8,7 +8,8 @@ from ubiquerg import checksum, size, is_command_callable
 
 from .const import *
 
-
+global _LOGGER
+_LOGGER = logging.getLogger(PKG_NAME)
 def archive(rgc, registry_paths, force, remove, cfg_path):
     """
     Takes the RefGenConf object and builds individual tar archives
@@ -23,8 +24,6 @@ def archive(rgc, registry_paths, force, remove, cfg_path):
     :param bool remove: whether remove specified genome/asset:tag from the archive
     :param str cfg_path: config file path
     """
-    global _LOGGER
-    _LOGGER = logging.getLogger(PKG_NAME)
     if float(rgc[CFG_VERSION_KEY]) < float(REQ_CFG_VERSION):
         raise ConfigNotCompliantError("You need to update the genome config to v{} in order to use the archiver. "
                                       "The required version can be generated with refgenie >= {}".
@@ -38,7 +37,18 @@ def archive(rgc, registry_paths, force, remove, cfg_path):
         _LOGGER.info("build forced; file existence will be ignored")
         if os.path.exists(server_rgc_path):
             _LOGGER.debug("'{}' file was found and will be updated".format(server_rgc_path))
+    # original RefGenConf has been created in read-only mode,
+    # make it RW compatible and point to new target path for server use or initialize a new object
+    rgc_server = RefGenConf(filepath=server_rgc_path, writable=True) \
+        if os.path.exists(server_rgc_path) else rgc.make_writable(server_rgc_path)
     _LOGGER.debug("registry_paths: {}".format(registry_paths))
+    if remove:
+        if not registry_paths:
+            _LOGGER.error("To remove archives you have to specify them. Use 'asset_registry_path' argument.")
+            exit(1)
+        _remove_archive(rgc_server, registry_paths)
+        rgc_server.write()
+        exit(0)
     if registry_paths:
         genomes, asset_list, tag_list = _get_paths_element(registry_paths, "namespace"), \
                               _get_paths_element(registry_paths, "item"), _get_paths_element(registry_paths, "tag")
@@ -50,10 +60,7 @@ def archive(rgc, registry_paths, force, remove, cfg_path):
         exit(1)
     else:
         _LOGGER.debug("Genomes to be processed: {}".format(str(genomes)))
-    # original RefGenConf has been created in read-only mode,
-    # make it RW compatible and point to new target path for server use or initialize a new object
-    rgc_server = RefGenConf(filepath=server_rgc_path, writable=True) \
-        if os.path.exists(server_rgc_path) else rgc.make_writable(server_rgc_path)
+
     counter = 0
     for genome in genomes:
         genome_dir = os.path.join(rgc[CFG_FOLDER_KEY], genome)
@@ -145,16 +152,54 @@ def _check_tgz(path, output, asset_name):
         raise OSError("entity '{}' does not exist".format(path))
 
 
-def _remove_archive(rgc, genome, asset, tag):
+def _remove_archive(rgc, registry_paths):
+    from glob import glob
     """
 
     :param rgc:
-    :param genome:
-    :param asset:
-    :param tag:
-    :return:
+    :param registry_paths:
+    :return list:
     """
+    ret = []
+    for registry_path in _correct_registry_paths(registry_paths):
+        genome = registry_path["namespace"]
+        asset = registry_path["item"]
+        tag = registry_path["tag"]
+        try:
+            if asset is None:
+                [rgc.remove_assets(genome, x, None) for x in rgc.list_assets_by_genome(genome)]
+            else:
+                rgc.remove_assets(genome, asset, tag)
+            _LOGGER.info("{}/{}:{} removed".format(genome, asset, tag))
+        except KeyError:
+            _LOGGER.warning("{}/{}:{} not found and not removed".format(genome, asset, tag))
+            continue
+        ret.append(os.path.join(rgc[CFG_ARCHIVE_KEY], genome, "{}__{}".format(asset or "*", tag or "*") + ".tgz"))
+        for p in ret:
+            archives = glob(p)
+            [os.remove(x) for x in archives]
+    return ret
 
+
+def _correct_registry_paths(registry_paths):
+    """
+    parse_registry_path function recognizes the 'item' as the central element of the asset registry path.
+    We require the 'namespace' to be the central one. Consequently, this function swaps them.
+
+    :param list[dict] registry_paths: output of parse_registry_path
+    :return list[dict]: corrected registry paths
+    """
+    def _swap(rp):
+        """
+        Swaps dict values of 'namespace' with 'item' keys
+
+        :param dict rp: dict to swap values for
+        :return dict: dict with swapped values
+        """
+        rp["namespace"] = rp["item"]
+        rp["item"] = None
+        return rp
+    return [_swap(x) if x["namespace"] is None else x for x in registry_paths]
 
 
 def _get_paths_element(registry_paths, element):
@@ -165,25 +210,6 @@ def _get_paths_element(registry_paths, element):
     :param str element: 'protocol', 'namespace', 'item' or 'tag'
     :return list[str]: extracted elements
     """
-    def _correct_registry_paths(registry_paths):
-        """
-        parse_registry_path function recognizes the 'item' as the central element of the asset registry path.
-        We require the 'namespace' to be the central one. Consequently, this function swaps them.
-
-        :param list[dict] registry_paths: output of parse_registry_path
-        :return list[dict]: corrected registry paths
-        """
-        def _swap(rp):
-            """
-            Swaps dict values of 'namespace' with 'item' keys
-
-            :param dict rp: dict to swap values for
-            :return dict: dict with swapped values
-            """
-            rp["namespace"] = rp["item"]
-            rp["item"] = None
-            return rp
-        return [_swap(x) if x["namespace"] is None else x for x in registry_paths]
     return [x[element] for x in _correct_registry_paths(registry_paths)]
 
 
