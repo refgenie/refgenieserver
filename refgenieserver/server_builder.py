@@ -18,9 +18,7 @@ def archive(rgc, registry_paths, force, remove, cfg_path):
     `genome_server` in the original config and update it so that no archive metadata is lost
 
     :param RefGenConf rgc: configuration object with the data to build the servable archives for
-    :param str genome: genome to build archives for
-    :param str asset: asset to build archives for
-    :param str tag: tag to build archives for
+    :param list[dict] registry_paths: a collection of mappings that identifies the assets to update
     :param bool force: whether to force the build of archive, regardless of its existence
     :param bool remove: whether remove specified genome/asset:tag from the archive
     :param str cfg_path: config file path
@@ -40,11 +38,13 @@ def archive(rgc, registry_paths, force, remove, cfg_path):
         _LOGGER.info("build forced; file existence will be ignored")
         if os.path.exists(server_rgc_path):
             _LOGGER.debug("'{}' file was found and will be updated".format(server_rgc_path))
-    if registry_paths is None:
-        genomes = rgc.genomes_list()
-    else:
-        genomes, asset, tag = _get_paths_element(registry_paths, "namespace"), \
+    _LOGGER.debug("registry_paths: {}".format(registry_paths))
+    if registry_paths:
+        genomes, asset_list, tag_list = _get_paths_element(registry_paths, "namespace"), \
                               _get_paths_element(registry_paths, "item"), _get_paths_element(registry_paths, "tag")
+    else:
+        genomes = rgc.genomes_list()
+        asset_list, tag_list = None, None
     if not genomes:
         _LOGGER.error("No genomes found")
         exit(1)
@@ -66,7 +66,8 @@ def archive(rgc, registry_paths, force, remove, cfg_path):
                         CFG_CHECKSUM_KEY: genome_checksum}
         rgc_server.update_genomes(genome, genome_attrs)
         _LOGGER.debug("updating '{}' genome attributes...".format(genome))
-        assets = asset[counter] or rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY].keys()
+        asset = asset_list[counter] if asset_list is not None else None
+        assets = asset or rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY].keys()
         if not assets:
             _LOGGER.error("No assets found")
             exit(1)
@@ -78,7 +79,8 @@ def archive(rgc, registry_paths, force, remove, cfg_path):
             asset_attrs = {CFG_ASSET_DESC_KEY: asset_desc}
             _LOGGER.debug("updating '{}/{}' asset attributes...".format(genome, asset_name))
             rgc_server.update_assets(genome, asset_name, asset_attrs)
-            tags = tag[counter] or rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][asset_name][CFG_ASSET_TAGS_KEY].keys()
+            tag = tag_list[counter] if tag_list is not None else None
+            tags = tag or rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][asset_name][CFG_ASSET_TAGS_KEY].keys()
             for tag_name in tags if isinstance(tags, list) else [tags]:
                 if not rgc.is_asset_complete(genome, asset_name, tag_name):
                     _LOGGER.info("'{}/{}:{}' is incomplete, skipping".format(genome, asset_name, tag_name))
@@ -152,6 +154,7 @@ def _remove_archive(rgc, genome, asset, tag):
     :param tag:
     :return:
     """
+
 
 
 def _get_paths_element(registry_paths, element):
