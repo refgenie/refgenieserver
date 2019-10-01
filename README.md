@@ -93,7 +93,13 @@ This command will:
 In case you already have some of the assets archived and just want to add a new one, use:
 
 ```
-refgenieserver archive -c CONFIG -g GENOME -a ASSET
+refgenieserver archive -c CONFIG GENOME/ASSET:TAG
+```
+
+In case you want to remove an unwanted archive, add an `-r` flag:
+
+```
+refgenieserver archive -c CONFIG -r GENOME/ASSET:TAG
 ```
 
 

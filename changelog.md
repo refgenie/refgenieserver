@@ -17,11 +17,14 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - `pigz` support. If the command is callable, it will be used for archiving
 - incomplete assets skipping in `refgenieserver archive`
 - config manipulation support in multi-process contexts, it's racefree, uses file locks
+- archive removal support (added `-r` option in `refgenieserver archive`)
+- asset registry path support in `refgenieserver archive`
     
 ### Changed
 - command order from `refgenieserver -c CONFIG -d archive/serve` to `refgenieserver archive/serve -c CONFIG -d`
 - the genome tarballs are not produced
 - config v0.3 is required
+- `-g` and `-a` flags to asset registry path
 
 ### Fixed
 - `AttributeError` in `refgenieserver archive`; [#35](https://github.com/databio/refgenieserver/issues/35)
