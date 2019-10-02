@@ -155,9 +155,10 @@ def _check_tgz(path, output, asset_name):
     # of refgenie CLI. The difference is that refgenie < 0.7.0 requires the asset to be archived with the asset-named
     # enclosing dir, but with no tag-named directory as this concept did not exist back then.
     if os.path.exists(path):
-        cmd = "cd {p}; mkdir {an}; mv * {an}; "  # move the asset files to asset-named dir
+        cmd = "cd {p}; mkdir {an}; mv * {an}  2>/dev/null; "  # move the asset files to asset-named dir
         cmd += "tar -cvf - {an} | pigz > {o}; " if is_command_callable("pigz") else "tar -cvzf {o} {an}; "  # tar gzip
         cmd += "mv {an}/* .; rm -r {an}"  # move the files back to the tag-named dir and remove asset-named dir
+        _LOGGER.debug("command: {}".format(cmd.format(p=path, o=output, an=asset_name)))
         run(cmd.format(p=path, o=output, an=asset_name), shell=True)
     else:
         raise OSError("entity '{}' does not exist".format(path))
