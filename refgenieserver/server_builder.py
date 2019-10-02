@@ -210,6 +210,11 @@ def _remove_archive(rgc, registry_paths):
                     os.remove(path)
                 except FileNotFoundError:
                     _LOGGER.warning("File does not exist: {}".format(path))
+        try:
+            os.removedirs(os.path.join(rgc[CFG_ARCHIVE_KEY], genome))
+            _LOGGER.info("Removed empty genome directory: {}".format(genome))
+        except OSError:
+            pass
     return ret
 
 
