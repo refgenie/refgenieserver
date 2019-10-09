@@ -3,7 +3,6 @@ from starlette.requests import Request
 from fastapi import HTTPException, APIRouter
 from ..const import *
 from ..main import rgc, templates, _LOGGER
-
 router = APIRouter()
 
 
@@ -28,7 +27,7 @@ def list_available_genomes():
     return rgc.genomes_list()
 
 
-@router.get("/assets")
+@router.get("/assets", operation_id=API_ID_ASSETS)
 def list_available_assets():
     """
     Returns a list of all assets that can be downloaded. No inputs required.
@@ -38,7 +37,7 @@ def list_available_assets():
     return ret_dict
 
 
-@router.get("/asset/{genome}/{asset}/archive")
+@router.get("/asset/{genome}/{asset}/archive", operation_id=API_ID_ARCHIVE)
 async def download_asset(genome: str, asset: str, tag: str = None):
     """
     Returns an archive. Requires the genome name and the asset name as an input.
@@ -52,11 +51,12 @@ async def download_asset(genome: str, asset: str, tag: str = None):
     if os.path.isfile(asset_file):
         return FileResponse(asset_file, filename=file_name, media_type="application/octet-stream")
     else:
-        _LOGGER.warning(MSG_404.format("asset"))
-        raise HTTPException(status_code=404, detail=MSG_404.format("asset"))
+        msg = MSG_404.format("asset ({})".format(asset))
+        _LOGGER.warning(msg)
+        raise HTTPException(status_code=404, detail=msg)
 
 
-@router.get("/asset/{genome}/{asset}/default_tag")
+@router.get("/asset/{genome}/{asset}/default_tag", operation_id=API_ID_DEFAULT_TAG)
 async def get_asset_default_tag(genome: str, asset: str):
     """
     Returns the default tag name. Requires genome name and asset name as an input.
@@ -64,7 +64,7 @@ async def get_asset_default_tag(genome: str, asset: str):
     return rgc.get_default_tag(genome, asset)
 
 
-@router.get("/asset/{genome}/{asset}/{tag}/asset_digest")
+@router.get("/asset/{genome}/{asset}/{tag}/asset_digest", operation_id=API_ID_DIGEST)
 async def get_asset_digest(genome: str, asset: str, tag: str):
     """
     Returns the asset digest. Requires genome name asset name and tag name as an input.
@@ -72,11 +72,12 @@ async def get_asset_digest(genome: str, asset: str, tag: str):
     try:
         return rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][asset][CFG_ASSET_TAGS_KEY][tag][CFG_ASSET_CHECKSUM_KEY]
     except KeyError:
-        _LOGGER.warning(MSG_404.format("genome/asset:tag combination"))
-        raise HTTPException(status_code=404, detail=MSG_404.format("genome/asset:tag combination"))
+        msg = MSG_404.format("genome/asset:tag combination ({}/{}:{})".format(genome, asset, tag))
+        _LOGGER.warning(msg)
+        raise HTTPException(status_code=404, detail=msg)
 
 
-@router.get("/asset/{genome}/{asset}")
+@router.get("/asset/{genome}/{asset}", operation_id=API_ID_ASSET_ATTRS)
 def download_asset_attributes(genome: str, asset: str, tag: str = None):
     """
     Returns a dictionary of asset attributes, like archive size, archive digest etc.
@@ -89,8 +90,9 @@ def download_asset_attributes(genome: str, asset: str, tag: str = None):
         _LOGGER.info("attributes returned for {}/{}:{}: \n{}".format(genome, asset, tag, attrs))
         return attrs
     except KeyError:
-        _LOGGER.warning(_LOGGER.warning(MSG_404.format("genome/asset:tag combination")))
-        raise HTTPException(status_code=404, detail=MSG_404.format("genome/asset:tag combination"))
+        msg = MSG_404.format("genome/asset:tag combination ({}/{}:{})".format(genome, asset, tag))
+        _LOGGER.warning(msg)
+        raise HTTPException(status_code=404, detail=msg)
 
 
 @router.get("/genome/{genome}/genome_digest")
@@ -103,8 +105,9 @@ async def download_genome_digest(genome: str):
         _LOGGER.info("digest returned for '{}': {}".format(genome, digest))
         return digest
     except KeyError:
-        _LOGGER.warning(MSG_404.format("genome"))
-        raise HTTPException(status_code=404, detail=MSG_404.format("genome"))
+        msg = MSG_404.format("genome ({})".format(genome))
+        _LOGGER.warning(msg)
+        raise HTTPException(status_code=404, detail=msg)
 
 
 @router.get("/genome/{genome}")
@@ -118,8 +121,9 @@ async def download_genome_attributes(genome: str):
         _LOGGER.info("attributes returned for genome '{}': \n{}".format(genome, str(attrs)))
         return attrs
     except KeyError:
-        _LOGGER.warning(MSG_404.format("genome"))
-        raise HTTPException(status_code=404, detail=MSG_404.format("genome"))
+        msg = MSG_404.format("genome ({})".format(genome))
+        _LOGGER.warning(msg)
+        raise HTTPException(status_code=404, detail=msg)
 
 
 @router.get("/genomes/{asset}")
