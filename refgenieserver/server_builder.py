@@ -91,7 +91,8 @@ def archive(rgc, registry_paths, force, remove, cfg_path):
         for asset_name in assets if isinstance(assets, list) else [assets]:
             asset_desc = rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][asset_name].setdefault(CFG_ASSET_DESC_KEY,
                                                                                              DESC_PLACEHOLDER)
-            default_tag = rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][asset_name].setdefault(CFG_ASSET_DEFAULT_TAG_KEY, DEFAULT_TAG)
+            default_tag = rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][asset_name].setdefault(CFG_ASSET_DEFAULT_TAG_KEY,
+                                                                                              DEFAULT_TAG)
             asset_attrs = {CFG_ASSET_DESC_KEY: asset_desc,
                            CFG_ASSET_DEFAULT_TAG_KEY: default_tag}
             _LOGGER.debug("updating '{}/{}' asset attributes...".format(genome, asset_name))
@@ -114,6 +115,8 @@ def archive(rgc, registry_paths, force, remove, cfg_path):
                     setdefault(CFG_ASSET_CHILDREN_KEY, [])
                 seek_keys = rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][asset_name][CFG_ASSET_TAGS_KEY][tag_name].\
                     setdefault(CFG_SEEK_KEYS_KEY, {})
+                asset_digest = rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][asset_name][CFG_ASSET_TAGS_KEY][tag_name].\
+                    setdefault(CFG_ASSET_CHECKSUM_KEY, None)
                 if not os.path.exists(target_file) or force:
                     _LOGGER.info("creating asset '{}' from '{}'".format(target_file, input_file))
                     try:
@@ -129,7 +132,8 @@ def archive(rgc, registry_paths, force, remove, cfg_path):
                                      CFG_ARCHIVE_SIZE_KEY: size(target_file),
                                      CFG_ASSET_SIZE_KEY: size(input_file),
                                      CFG_ASSET_PARENTS_KEY: parents,
-                                     CFG_ASSET_CHILDREN_KEY: children}
+                                     CFG_ASSET_CHILDREN_KEY: children,
+                                     CFG_ASSET_CHECKSUM_KEY: asset_digest}
                         _LOGGER.debug("attr dict: {}".format(tag_attrs))
                         rgc_server.update_tags(genome, asset_name, tag_name, tag_attrs)
                         rgc_server.write()
@@ -169,7 +173,7 @@ def _purge_nonservable(rgc):
     Remove entries in RefGenConf object that were not processed by the archiver and should not be served
 
     :param refgenconf.RefGenConf rgc: object to check
-    :return refgenconf.RefGenConf: object with just the servale entries
+    :return refgenconf.RefGenConf: object with just the servable entries
     """
     def _check_servable(rgc, genome, asset, tag):
         tag_data = rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][asset][CFG_ASSET_TAGS_KEY][tag]
