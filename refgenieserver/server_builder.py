@@ -1,6 +1,7 @@
 import sys
 import logging
 
+from glob import glob
 from subprocess import run
 from refgenconf import RefGenConf
 from refgenconf.exceptions import GenomeConfigFormatError, ConfigNotCompliantError
@@ -121,6 +122,8 @@ def archive(rgc, registry_paths, force, remove, cfg_path):
                     _LOGGER.info("creating asset '{}' from '{}'".format(target_file, input_file))
                     try:
                         _check_tgz(input_file, target_file, asset_name)
+                        _copy_recipe(input_file, target_dir, asset_name, tag_name)
+                        _copy_log(input_file, target_dir)
                     except OSError as e:
                         _LOGGER.warning(e)
                         continue
@@ -159,13 +162,49 @@ def _check_tgz(path, output, asset_name):
     # of refgenie CLI. The difference is that refgenie < 0.7.0 requires the asset to be archived with the asset-named
     # enclosing dir, but with no tag-named directory as this concept did not exist back then.
     if os.path.exists(path):
-        cmd = "cd {p}; mkdir {an}; mv * {an}  2>/dev/null; "  # move the asset files to asset-named dir
-        cmd += "tar -cvf - {an} | pigz > {o}; " if is_command_callable("pigz") else "tar -cvzf {o} {an}; "  # tar gzip
-        cmd += "mv {an}/* .; rm -r {an}"  # move the files back to the tag-named dir and remove asset-named dir
+        # move the asset files to asset-named dir
+        cmd = "cd {p}; mkdir {an}; mv `find . -type f -not -path './_refgenie_build*'` {an}  2>/dev/null; "
+        # tar gzip
+        cmd += "tar -cvf - {an} | pigz > {o}; " if is_command_callable("pigz") else "tar -cvzf {o} {an}; "
+        # move the files back to the tag-named dir and remove asset-named dir
+        cmd += "mv {an}/* .; rm -r {an}"
         _LOGGER.debug("command: {}".format(cmd.format(p=path, o=output, an=asset_name)))
         run(cmd.format(p=path, o=output, an=asset_name), shell=True)
     else:
         raise OSError("entity '{}' does not exist".format(path))
+
+
+def _copy_log(input_dir, target_dir):
+    """
+    Copy the log file
+
+    :param str input_dir: path to the directory to copy the recipe from
+    :param str target_dir: path to the directory to copy the recipe to
+    """
+    log_path = "{}/_refgenie_build/refgenie_log.md".format(input_dir)
+    if log_path and os.path.exists(log_path):
+        run("cp " + log_path + " " + target_dir, shell=True)
+        _LOGGER.debug("Log copied to: {}".format(target_dir))
+    else:
+        _LOGGER.debug("Log not found in: {}".format(input_dir))
+
+
+def _copy_recipe(input_dir, target_dir, asset_name, tag_name):
+    """
+    Copy the recipe
+
+    :param str input_dir: path to the directory to copy the recipe from
+    :param str target_dir: path to the directory to copy the recipe to
+    :param str asset_name: asset name
+    :param str tag_name: tag name
+    """
+    recipe_path = "{}/_refgenie_build/build_recipe_{}__{}.json".\
+        format(input_dir, asset_name, tag_name)
+    if recipe_path and os.path.exists(recipe_path):
+        run("cp " + recipe_path + " " + target_dir, shell=True)
+        _LOGGER.debug("Recipe copied to: {}".format(target_dir))
+    else:
+        _LOGGER.debug("Recipe not found in: {}".format(input_dir))
 
 
 def _purge_nonservable(rgc):
@@ -194,7 +233,6 @@ def _remove_archive(rgc, registry_paths):
     :param list[dict] registry_paths: entries to remove
     :return list[str]: removed file paths
     """
-    from glob import glob
     ret = []
     for registry_path in _correct_registry_paths(registry_paths):
         genome, asset, tag = registry_path["namespace"], registry_path["item"], registry_path["tag"]
