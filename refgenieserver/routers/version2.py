@@ -77,6 +77,44 @@ async def get_asset_digest(genome: str, asset: str, tag: str):
         raise HTTPException(status_code=404, detail=msg)
 
 
+@router.get("/asset/{genome}/{asset}/log", operation_id=API_ID_LOG)
+async def download_asset_build_log(genome: str, asset: str, tag: str = None):
+    """
+    Returns a build log. Requires the genome name and the asset name as an input.
+
+    Optionally, 'tag' query parameter can be specified to get a tagged asset archive. Default tag is returned otherwise.
+    """
+    tag = tag or rgc.get_default_tag(genome, asset)  # returns 'default' for nonexistent genome/asset; no need to catch
+    file_name = TEMPLATE_LOG.format(asset, tag)
+    log_file = "{base}/{genome}/{file_name}".format(base=BASE_DIR, genome=genome, file_name=file_name)
+    _LOGGER.info("serving build log file: '{}'".format(log_file))
+    if os.path.isfile(log_file):
+        return FileResponse(log_file, filename=file_name, media_type="application/octet-stream")
+    else:
+        msg = MSG_404.format("asset ({})".format(asset))
+        _LOGGER.warning(msg)
+        raise HTTPException(status_code=404, detail=msg)
+
+
+@router.get("/asset/{genome}/{asset}/recipe", operation_id=API_ID_RECIPE)
+async def download_asset_build_recipe(genome: str, asset: str, tag: str = None):
+    """
+    Returns a build recipe. Requires the genome name and the asset name as an input.
+
+    Optionally, 'tag' query parameter can be specified to get a tagged asset archive. Default tag is returned otherwise.
+    """
+    tag = tag or rgc.get_default_tag(genome, asset)  # returns 'default' for nonexistent genome/asset; no need to catch
+    file_name = TEMPLATE_RECIPE_JSON.format(asset, tag)
+    recipe_file = "{base}/{genome}/{file_name}".format(base=BASE_DIR, genome=genome, file_name=file_name)
+    _LOGGER.info("serving build recipe file: '{}'".format(recipe_file))
+    if os.path.isfile(recipe_file):
+        return FileResponse(recipe_file, filename=file_name, media_type="application/octet-stream")
+    else:
+        msg = MSG_404.format("asset ({})".format(asset))
+        _LOGGER.warning(msg)
+        raise HTTPException(status_code=404, detail=msg)
+
+
 @router.get("/asset/{genome}/{asset}", operation_id=API_ID_ASSET_ATTRS)
 def download_asset_attributes(genome: str, asset: str, tag: str = None):
     """
