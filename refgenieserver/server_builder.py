@@ -123,7 +123,7 @@ def archive(rgc, registry_paths, force, remove, cfg_path):
                     try:
                         _check_tgz(input_file, target_file, asset_name)
                         _copy_recipe(input_file, target_dir, asset_name, tag_name)
-                        _copy_log(input_file, target_dir)
+                        _copy_log(input_file, target_dir, asset_name, tag_name)
                     except OSError as e:
                         _LOGGER.warning(e)
                         continue
@@ -174,7 +174,7 @@ def _check_tgz(path, output, asset_name):
         raise OSError("entity '{}' does not exist".format(path))
 
 
-def _copy_log(input_dir, target_dir):
+def _copy_log(input_dir, target_dir, asset_name, tag_name):
     """
     Copy the log file
 
@@ -183,7 +183,7 @@ def _copy_log(input_dir, target_dir):
     """
     log_path = "{}/_refgenie_build/refgenie_log.md".format(input_dir)
     if log_path and os.path.exists(log_path):
-        run("cp " + log_path + " " + target_dir, shell=True)
+        run("cp " + log_path + " " + os.path.join(target_dir, "log_{}__{}.md".format(asset_name, tag_name)), shell=True)
         _LOGGER.debug("Log copied to: {}".format(target_dir))
     else:
         _LOGGER.debug("Log not found in: {}".format(input_dir))
