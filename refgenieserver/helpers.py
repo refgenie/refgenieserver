@@ -63,6 +63,7 @@ def build_parser():
         "--genomes_desc",
         dest="genomes_desc",
         type=str,
+        default=None,
         help="Path to a CSV file with genomes descriptions. Format: genome_name, genome description")
     sps["archive"].add_argument(
         "-f", "--force",
