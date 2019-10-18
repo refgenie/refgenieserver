@@ -59,6 +59,9 @@
                                             <a href="/v2/asset/{{ genome_name }}/{{ asset_name }}?tag={{ tag_name }}" class="btn btn-outline-dark btn-sm ml-0" role="button" data-toggle="tooltip" title="Attributes">
                                                 <i class="fa fa-tags" aria-hidden="true"></i>
                                             </a>
+                                            <a href="/v2/asset/{{ genome_name }}/{{ asset_name }}/recipe?tag={{ tag_name }}" class="btn btn-outline-dark btn-sm ml-0" role="button" data-toggle="tooltip" title="Build recipe">
+                                                <i class="fa fa-file-code-o" aria-hidden="true"></i>
+                                            </a>
                                         </td>
                                         <td class="asset_name"><b>{{ asset_name }}</b>:{{ tag_name }}</td>
                                         <td class="asset_desc">{{ safe_show_asset_attr(asset_data["asset_description"]) }}</td>

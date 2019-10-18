@@ -60,6 +60,12 @@ def build_parser():
         type=int,
         help="The port the webserver should be run on.", default=DEFAULT_PORT)
     sps["archive"].add_argument(
+        "--genomes_desc",
+        dest="genomes_desc",
+        type=str,
+        default=None,
+        help="Path to a CSV file with genomes descriptions. Format: genome_name, genome description")
+    sps["archive"].add_argument(
         "-f", "--force",
         action="store_true",
         dest="force",
