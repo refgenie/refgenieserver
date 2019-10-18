@@ -105,6 +105,8 @@ def archive(rgc, registry_paths, force, remove, cfg_path):
                     _LOGGER.info("'{}/{}:{}' is incomplete, skipping".format(genome, asset_name, tag_name))
                     rgc_server.remove_assets(genome, asset_name, tag_name)
                     continue
+                rgc_server.write()
+                del rgc_server
                 file_name = rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][asset_name][CFG_ASSET_TAGS_KEY][tag_name][CFG_ASSET_PATH_KEY]
                 target_file = os.path.join(target_dir, "{}__{}".format(asset_name, tag_name) + ".tgz")
                 input_file = os.path.join(genome_dir, file_name, tag_name)
@@ -126,8 +128,10 @@ def archive(rgc, registry_paths, force, remove, cfg_path):
                         _copy_log(input_file, target_dir, asset_name, tag_name)
                     except OSError as e:
                         _LOGGER.warning(e)
+                        rgc_server = RefGenConf(filepath=server_rgc_path, writable=True)
                         continue
                     else:
+                        rgc_server = RefGenConf(filepath=server_rgc_path, writable=True)
                         _LOGGER.info("updating '{}/{}:{}' tag attributes...".format(genome, asset_name, tag_name))
                         tag_attrs = {CFG_ASSET_PATH_KEY: file_name,
                                      CFG_SEEK_KEYS_KEY: seek_keys,
@@ -142,8 +146,12 @@ def archive(rgc, registry_paths, force, remove, cfg_path):
                         rgc_server.write()
                 else:
                     _LOGGER.debug("'{}' exists".format(target_file))
+                    rgc_server = RefGenConf(filepath=server_rgc_path, writable=True)
         counter += 1
-    rgc_server = _purge_nonservable(rgc_server)
+    try:
+        rgc_server = _purge_nonservable(rgc_server)
+    except Exception as e:
+        _LOGGER.warning("Caught exception while removing non-servable config entries: {}".format(e))
     _LOGGER.info("builder finished; server config file saved to: '{}'".format(rgc_server.write(server_rgc_path)))
 
 
