@@ -2,7 +2,7 @@
 
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) and [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) format. 
 
-## [0.2.1] -- unreleased
+## [0.2.1] -- 2019-10-21
 
 ### Added
 - possibility to use `$REFGENIE` environment variable to provide config path in `refgenieserver archive`
@@ -16,6 +16,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Fixed
 - `AttributeError` in `refgenieserver archive`; [#35](https://github.com/databio/refgenieserver/issues/35) 
+
 ## [0.2.0] -- 2019-07-11
 
 ### Added
