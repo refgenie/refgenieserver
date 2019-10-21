@@ -6,4 +6,4 @@ starlette
 ubiquerg>=0.5.0
 uvicorn>=0.7.1
 yacman>=0.3
-#refgenconf>=0.4.1
+refgenconf>=0.5.0
