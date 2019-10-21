@@ -78,7 +78,7 @@ docker exec -it refgenieservercon sh
 
 Refgenieserver can also archive your assets, creating the directory for asset archives needed to `serve`.
 
-First, make sure the config points has a `genome_archive` key that points to the directory where you want to store the servable archives (`genome_archive` is __not__ added automatically by [`refgenie init`](http://refgenie.databio.org/en/latest/usage/#refgenie-init-help)). Your first time you will need to manually add this to tell refgenieserver where to store the archives.
+First, make sure the config has a `genome_archive` key that points to the directory where you want to store the servable archives (`genome_archive` is __not__ added automatically by [`refgenie init`](http://refgenie.databio.org/en/latest/usage/#refgenie-init-help)). Your first time you will need to manually add this to tell refgenieserver where to store the archives.
 
 Then run: 
 ```
@@ -88,12 +88,18 @@ It just requires a `-c` argument or `$REFGENIE` environment variable.
 
 This command will:
 - create the `genome_archive` directory and structure that can be used to serve the assets
-- create a server config file in that directory, which includes a couple of extra asset attributes, like `checksum` and `size`. 
+- create a server config file in that directory, which includes a couple of extra asset attributes, like `archive_digest` and `archive_size`. 
 
 In case you already have some of the assets archived and just want to add a new one, use:
 
 ```
-refgenieserver archive -c CONFIG -g GENOME -a ASSET
+refgenieserver archive -c CONFIG GENOME/ASSET:TAG
+```
+
+In case you want to remove an unwanted archive, add an `-r` flag:
+
+```
+refgenieserver archive -c CONFIG -r GENOME/ASSET:TAG
 ```
 
 

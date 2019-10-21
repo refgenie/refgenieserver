@@ -13,11 +13,10 @@ TEMPLATES_DIRNAME = "templates"
 TEMPLATES_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), TEMPLATES_DIRNAME)
 STATIC_DIRNAME = "static"
 STATIC_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), STATIC_DIRNAME)
-TGZ = dict(ext=".tgz", flags="-cvzf")
-TAR = dict(ext=".tar", flags="-cvf")
-FILE_SIZE_UNITS = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB']
 LOG_FORMAT = "%(levelname)s in %(funcName)s: %(message)s"
 MSG_404 = "No such {} on server"
 DESC_PLACEHOLDER = "No description"
-CHECKSUM_PLACEHOLDER = "No checksum"
-CONTENTS_PLACEHOLDER = "No contents"
+CHECKSUM_PLACEHOLDER = "No digest"
+# Here we define the key name changes; format: {"new_key": "old_key"}
+# This dict is then used to pre-process the attributes dict before serving to the old versions of the client
+CHANGED_KEYS = {CFG_ASSET_PATH_KEY: "path"}

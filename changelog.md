@@ -2,20 +2,35 @@
 
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) and [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) format. 
 
-## [0.2.1] -- 2019-10-21
+
+## [0.3.0] -- 2019-10-21
 
 ### Added
 - possibility to use `$REFGENIE` environment variable to provide config path in `refgenieserver archive`
 - new API endpoints:
     - `/genome/{genome}` -- returns a dictionary with genome attributes (`contents`, `checksum`, `genome_description`)
-    - `/genome/{genome}/checksum` -- returns just the genome checksum 
-
+    - `/genome/{genome}/genome_digest` -- returns just the genome digest
+    - `/asset/{genome}/{asset}/{tag}/asset_digest` -- returns just the asset digest
+    - `/asset/{genome}/{asset}/default_tag` -- returns the default tag of an asset
+- `tag` query parameter to the endpoints: `/asset/{genome}/{asset}/archive`, `/asset/{genome}/{asset}` to retrieve the archive/metadata associated with tagged asset
+- API versioning support
+- API versions: `v1` (accessible with a `v1/` prefix and without any) and `v2` (accessible with `v2/` prefix)
+- `pigz` support. If the command is callable, it will be used for archiving
+- incomplete assets skipping in `refgenieserver archive`
+- config manipulation support in multi-process contexts, it's racefree, uses file locks
+- archive removal support (added `-r` option in `refgenieserver archive`)
+- asset registry path support in `refgenieserver archive`
+    
 ### Changed
 - command order from `refgenieserver -c CONFIG -d archive/serve` to `refgenieserver archive/serve -c CONFIG -d`
-- `refgenieserver archive` populates newly added genome-level attributes: `contents`and `checksum`
+- the genome tarballs are not produced
+- config v0.3 is required
+- `-g` and `-a` flags to asset registry path
 
 ### Fixed
-- `AttributeError` in `refgenieserver archive`; [#35](https://github.com/databio/refgenieserver/issues/35) 
+- `AttributeError` in `refgenieserver archive`; [#35](https://github.com/databio/refgenieserver/issues/35)
+- issue with asset attributes serving in API v1 after config format change
+
 
 ## [0.2.0] -- 2019-07-11
 

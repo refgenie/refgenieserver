@@ -12,15 +12,10 @@ body {
     padding: 5px;
 }
 
-#wrap {
-  min-height: 100%;
-  min-width: 800px;
-  padding: 20px;
-}
-
 #main {
   overflow: auto;
   padding-bottom: 40px;
+  padding-top: 20px;
   /* must be same height as the footer */
 }
 
@@ -109,18 +104,14 @@ div#navbar_links {
   display: flex;
 }
 
-table#asset_table{
-    width: auto;
-    min-width: 570px;
+div.col-12#genome-asset {
+    margin: auto;
+    max-width: 1400px;
 }
 
-div.col-3#genome_title{
-    min-width: 300px;
-    max-width: 310px;
-}
-
-div.col-9#asset_table {
-    min-width: 600px;
+div.col-12#txt {
+    margin: auto;
+    max-width: 1400px;
 }
 
 .asset_name {
@@ -128,19 +119,27 @@ div.col-9#asset_table {
 }
 
 .asset_desc {
-    width: 300px;
+    width: 500px;
+    min-width: 250px;
+}
+
+.actions {
+    min-width: 180px;
+    width: 180px;
 }
 
 .size {
-    width: 110px;
+    width: 150px;
+    min-width: 150px;
 }
 
 .checksum {
     width: 280px;
+    min-width: 280px;
 }
 
-.attrs {
-    width: 110px;
+.container {
+    max-width: none;
 }
 
 th.footer {
@@ -165,8 +164,3 @@ td.footer {
 code.footer {
   color:#464c56;
 }
-
-#json_btn {
-  margin-left: 8px;
-}
-
