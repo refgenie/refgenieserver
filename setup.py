@@ -26,12 +26,16 @@ extra["install_requires"] = DEPENDENCIES
 with open("{}/_version.py".format(PACKAGE), 'r') as versionfile:
     version = versionfile.readline().split()[-1].strip("\"'\n")
 
+
 # Handle the pypi README formatting.
 try:
     import pypandoc
     long_description = pypandoc.convert_file('README.md', 'rst')
-except(IOError, ImportError, OSError, RuntimeError):
+    msg = "\033[032mPandoc conversion succeeded.\033[0m"
+except(IOError, ImportError, OSError):
+    msg = "\033[0;31mWarning: pandoc conversion failed!\033[0m"
     long_description = open('README.md').read()
+
 
 setup(
     name=PACKAGE,
@@ -61,3 +65,5 @@ setup(
     include_package_data=True,
     **extra
 )
+
+print(msg)
