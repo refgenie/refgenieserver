@@ -19,6 +19,10 @@ def main():
     global rgc, _LOGGER
     parser = build_parser()
     args = parser.parse_args()
+    if not args.command:
+        parser.print_help()
+        print("No subcommand given")
+        sys.exit(1)
     logger_args = dict(name=PKG_NAME, fmt=LOG_FORMAT, level=5) if args.debug else dict(name=PKG_NAME, fmt=LOG_FORMAT)
     _LOGGER = logmuse.setup_logger(**logger_args)
     selected_cfg = select_genome_config(args.config)
