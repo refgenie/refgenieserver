@@ -57,8 +57,8 @@ def archive(rgc, registry_paths, force, remove, cfg_path, genomes_desc):
         if remove:
             _LOGGER.error("You can't remove archives since the genome_archive path does not exist yet.")
             exit(1)
-        rgc_server = rgc.make_writable(server_rgc_path)
-
+        rgc_server = RefGenConf(filepath=rgc.file_path)
+        rgc_server.make_writable(filepath=server_rgc_path)
     if registry_paths:
         genomes, asset_list, tag_list = _get_paths_element(registry_paths, "namespace"), \
                                         _get_paths_element(registry_paths, "item"), _get_paths_element(registry_paths,

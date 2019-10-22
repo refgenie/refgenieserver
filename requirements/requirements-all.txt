@@ -5,5 +5,5 @@ logmuse>=0.2
 starlette
 ubiquerg>=0.5.0
 uvicorn>=0.7.1
-yacman>=0.3
+yacman>=0.6.3
 refgenconf>=0.5.0
