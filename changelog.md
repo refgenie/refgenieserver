@@ -2,6 +2,14 @@
 
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) and [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) format. 
 
+## [0.3.2] -- 2019-10-23
+### Added
+- dynamic website URL rendering in the page banner
+
+### Fixed
+- `TypeError` in `refgenieserver archive`; [#55](https://github.com/databio/refgenieserver/issues/55)
+- `AttributeError` which was raised when no subcommand was specified; [#54](https://github.com/databio/refgenieserver/issues/54)
+
 ## [0.3.1] -- 2019-10-21
 
 ### Fixed
