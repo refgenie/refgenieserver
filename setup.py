@@ -61,7 +61,7 @@ setup(
             "{p} = {p}.main:main".format(p=PACKAGE),
         ],
     },
-    package_data={PACKAGE: ['templates/*', 'static/*']},
+    package_data={PACKAGE: ['templates/*', 'static/*', 'routers/*']},
     include_package_data=True,
     **extra
 )

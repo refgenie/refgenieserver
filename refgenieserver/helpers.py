@@ -60,7 +60,7 @@ def build_parser():
         type=int,
         help="The port the webserver should be run on.", default=DEFAULT_PORT)
     sps["archive"].add_argument(
-        "--genomes_desc",
+        "--genomes-desc",
         dest="genomes_desc",
         type=str,
         default=None,
