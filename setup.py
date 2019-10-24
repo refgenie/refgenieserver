@@ -44,6 +44,7 @@ setup(
     description="This server provides both a web interface and a RESTful API. Users may explore and download archived "
                 "indexes from the web interface or develop tools that programmatically query the API.",
     long_description=long_description,
+    long_description_content_type="text/markdown",
     classifiers=[
         "Development Status :: 4 - Beta",
         "License :: OSI Approved :: BSD License",
@@ -61,7 +62,6 @@ setup(
             "{p} = {p}.main:main".format(p=PACKAGE),
         ],
     },
-    package_data={PACKAGE: ['templates/*', 'static/*', 'routers/*']},
     include_package_data=True,
     **extra
 )
