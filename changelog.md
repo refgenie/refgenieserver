@@ -2,6 +2,10 @@
 
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) and [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) format. 
 
+## [0.3.4] -- unreleased
+### Added
+- distribute the license file with the package
+
 ## [0.3.3] -- 2019-10-24
 ### Fixed
 - PyPi installation problem; [#59](https://github.com/databio/refgenieserver/issues/59)
