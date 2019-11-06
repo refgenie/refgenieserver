@@ -7,6 +7,9 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - distribute the license file with the package
 - test script
 
+### Fixed
+- `fastapi` - `starlette` dependency issue
+
 ## [0.3.3] -- 2019-10-24
 ### Fixed
 - PyPi installation problem; [#59](https://github.com/databio/refgenieserver/issues/59)
