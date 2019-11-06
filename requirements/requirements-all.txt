@@ -1,6 +1,5 @@
 aiofiles
 fastapi
-starlette
 jinja2
 logmuse>=0.2
 uvicorn>=0.7.1
