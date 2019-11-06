@@ -102,4 +102,15 @@ In case you want to remove an unwanted archive, add an `-r` flag:
 refgenieserver archive -c CONFIG -r GENOME/ASSET:TAG
 ```
 
+## How to test the `refgenie` suite of software
 
+The `refgenie` universe includes [`refgenie`](http://refgenie.databio.org/en/latest/), [`refgenconf`](http://refgenie.databio.org/en/latest/overview/#3-the-refgenconf-python-package), and [`refgenieserver`](https://github.com/databio/refgenieserver/).
+
+The [`test_refgenie.sh`](https://github.com/databio/refgenieserver/blob/staging/test_refgenie.sh) script will test the integration of all three tools to ensure everything is functioning, particularly following any changes or updates to one, two, or all three tools.
+
+Use it simply as follows:
+```
+/path/to/test_refgenie.sh
+```
+
+The script also requires Python's [virtual environment module](https://docs.python.org/3/tutorial/venv.html), [Docker](https://www.docker.com/), and [Bulker](https://bulker.databio.org/en/latest/) to successfully test all components.

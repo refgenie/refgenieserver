@@ -161,10 +161,7 @@ def archive(rgc, registry_paths, force, remove, cfg_path, genomes_desc):
                     _LOGGER.debug("'{}' exists".format(target_file))
                     rgc_server = RefGenConf(filepath=server_rgc_path, writable=True)
         counter += 1
-    try:
-        rgc_server = _purge_nonservable(rgc_server)
-    except Exception as e:
-        _LOGGER.warning("Caught exception while removing non-servable config entries: {}".format(e))
+    rgc_server = _purge_nonservable(rgc_server)
     _LOGGER.info("builder finished; server config file saved to: '{}'".format(rgc_server.write(server_rgc_path)))
 
 
@@ -243,9 +240,12 @@ def _purge_nonservable(rgc):
 
     for genome_name, genome in rgc[CFG_GENOMES_KEY].items():
         for asset_name, asset in genome[CFG_ASSETS_KEY].items():
-            for tag_name, tag in asset[CFG_ASSET_TAGS_KEY].items():
-                if not _check_servable(rgc, genome_name, asset_name, tag_name):
-                    rgc.remove_assets(genome_name, asset_name, tag_name)
+            try:
+                for tag_name, tag in asset[CFG_ASSET_TAGS_KEY].items():
+                    if not _check_servable(rgc, genome_name, asset_name, tag_name):
+                        rgc.remove_assets(genome_name, asset_name, tag_name)
+            except KeyError:
+                rgc.remove_assets(genome_name, asset_name)
     return rgc
 
 
