@@ -199,10 +199,10 @@ def _copy_log(input_dir, target_dir, asset_name, tag_name):
     :param str input_dir: path to the directory to copy the recipe from
     :param str target_dir: path to the directory to copy the recipe to
     """
-    log_path = "{}/_refgenie_build/refgenie_log.md".format(input_dir)
+    log_path = "{}/{}/{}".format(BUILD_STATS_DIR, input_dir, ORI_LOG_NAME)
     if log_path and os.path.exists(log_path):
         run("cp " + log_path + " " +
-            os.path.join(target_dir, "build_log_{}__{}.md".format(asset_name, tag_name)), shell=True)
+            os.path.join(target_dir, TEMPLATE_LOG.format(asset_name, tag_name)), shell=True)
         _LOGGER.debug("Log copied to: {}".format(target_dir))
     else:
         _LOGGER.debug("Log not found: ".format(log_path))
@@ -217,8 +217,7 @@ def _copy_recipe(input_dir, target_dir, asset_name, tag_name):
     :param str asset_name: asset name
     :param str tag_name: tag name
     """
-    recipe_path = "{}/_refgenie_build/build_recipe_{}__{}.json". \
-        format(input_dir, asset_name, tag_name)
+    recipe_path = "{}/{}/{}".format(input_dir, BUILD_STATS_DIR, TEMPLATE_RECIPE_JSON.format(asset_name, tag_name))
     if recipe_path and os.path.exists(recipe_path):
         run("cp " + recipe_path + " " + target_dir, shell=True)
         _LOGGER.debug("Recipe copied to: {}".format(target_dir))
