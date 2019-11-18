@@ -199,13 +199,13 @@ def _copy_log(input_dir, target_dir, asset_name, tag_name):
     :param str input_dir: path to the directory to copy the recipe from
     :param str target_dir: path to the directory to copy the recipe to
     """
-    log_path = "{}/{}/{}".format(BUILD_STATS_DIR, input_dir, ORI_LOG_NAME)
+    log_path = "{}/{}/{}".format(input_dir, BUILD_STATS_DIR, ORI_LOG_NAME)
     if log_path and os.path.exists(log_path):
         run("cp " + log_path + " " +
             os.path.join(target_dir, TEMPLATE_LOG.format(asset_name, tag_name)), shell=True)
         _LOGGER.debug("Log copied to: {}".format(target_dir))
     else:
-        _LOGGER.debug("Log not found: ".format(log_path))
+        _LOGGER.warning("Log not found: ".format(log_path))
 
 
 def _copy_recipe(input_dir, target_dir, asset_name, tag_name):
@@ -222,7 +222,7 @@ def _copy_recipe(input_dir, target_dir, asset_name, tag_name):
         run("cp " + recipe_path + " " + target_dir, shell=True)
         _LOGGER.debug("Recipe copied to: {}".format(target_dir))
     else:
-        _LOGGER.debug("Recipe not found: {}".format(recipe_path))
+        _LOGGER.warning("Recipe not found: {}".format(recipe_path))
 
 
 def _purge_nonservable(rgc):
@@ -232,7 +232,6 @@ def _purge_nonservable(rgc):
     :param refgenconf.RefGenConf rgc: object to check
     :return refgenconf.RefGenConf: object with just the servable entries
     """
-
     def _check_servable(rgc, genome, asset, tag):
         tag_data = rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][asset][CFG_ASSET_TAGS_KEY][tag]
         return all([r in tag_data for r in [CFG_ARCHIVE_CHECKSUM_KEY, CFG_ARCHIVE_SIZE_KEY]])
@@ -292,7 +291,6 @@ def _correct_registry_paths(registry_paths):
     :param list[dict] registry_paths: output of parse_registry_path
     :return list[dict]: corrected registry paths
     """
-
     def _swap(rp):
         """
         Swaps dict values of 'namespace' with 'item' keys
