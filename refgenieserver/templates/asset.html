@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}{{ genome }}/{{ asset }}:{{ tag }}{% endblock %}
+{% block head %}
+    {{ super() }}
+    <script>
+        $(document).ready(function(){
+          $('[data-toggle="tooltip"]').tooltip();
+        });
+    </script>
+{% endblock %}
+{% block content %}
+{% set tag_data = rgc["genomes"][genome]["assets"][asset]["tags"][tag] %}
+<div class="container">
+    <div class="row align-items-center">
+        <div class="col-12" id="genome-asset">
+            <h3>{{ genome }}/{{ asset }}:{{ tag }}</h3>
+            <ul>
+            {% for attr_name, value in tag_data.items() %}
+                {% if value is mapping %}
+                    <li>{{ attr_name }}:</li>
+                    <ul>
+                    {% for seek_key, path  in value.items() %}
+                        <li>{{ seek_key }}: <code>{{ path }}</code></li>
+                    {% endfor %}
+                    </ul>
+                {% elif value is iterable and value is not string %}
+                    <li>{{ attr_name }}:
+                    {% if value|length == 0 %}
+                        <code>{{ value }}</code></li>
+                    {% else %}
+                        {% for asset_registry_path in value %}
+                            {% set parsed = prp(asset_registry_path) %}
+                            {% if parsed["namespace"] is not none %}
+                                 <code><a href="/v2/splash/{{ parsed['namespace'] }}/{{ parsed['item'] }}/{{ parsed['tag'] }}" data-toggle="tooltip" title="Asset splash page">{{ asset_registry_path }}</a></code>{{ "," if not loop.last }}
+                            {% endif %}
+                        {% endfor %}
+                        </li>
+                    {% endif %}
+                {% else %}
+                    <li>{{ attr_name }}: <code>{{ value }}</code></li>
+                {% endif %}
+            {% endfor %}
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}

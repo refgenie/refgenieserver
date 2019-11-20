@@ -82,7 +82,7 @@
                                                 <i class="fa fa-file-code-o" aria-hidden="true"></i>
                                             </a>
                                         </td>
-                                        <td class="asset_name"><b>{{ asset_name }}</b>:{{ tag_name }}</td>
+                                        <td class="asset_name"><a href="/v2/splash/{{ genome_name }}/{{ asset_name }}/{{ tag_name }}" data-toggle="tooltip" title="Asset splash page"><b>{{ asset_name }}</b>:{{ tag_name }}</a></td>
                                         <td class="asset_desc">{{ safe_show_asset_attr(asset_data["asset_description"]) }}</td>
                                         <td class="size">{{ safe_show_asset_attr(tag_data["asset_size"]) }}/{{ safe_show_asset_attr(tag_data["archive_size"]) }}</td>
                                         <td class="checksum"><code>{{ safe_show_asset_attr(tag_data["archive_digest"]) }}</code></td>

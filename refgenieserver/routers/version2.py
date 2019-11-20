@@ -3,6 +3,7 @@ from starlette.requests import Request
 from fastapi import HTTPException, APIRouter
 from ..const import *
 from ..main import rgc, templates, _LOGGER
+from ubiquerg import parse_registry_path
 router = APIRouter()
 
 
@@ -16,6 +17,16 @@ async def index(request: Request):
     vars = {"request": request, "genomes": rgc[CFG_GENOMES_KEY], "rgc": rgc[CFG_GENOMES_KEY]}
     _LOGGER.debug("merged vars: {}".format(dict(vars, **ALL_VERSIONS)))
     return templates.TemplateResponse("index.html", dict(vars, **ALL_VERSIONS))
+
+
+@router.get("/splash/{genome}/{asset}/{tag}")
+async def asset_splash_page(request: Request, genome: str, asset: str, tag: str):
+    """
+    Returns an asset splash page
+    """
+    vars = {"request": request, "genome": genome, "asset": asset, "tag": tag, "rgc": rgc, "prp": parse_registry_path}
+    _LOGGER.debug("merged vars: {}".format(dict(vars, **ALL_VERSIONS)))
+    return templates.TemplateResponse("asset.html", dict(vars, **ALL_VERSIONS))
 
 
 @router.get("/genomes")
