@@ -39,7 +39,7 @@
                         None</li>
                     {% else %}
                         <ul>
-                        {% for asset_registry_path in value %}
+                        {% for asset_registry_path in value | sort %}
                             {% set parsed = prp(asset_registry_path) %}
                             {% if parsed["namespace"] is none %}
                             <!-- assign parent namespace to the same namespace the the asset of interest is in -->
