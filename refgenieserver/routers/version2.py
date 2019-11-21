@@ -39,7 +39,7 @@ async def asset_splash_page(request: Request, genome: str, asset: str, tag: str 
 
 
 @router.get("/genomes")
-def list_available_genomes():
+async def list_available_genomes():
     """
     Returns a list of genomes this server holds at least one asset for. No inputs required.
     """
@@ -48,7 +48,7 @@ def list_available_genomes():
 
 
 @router.get("/assets", operation_id=API_ID_ASSETS)
-def list_available_assets():
+async def list_available_assets():
     """
     Returns a list of all assets that can be downloaded. No inputs required.
     """
@@ -97,6 +97,19 @@ async def get_asset_digest(genome: str, asset: str, tag: str):
         raise HTTPException(status_code=404, detail=msg)
 
 
+@router.get("/asset/{genome}/{asset}/{tag}/archive_digest", operation_id=API_ID_ARCHIVE_DIGEST)
+async def get_asset_digest(genome: str, asset: str, tag: str):
+    """
+    Returns the archive digest. Requires genome name asset name and tag name as an input.
+    """
+    try:
+        return rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][asset][CFG_ASSET_TAGS_KEY][tag][CFG_ARCHIVE_CHECKSUM_KEY]
+    except KeyError:
+        msg = MSG_404.format("genome/asset:tag combination ({}/{}:{})".format(genome, asset, tag))
+        _LOGGER.warning(msg)
+        raise HTTPException(status_code=404, detail=msg)
+
+
 @router.get("/asset/{genome}/{asset}/log", operation_id=API_ID_LOG)
 async def download_asset_build_log(genome: str, asset: str, tag: str = None):
     """
@@ -136,7 +149,7 @@ async def download_asset_build_recipe(genome: str, asset: str, tag: str = None):
 
 
 @router.get("/asset/{genome}/{asset}", operation_id=API_ID_ASSET_ATTRS)
-def download_asset_attributes(genome: str, asset: str, tag: str = None):
+async def download_asset_attributes(genome: str, asset: str, tag: str = None):
     """
     Returns a dictionary of asset attributes, like archive size, archive digest etc.
     Requires the genome name and the asset name as an input.
@@ -185,7 +198,7 @@ async def download_genome_attributes(genome: str):
 
 
 @router.get("/genomes/{asset}")
-def list_genomes_by_asset(asset: str):
+async def list_genomes_by_asset(asset: str):
     """
     Returns a list of genomes that have the requested asset defined. Requires the asset name as an input.
     """
