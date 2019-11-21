@@ -95,3 +95,13 @@ def preprocess_attrs(attrs):
             attrs_cpy[CHANGED_KEYS[new_key]] = attrs_cpy[new_key]
             del attrs_cpy[new_key]
     return attrs_cpy
+
+
+def fmt_id(oid):
+    """
+    Perform operaionId processing so that it's ready to be displayed in the html page
+
+    :param str oid: operationId to process
+    :return str: processed operationId
+    """
+    return oid[len(CUSTOM_PFX) + len("_asset_"):].replace("_", " ")

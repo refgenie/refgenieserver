@@ -1,9 +1,14 @@
 from starlette.responses import FileResponse
 from starlette.requests import Request
 from fastapi import HTTPException, APIRouter
-from ..const import *
-from ..main import rgc, templates, _LOGGER
+
 from ubiquerg import parse_registry_path
+from refgenconf.refgenconf import map_paths_by_id
+
+from ..const import *
+from ..main import rgc, templates, _LOGGER, app
+from ..helpers import fmt_id
+
 router = APIRouter()
 
 
@@ -14,19 +19,23 @@ async def index(request: Request):
     Returns a landing page HTML with the server resources ready do download. No inputs required.
     """
     _LOGGER.debug("RefGenConf object:\n{}".format(rgc))
-    vars = {"request": request, "genomes": rgc[CFG_GENOMES_KEY], "rgc": rgc[CFG_GENOMES_KEY]}
-    _LOGGER.debug("merged vars: {}".format(dict(vars, **ALL_VERSIONS)))
-    return templates.TemplateResponse("index.html", dict(vars, **ALL_VERSIONS))
+    templ_vars = {"request": request, "genomes": rgc[CFG_GENOMES_KEY], "rgc": rgc[CFG_GENOMES_KEY]}
+    _LOGGER.debug("merged vars: {}".format(dict(templ_vars, **ALL_VERSIONS)))
+    return templates.TemplateResponse("index.html", dict(templ_vars, **ALL_VERSIONS))
 
 
-@router.get("/splash/{genome}/{asset}/{tag}")
-async def asset_splash_page(request: Request, genome: str, asset: str, tag: str):
+@router.get("/asset/{genome}/{asset}/splash")
+async def asset_splash_page(request: Request, genome: str, asset: str, tag: str = None):
     """
     Returns an asset splash page
     """
-    vars = {"request": request, "genome": genome, "asset": asset, "tag": tag, "rgc": rgc, "prp": parse_registry_path}
-    _LOGGER.debug("merged vars: {}".format(dict(vars, **ALL_VERSIONS)))
-    return templates.TemplateResponse("asset.html", dict(vars, **ALL_VERSIONS))
+    tag = tag or rgc.get_default_tag(genome, asset)  # returns 'default' for nonexistent genome/asset; no need to catch
+    links_dict = {fmt_id(oid): path.format(genome=genome, asset=asset, tag=tag)
+                  for oid, path in map_paths_by_id(app.openapi()).items() if oid in OPERATION_IDS["asset"]}
+    templ_vars = {"request": request, "genome": genome, "asset": asset,
+                  "tag": tag, "rgc": rgc, "prp": parse_registry_path, "links_dict": links_dict}
+    _LOGGER.debug("merged vars: {}".format(dict(templ_vars, **ALL_VERSIONS)))
+    return templates.TemplateResponse("asset.html", dict(templ_vars, **ALL_VERSIONS))
 
 
 @router.get("/genomes")
