@@ -1,4 +1,4 @@
-from starlette.responses import FileResponse
+from starlette.responses import FileResponse, JSONResponse
 from starlette.requests import Request
 from fastapi import HTTPException, APIRouter
 
@@ -135,12 +135,15 @@ async def download_asset_build_recipe(genome: str, asset: str, tag: str = None):
 
     Optionally, 'tag' query parameter can be specified to get a tagged asset archive. Default tag is returned otherwise.
     """
+    import json
     tag = tag or rgc.get_default_tag(genome, asset)  # returns 'default' for nonexistent genome/asset; no need to catch
     file_name = TEMPLATE_RECIPE_JSON.format(asset, tag)
     recipe_file = "{base}/{genome}/{file_name}".format(base=BASE_DIR, genome=genome, file_name=file_name)
     _LOGGER.info("serving build recipe file: '{}'".format(recipe_file))
     if os.path.isfile(recipe_file):
-        return FileResponse(recipe_file, filename=file_name, media_type="application/octet-stream")
+        with open(recipe_file, 'r') as f:
+            recipe = json.load(f)
+        return JSONResponse(recipe)
     else:
         msg = MSG_404.format("asset ({})".format(asset))
         _LOGGER.warning(msg)
