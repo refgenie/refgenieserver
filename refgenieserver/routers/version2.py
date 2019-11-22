@@ -7,7 +7,6 @@ from refgenconf.refgenconf import map_paths_by_id
 
 from ..const import *
 from ..main import rgc, templates, _LOGGER, app
-from ..helpers import fmt_id
 
 router = APIRouter()
 
@@ -30,8 +29,8 @@ async def asset_splash_page(request: Request, genome: str, asset: str, tag: str 
     Returns an asset splash page
     """
     tag = tag or rgc.get_default_tag(genome, asset)  # returns 'default' for nonexistent genome/asset; no need to catch
-    links_dict = {fmt_id(oid): path.format(genome=genome, asset=asset, tag=tag)
-                  for oid, path in map_paths_by_id(app.openapi()).items() if oid in OPERATION_IDS["asset"]}
+    links_dict = {OPERATION_IDS["asset"][oid]: path.format(genome=genome, asset=asset, tag=tag)
+                  for oid, path in map_paths_by_id(app.openapi()).items() if oid in OPERATION_IDS["asset"].keys()}
     templ_vars = {"request": request, "genome": genome, "asset": asset,
                   "tag": tag, "rgc": rgc, "prp": parse_registry_path, "links_dict": links_dict}
     _LOGGER.debug("merged vars: {}".format(dict(templ_vars, **ALL_VERSIONS)))
