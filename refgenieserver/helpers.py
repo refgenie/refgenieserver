@@ -95,3 +95,16 @@ def preprocess_attrs(attrs):
             attrs_cpy[CHANGED_KEYS[new_key]] = attrs_cpy[new_key]
             del attrs_cpy[new_key]
     return attrs_cpy
+
+
+def get_openapi_version(app):
+    """
+    Get the OpenAPI version from the OpenAPI description JSON
+
+    :param fastapi.FastAPI app: app object
+    :return str: openAPI version in use
+    """
+    try:
+        return app.openapi()["openapi"]
+    except Exception as e:
+        return "3"
