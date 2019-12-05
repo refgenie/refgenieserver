@@ -107,4 +107,4 @@ def get_openapi_version(app):
     try:
         return app.openapi()["openapi"]
     except Exception as e:
-        return "3"
+        return "3.0.2"
