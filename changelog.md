@@ -2,10 +2,21 @@
 
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) and [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) format. 
 
+## [0.3.5] -- unreleased
+### Added
+- asset splash pages presenting all the asset attributes and related API endpoint links. Available at: `/asset/{genome}/{asset}/splash`
+- archive digest API endpoint. Available at `/asset/{genome}/{asset}/{tag}/archive_digest`
+
+### Changed
+- recipes are served as JSON objects, not files
+- `refgenieserver archive` enhancments; related to config file locking
+
 ## [0.3.4] -- 2019-11-06
 ### Added
 - distribute the license file with the package
 - test script
+- API endpoints for serving asset build logs and asset build recipes. Available at `/asset/{genome}/{asset}/log` and `/asset/{genome}/{asset}/recipe`, respectively
+
 
 ### Fixed
 - `fastapi` - `starlette` dependency issue
