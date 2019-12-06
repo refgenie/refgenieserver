@@ -39,7 +39,7 @@ echo -e "\n-- Activate bulker --\n"
 bulker-activate() {
   eval "$(bulker activate -e $@)"
 }
-bulker-activate databio/refgenie:0.7.2 || ErrorExit "$LINENO: Failed to activate bulker."
+bulker-activate databio/refgenie:0.7.3 || ErrorExit "$LINENO: Failed to activate bulker."
 
 echo -e "\n-- Create and activate virtualenv --\n"
 python -m venv $VENVDIR || ErrorExit "$LINENO: Failed to create virtual environment."
@@ -50,9 +50,6 @@ mkdir $WORKDIR && cd $WORKDIR || ErrorExit "$LINENO: Failed to create working en
 
 # install refgenie universe tools
 python -m pip install --quiet wheel || ErrorExit "$LINENO: Failed to install wheel module."
-python -m pip install --quiet https://github.com/databio/yacman/archive/dev.zip || ErrorExit "$LINENO: Failed to install development version of yacman."
-python -m pip install --quiet https://github.com/databio/refgenconf/archive/dev.zip || ErrorExit "$LINENO: Failed to install development version of refgenconf."
-python -m pip install --quiet https://github.com/databio/refgenie/archive/dev.zip || ErrorExit "$LINENO: Failed to install development version of refgenie."
 
 echo -e "\n-- Create dockerfile --\n"
 cat > testrgs.Dockerfile <<EOF
@@ -61,7 +58,6 @@ LABEL authors="Nathan Sheffield, Michal Stolarczyk"
 
 COPY . /app
 
-RUN pip install https://github.com/databio/refgenconf/archive/dev.zip
 RUN pip install https://github.com/databio/refgenieserver/archive/master.zip
 
 EOF
