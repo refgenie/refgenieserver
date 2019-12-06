@@ -1,9 +1,11 @@
 from starlette.responses import FileResponse
 from starlette.requests import Request
 from fastapi import HTTPException, APIRouter
+
 from ..const import *
 from ..helpers import preprocess_attrs
-from ..main import rgc, templates, _LOGGER
+from ..main import rgc, templates, _LOGGER, app
+from ..helpers import get_openapi_version
 
 router = APIRouter()
 
@@ -15,9 +17,10 @@ async def index(request: Request):
     Returns a landing page HTML with the server resources ready do download. No inputs required.
     """
     _LOGGER.debug("RefGenConf object:\n{}".format(rgc))
-    vars = {"request": request, "genomes": rgc[CFG_GENOMES_KEY], "rgc": rgc[CFG_GENOMES_KEY]}
-    _LOGGER.debug("merged vars: {}".format(dict(vars, **ALL_VERSIONS)))
-    return templates.TemplateResponse("index.html", dict(vars, **ALL_VERSIONS))
+    templ_vars = {"request": request, "genomes": rgc[CFG_GENOMES_KEY], "rgc": rgc[CFG_GENOMES_KEY],
+                  "openapi_version": get_openapi_version(app)}
+    _LOGGER.debug("merged vars: {}".format(dict(templ_vars, **ALL_VERSIONS)))
+    return templates.TemplateResponse("index.html", dict(templ_vars, **ALL_VERSIONS))
 
 
 @router.get("/genomes")

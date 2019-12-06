@@ -3,11 +3,11 @@
 # Set up script
 shopt -s expand_aliases
 set -e
-alias python=python3.7
+alias python=python3.6
 # Work in virtual environment (requires virtualenv to be installed)
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-WORKDIR="$DIR/testing_refgenie"
-VENVDIR="$DIR/venv_refgenie"
+export WORKDIR="$DIR/testing_refgenie"
+export VENVDIR="$DIR/venv_refgenie"
 # requires bulker to be installed
 #python -m pip install --user --upgrade bulker
 
@@ -39,7 +39,7 @@ echo -e "\n-- Activate bulker --\n"
 bulker-activate() {
   eval "$(bulker activate -e $@)"
 }
-bulker-activate databio/refgenie:0.7.0 || ErrorExit "$LINENO: Failed to activate bulker."
+bulker-activate databio/refgenie:0.7.3 || ErrorExit "$LINENO: Failed to activate bulker."
 
 echo -e "\n-- Create and activate virtualenv --\n"
 python -m venv $VENVDIR || ErrorExit "$LINENO: Failed to create virtual environment."
@@ -50,8 +50,6 @@ mkdir $WORKDIR && cd $WORKDIR || ErrorExit "$LINENO: Failed to create working en
 
 # install refgenie universe tools
 python -m pip install --quiet wheel || ErrorExit "$LINENO: Failed to install wheel module."
-python -m pip install --quiet https://github.com/databio/refgenie/archive/dev.zip || ErrorExit "$LINENO: Failed to install development version of refgenie."
-python -m pip install --quiet https://github.com/databio/refgenconf/archive/dev.zip || ErrorExit "$LINENO: Failed to install development version of refgenconf."
 
 echo -e "\n-- Create dockerfile --\n"
 cat > testrgs.Dockerfile <<EOF
@@ -60,7 +58,6 @@ LABEL authors="Nathan Sheffield, Michal Stolarczyk"
 
 COPY . /app
 
-RUN pip install https://github.com/databio/refgenconf/archive/dev.zip
 RUN pip install https://github.com/databio/refgenieserver/archive/master.zip
 
 EOF
@@ -79,16 +76,18 @@ refgenie init -c refgenie_rCRS.yaml || ErrorExit "$LINENO: Failed to initialize 
 refgenie init -c refgenie_test.yaml || ErrorExit "$LINENO: Failed to initialize refgenie."
 
 echo -e "\n-- Build assets --\n"
-refgenie build -c refgenie_rCRS.yaml -g rCRS -a fasta --fasta rCRS.fa.gz || ErrorExit "$LINENO: Failed to build rCRS asset."
-refgenie build -c refgenie_test.yaml -g test -a fasta --fasta rCRS.fa.gz || ErrorExit "$LINENO: Failed to build test asset."
+refgenie build -c refgenie_rCRS.yaml -g rCRS -a fasta --files fasta=rCRS.fa.gz || ErrorExit "$LINENO: Failed to build rCRS asset."
+refgenie build -c refgenie_test.yaml -g test -a fasta --files fasta=rCRS.fa.gz || ErrorExit "$LINENO: Failed to build test asset."
 
 echo -e "\n-- Add genome_archive to refgenie config files --"
-sed -i "4i genome_archive: $WORKDIR/archive" refgenie_rCRS.yaml || ErrorExit "$LINENO: Failed to write rCRS archive to yaml."
-sed -i "4i genome_archive: $WORKDIR/archive2" refgenie_test.yaml || ErrorExit "$LINENO: Failed to write test archive to yaml."
+sed -i '' '1s;^;genome_archive: $WORKDIR/archive\
+;' refgenie_rCRS.yaml
+sed -i '' '1s;^;genome_archive: $WORKDIR/archive2\
+;' refgenie_test.yaml
 
 echo -e "\n-- Archive asset --\n"
-docker run --user=$(id -u):$(id -g) -v $WORKDIR:$WORKDIR testrgs refgenieserver archive -c $WORKDIR/refgenie_rCRS.yaml || ErrorExit "$LINENO: Failed to archive rCRS asset."
-docker run --user=$(id -u):$(id -g) -v $WORKDIR:$WORKDIR testrgs refgenieserver archive -c $WORKDIR/refgenie_test.yaml || ErrorExit "$LINENO: Failed to archive test asset."
+docker run --user=$(id -u):$(id -g) -v $WORKDIR:$WORKDIR -e WORKDIR=`echo $WORKDIR` testrgs refgenieserver archive -c $WORKDIR/refgenie_rCRS.yaml || ErrorExit "$LINENO: Failed to archive rCRS asset."
+docker run --user=$(id -u):$(id -g) -v $WORKDIR:$WORKDIR -e WORKDIR=`echo $WORKDIR` testrgs refgenieserver archive -c $WORKDIR/refgenie_test.yaml || ErrorExit "$LINENO: Failed to archive test asset."
 
 echo -e "\n-- Run refgenieserver --\n"
 docker run --rm -d -p 80:80 --name refgenieservercon -v $WORKDIR/archive:/genomes testrgs refgenieserver serve -c /genomes/refgenie_rCRS.yaml || ErrorExit "$LINENO: Failed to run rCRS refgenieserver."
