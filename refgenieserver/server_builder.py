@@ -5,7 +5,7 @@ from glob import glob
 from subprocess import run
 from refgenconf import RefGenConf
 from refgenconf.exceptions import GenomeConfigFormatError, ConfigNotCompliantError
-from ubiquerg import checksum, size, is_command_callable
+from ubiquerg import checksum, size, is_command_callable, parse_registry_path
 
 from .const import *
 
@@ -119,7 +119,6 @@ def archive(rgc, registry_paths, force, remove, cfg_path, genomes_desc):
                 if not rgc.is_asset_complete(genome, asset_name, tag_name):
                     _LOGGER.info("'{}/{}:{}' is incomplete, skipping".format(genome, asset_name, tag_name))
                     with rgc_server as r:
-                        print(r)
                         r.remove_assets(genome, asset_name, tag_name)
                     continue
                 file_name = rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][asset_name][CFG_ASSET_TAGS_KEY][tag_name][
@@ -157,6 +156,16 @@ def archive(rgc, registry_paths, force, remove, cfg_path, genomes_desc):
                                      CFG_ASSET_CHECKSUM_KEY: asset_digest}
                         _LOGGER.debug("attr dict: {}".format(tag_attrs))
                         with rgc_server as r:
+                            for parent in parents:
+                                _LOGGER.debug("updating {} parents list with {}".
+                                              format(parent, "{}/{}:{}".format(genome, asset_name, tag_name)))
+                                rp = parse_registry_path(parent)
+                                parent_genome = rp["namespace"]
+                                parent_asset = rp["item"]
+                                parent_tag = rp["tag"]
+                                r.update_relatives_assets(parent_genome, parent_asset, parent_tag,
+                                                          ["{}/{}:{}".format(genome, asset_name, tag_name)],
+                                                          children=True)
                             r.update_tags(genome, asset_name, tag_name, tag_attrs)
                 else:
                     _LOGGER.debug("'{}' exists".format(target_file))
