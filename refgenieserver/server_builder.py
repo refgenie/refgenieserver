@@ -4,7 +4,7 @@ import logging
 from glob import glob
 from subprocess import run
 from refgenconf import RefGenConf
-from refgenconf.exceptions import GenomeConfigFormatError, ConfigNotCompliantError
+from refgenconf.exceptions import GenomeConfigFormatError, ConfigNotCompliantError, RefgenconfError
 from ubiquerg import checksum, size, is_command_callable, parse_registry_path
 
 from .const import *
@@ -157,6 +157,13 @@ def archive(rgc, registry_paths, force, remove, cfg_path, genomes_desc):
                         _LOGGER.debug("attr dict: {}".format(tag_attrs))
                         with rgc_server as r:
                             for parent in parents:
+                                try:
+                                    r.get_asset(parent_genome, parent_asset, parent_tag)
+                                except RefgenconfError:
+                                    _LOGGER.warning("'{}/{}:{}'s parent '{}' does not exist, "
+                                                    "skipping relationship updates".
+                                                    format(genome, asset_name, tag_name, parent))
+                                    continue
                                 # here we update any pre-existing parents' children attr with the newly added asset
                                 _LOGGER.debug("updating {} parents list with {}".
                                               format(parent, "{}/{}:{}".format(genome, asset_name, tag_name)))
