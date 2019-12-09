@@ -37,10 +37,10 @@ def archive(rgc, registry_paths, force, remove, cfg_path, genomes_desc):
         raise GenomeConfigFormatError("The config '{}' is missing a '{}' entry. Can't determine the desired archive.".
                                       format(cfg_path, CFG_ARCHIVE_KEY))
     if force:
-        _LOGGER.info("build forced; file existence will be ignored")
+        _LOGGER.info("Build forced; file existence will be ignored")
         if os.path.exists(server_rgc_path):
             _LOGGER.debug("'{}' file was found and will be updated".format(server_rgc_path))
-    _LOGGER.debug("registry_paths: {}".format(registry_paths))
+    _LOGGER.debug("Registry_paths: {}".format(registry_paths))
 
     # original RefGenConf has been created in read-only mode,
     # make it RW compatible and point to new target path for server use or initialize a new object
@@ -95,7 +95,7 @@ def archive(rgc, registry_paths, force, remove, cfg_path, genomes_desc):
                         CFG_CHECKSUM_KEY: genome_checksum}
         with rgc_server as r:
             r.update_genomes(genome, genome_attrs)
-        _LOGGER.debug("updating '{}' genome attributes...".format(genome))
+        _LOGGER.debug("Updating '{}' genome attributes...".format(genome))
         asset = asset_list[counter] if asset_list is not None else None
         assets = asset or rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY].keys()
         if not assets:
@@ -110,7 +110,7 @@ def archive(rgc, registry_paths, force, remove, cfg_path, genomes_desc):
                                                                                               DEFAULT_TAG)
             asset_attrs = {CFG_ASSET_DESC_KEY: asset_desc,
                            CFG_ASSET_DEFAULT_TAG_KEY: default_tag}
-            _LOGGER.debug("updating '{}/{}' asset attributes...".format(genome, asset_name))
+            _LOGGER.debug("Updating '{}/{}' asset attributes...".format(genome, asset_name))
             with rgc_server as r:
                 r.update_assets(genome, asset_name, asset_attrs)
             tag = tag_list[counter] if tag_list is not None else None
@@ -136,7 +136,7 @@ def archive(rgc, registry_paths, force, remove, cfg_path, genomes_desc):
                 asset_digest = rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][asset_name][CFG_ASSET_TAGS_KEY][tag_name]. \
                     setdefault(CFG_ASSET_CHECKSUM_KEY, None)
                 if not os.path.exists(target_file) or force:
-                    _LOGGER.info("creating asset '{}' from '{}'".format(target_file, input_file))
+                    _LOGGER.info("Creating asset '{}' from '{}'".format(target_file, input_file))
                     try:
                         _check_tgz(input_file, target_file, asset_name)
                         _copy_recipe(input_file, target_dir, asset_name, tag_name)
@@ -145,7 +145,7 @@ def archive(rgc, registry_paths, force, remove, cfg_path, genomes_desc):
                         _LOGGER.warning(e)
                         continue
                     else:
-                        _LOGGER.info("updating '{}/{}:{}' tag attributes...".format(genome, asset_name, tag_name))
+                        _LOGGER.info("Updating '{}/{}:{}' tag attributes...".format(genome, asset_name, tag_name))
                         tag_attrs = {CFG_ASSET_PATH_KEY: file_name,
                                      CFG_SEEK_KEYS_KEY: seek_keys,
                                      CFG_ARCHIVE_CHECKSUM_KEY: checksum(target_file),
@@ -157,6 +157,7 @@ def archive(rgc, registry_paths, force, remove, cfg_path, genomes_desc):
                         _LOGGER.debug("attr dict: {}".format(tag_attrs))
                         with rgc_server as r:
                             for parent in parents:
+                                # here we update any pre-existing parents' children attr with the newly added asset
                                 _LOGGER.debug("updating {} parents list with {}".
                                               format(parent, "{}/{}:{}".format(genome, asset_name, tag_name)))
                                 rp = parse_registry_path(parent)
@@ -172,7 +173,7 @@ def archive(rgc, registry_paths, force, remove, cfg_path, genomes_desc):
         counter += 1
     with rgc_server as r:
         _purge_nonservable(r)
-        _LOGGER.info("builder finished; server config file saved to: '{}'".format(r.write(server_rgc_path)))
+        _LOGGER.info("Builder finished; server config file saved to: '{}'".format(r.write(server_rgc_path)))
 
 
 def _check_tgz(path, output, asset_name):
@@ -199,7 +200,7 @@ def _check_tgz(path, output, asset_name):
         _LOGGER.debug("command: {}".format(cmd.format(p=path, o=output, an=asset_name)))
         run(cmd.format(p=path, o=output, an=asset_name), shell=True)
     else:
-        raise OSError("entity '{}' does not exist".format(path))
+        raise OSError("Entity '{}' does not exist".format(path))
 
 
 def _copy_log(input_dir, target_dir, asset_name, tag_name):
