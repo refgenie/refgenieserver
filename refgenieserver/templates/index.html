@@ -67,7 +67,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {% for asset_name, asset_data in values.assets.items() %}
+                        {% for asset_name, asset_data in values.assets.items() | sort %}
                             {% for tag_name, tag_data in asset_data.tags.items() %}
                                 {% if tag_name != "default_tag" %}
                                     <tr>
