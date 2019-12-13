@@ -2,6 +2,13 @@
 
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) and [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) format. 
 
+## [0.4.1] -- 2019-12-13
+### Fixed
+- relationship info not being updated during specific asset archivization; [#70](https://github.com/databio/refgenieserver/issues/70) 
+
+### Changed
+- order of the assets adn tags in the table in the index page: sorted alphabetically instead of oldest to newest 
+
 ## [0.4.0] -- 2019-12-06
 ### Added
 - asset splash pages presenting all the asset attributes and related API endpoint links. Available at: `/asset/{genome}/{asset}/splash`

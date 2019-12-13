@@ -67,8 +67,8 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {% for asset_name, asset_data in values.assets.items() %}
-                            {% for tag_name, tag_data in asset_data.tags.items() %}
+                        {% for asset_name, asset_data in values.assets.items() | sort %}
+                            {% for tag_name, tag_data in asset_data.tags.items() | sort %}
                                 {% if tag_name != "default_tag" %}
                                     <tr>
                                         <td>
