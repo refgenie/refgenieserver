@@ -2,6 +2,10 @@
 
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) and [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) format. 
 
+## [0.4.2] -- 2019-12-XX
+### Fixed
+- undefined variable referencing issue; [#73](https://github.com/databio/refgenieserver/issues/73)
+
 ## [0.4.1] -- 2019-12-13
 ### Fixed
 - relationship info not being updated during specific asset archivization; [#70](https://github.com/databio/refgenieserver/issues/70) 
