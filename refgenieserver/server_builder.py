@@ -281,7 +281,7 @@ def _remove_archive(rgc, registry_paths):
                 [rgc.remove_assets(genome, x, None) for x in rgc.list_assets_by_genome(genome)]
             else:
                 rgc.remove_assets(genome, asset, tag)
-            _LOGGER.info("{}/{}:{} removed".format(genome, asset, ":" + tag if tag else ""))
+            _LOGGER.info("{}/{}{} removed".format(genome, asset, ":" + tag if tag else ""))
         except KeyError:
             _LOGGER.warning("{}/{}{} not found and not removed.".format(genome, asset, ":" + tag if tag else ""))
             continue
