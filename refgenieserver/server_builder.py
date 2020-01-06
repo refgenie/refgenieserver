@@ -158,7 +158,7 @@ def archive(rgc, registry_paths, force, remove, cfg_path, genomes_desc):
                         with rgc_server as r:
                             for parent in parents:
                                 # here we update any pre-existing parents' children attr with the newly added asset
-                                _LOGGER.debug("updating {} parents list with {}".
+                                _LOGGER.debug("updating {} children list with {}".
                                               format(parent, "{}/{}:{}".format(genome, asset_name, tag_name)))
                                 rp = parse_registry_path(parent)
                                 parent_genome = rp["namespace"]
