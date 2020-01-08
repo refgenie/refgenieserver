@@ -157,6 +157,13 @@ def archive(rgc, registry_paths, force, remove, cfg_path, genomes_desc):
                         _LOGGER.debug("attr dict: {}".format(tag_attrs))
                         with rgc_server as r:
                             for parent in parents:
+                                # here we update any pre-existing parents' children attr with the newly added asset
+                                _LOGGER.debug("updating {} children list with {}".
+                                              format(parent, "{}/{}:{}".format(genome, asset_name, tag_name)))
+                                rp = parse_registry_path(parent)
+                                parent_genome = rp["namespace"]
+                                parent_asset = rp["item"]
+                                parent_tag = rp["tag"]
                                 try:
                                     r.get_asset(parent_genome, parent_asset, parent_tag)
                                 except RefgenconfError:
@@ -164,13 +171,6 @@ def archive(rgc, registry_paths, force, remove, cfg_path, genomes_desc):
                                                     "skipping relationship updates".
                                                     format(genome, asset_name, tag_name, parent))
                                     continue
-                                # here we update any pre-existing parents' children attr with the newly added asset
-                                _LOGGER.debug("updating {} parents list with {}".
-                                              format(parent, "{}/{}:{}".format(genome, asset_name, tag_name)))
-                                rp = parse_registry_path(parent)
-                                parent_genome = rp["namespace"]
-                                parent_asset = rp["item"]
-                                parent_tag = rp["tag"]
                                 r.update_relatives_assets(parent_genome, parent_asset, parent_tag,
                                                           ["{}/{}:{}".format(genome, asset_name, tag_name)],
                                                           children=True)
@@ -281,7 +281,7 @@ def _remove_archive(rgc, registry_paths):
                 [rgc.remove_assets(genome, x, None) for x in rgc.list_assets_by_genome(genome)]
             else:
                 rgc.remove_assets(genome, asset, tag)
-            _LOGGER.info("{}/{}:{} removed".format(genome, asset, ":" + tag if tag else ""))
+            _LOGGER.info("{}/{}{} removed".format(genome, asset, ":" + tag if tag else ""))
         except KeyError:
             _LOGGER.warning("{}/{}{} not found and not removed.".format(genome, asset, ":" + tag if tag else ""))
             continue
