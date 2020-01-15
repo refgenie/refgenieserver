@@ -2,7 +2,7 @@
 
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) and [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) format. 
 
-## [0.4.3] -- unreleased
+## [0.4.3] -- 2020-01-15
 ### Added
 - a possibility to decouple genome archive directory and genome archive config file. `refgenieserver archive` uses new key (`genome_archive_config`) from `refgenconf`
 - a genome archive config file writability check 
