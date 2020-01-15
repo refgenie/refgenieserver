@@ -5,7 +5,7 @@ from glob import glob
 from subprocess import run
 from refgenconf import RefGenConf
 from refgenconf.exceptions import GenomeConfigFormatError, ConfigNotCompliantError, RefgenconfError
-from ubiquerg import checksum, size, is_command_callable, parse_registry_path, is_writable
+from ubiquerg import checksum, size, is_command_callable, parse_registry_path
 
 from .const import *
 
@@ -42,8 +42,8 @@ def archive(rgc, registry_paths, force, remove, cfg_path, genomes_desc):
         except KeyError:
             raise GenomeConfigFormatError("The config '{}' is missing a {} entry. Can't determine the desired archive.".
                                           format(cfg_path, "or ".join([CFG_ARCHIVE_KEY, CFG_ARCHIVE_KEY_OLD])))
-    if not is_writable(server_rgc_path):
-        raise OSError("The determined archive config paths is not writable: {}".format(server_rgc_path))
+    if not os.access(server_rgc_path, os.W_OK):
+        raise OSError("The determined archive config path is not writable: {}".format(server_rgc_path))
     if force:
         _LOGGER.info("Build forced; file existence will be ignored")
         if os.path.exists(server_rgc_path):
