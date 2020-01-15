@@ -5,7 +5,7 @@ from glob import glob
 from subprocess import run
 from refgenconf import RefGenConf
 from refgenconf.exceptions import GenomeConfigFormatError, ConfigNotCompliantError, RefgenconfError
-from ubiquerg import checksum, size, is_command_callable, parse_registry_path
+from ubiquerg import checksum, size, is_command_callable, parse_registry_path, is_writable
 
 from .const import *
 
@@ -31,11 +31,19 @@ def archive(rgc, registry_paths, force, remove, cfg_path, genomes_desc):
         raise ConfigNotCompliantError("You need to update the genome config to v{} in order to use the archiver. "
                                       "The required version can be generated with refgenie >= {}".
                                       format(REQ_CFG_VERSION, REFGENIE_BY_CFG[REQ_CFG_VERSION]))
-    try:
-        server_rgc_path = os.path.join(rgc[CFG_ARCHIVE_KEY], os.path.basename(cfg_path))
-    except KeyError:
-        raise GenomeConfigFormatError("The config '{}' is missing a '{}' entry. Can't determine the desired archive.".
-                                      format(cfg_path, CFG_ARCHIVE_KEY))
+    # backwards compatibility: both CFG_ARCHIVE_KEY_OLD and CFG_ARCHIVE_KEY are accepted. The new one is given priority
+    cfg_archive_folder_key = CFG_ARCHIVE_KEY \
+        if CFG_ARCHIVE_KEY in rgc else CFG_ARCHIVE_KEY_OLD
+    if CFG_ARCHIVE_CONFIG_KEY in rgc:
+        server_rgc_path = rgc[CFG_ARCHIVE_CONFIG_KEY]
+    else:
+        try:
+            server_rgc_path = os.path.join(rgc[cfg_archive_folder_key], os.path.basename(cfg_path))
+        except KeyError:
+            raise GenomeConfigFormatError("The config '{}' is missing a {} entry. Can't determine the desired archive.".
+                                          format(cfg_path, "or ".join([CFG_ARCHIVE_KEY, CFG_ARCHIVE_KEY_OLD])))
+    if not is_writable(server_rgc_path):
+        raise OSError("The determined archive config paths is not writable: {}".format(server_rgc_path))
     if force:
         _LOGGER.info("Build forced; file existence will be ignored")
         if os.path.exists(server_rgc_path):
@@ -51,7 +59,7 @@ def archive(rgc, registry_paths, force, remove, cfg_path, genomes_desc):
                 _LOGGER.error("To remove archives you have to specify them. Use 'asset_registry_path' argument.")
                 exit(1)
             with rgc_server as r:
-                _remove_archive(r, registry_paths)
+                _remove_archive(r, registry_paths, cfg_archive_folder_key)
             exit(0)
     else:
         if remove:
@@ -85,7 +93,7 @@ def archive(rgc, registry_paths, force, remove, cfg_path, genomes_desc):
     counter = 0
     for genome in genomes:
         genome_dir = os.path.join(rgc[CFG_FOLDER_KEY], genome)
-        target_dir = os.path.join(rgc[CFG_ARCHIVE_KEY], genome)
+        target_dir = os.path.join(rgc[cfg_archive_folder_key], genome)
         if not os.path.exists(target_dir):
             os.makedirs(target_dir)
         genome_desc = rgc[CFG_GENOMES_KEY][genome].setdefault(CFG_GENOME_DESC_KEY, DESC_PLACEHOLDER) \
@@ -265,12 +273,13 @@ def _purge_nonservable(rgc):
     return rgc
 
 
-def _remove_archive(rgc, registry_paths):
+def _remove_archive(rgc, registry_paths, cfg_archive_folder_key=CFG_ARCHIVE_KEY):
     """
     Remove archives and corresponding entries from the RefGenConf object
 
     :param refgenconf.RefGenConf rgc: object to remove the entries from
     :param list[dict] registry_paths: entries to remove
+    :param str cfg_archive_folder_key: configuration archive folder key in the genome configuration file
     :return list[str]: removed file paths
     """
     ret = []
@@ -285,7 +294,7 @@ def _remove_archive(rgc, registry_paths):
         except KeyError:
             _LOGGER.warning("{}/{}{} not found and not removed.".format(genome, asset, ":" + tag if tag else ""))
             continue
-        ret.append(os.path.join(rgc[CFG_ARCHIVE_KEY], genome, "{}__{}".format(asset or "*", tag or "*") + ".tgz"))
+        ret.append(os.path.join(rgc[cfg_archive_folder_key], genome, "{}__{}".format(asset or "*", tag or "*") + ".tgz"))
         for p in ret:
             archives = glob(p)
             for path in archives:
@@ -294,7 +303,7 @@ def _remove_archive(rgc, registry_paths):
                 except FileNotFoundError:
                     _LOGGER.warning("File does not exist: {}".format(path))
         try:
-            os.removedirs(os.path.join(rgc[CFG_ARCHIVE_KEY], genome))
+            os.removedirs(os.path.join(rgc[cfg_archive_folder_key], genome))
             _LOGGER.info("Removed empty genome directory: {}".format(genome))
         except OSError:
             pass
