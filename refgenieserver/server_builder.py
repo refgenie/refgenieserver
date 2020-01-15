@@ -41,8 +41,8 @@ def archive(rgc, registry_paths, force, remove, cfg_path, genomes_desc):
             server_rgc_path = os.path.join(rgc[cfg_archive_folder_key], os.path.basename(cfg_path))
         except KeyError:
             raise GenomeConfigFormatError("The config '{}' is missing a {} entry. Can't determine the desired archive.".
-                                          format(cfg_path, "or ".join([CFG_ARCHIVE_KEY, CFG_ARCHIVE_KEY_OLD])))
-    if not os.access(server_rgc_path, os.W_OK):
+                                          format(cfg_path, " or ".join([CFG_ARCHIVE_KEY, CFG_ARCHIVE_KEY_OLD])))
+    if os.path.isfile(server_rgc_path) and not os.access(server_rgc_path, os.W_OK):
         raise OSError("The determined archive config path is not writable: {}".format(server_rgc_path))
     if force:
         _LOGGER.info("Build forced; file existence will be ignored")
