@@ -26,10 +26,10 @@ def main():
     logger_args = dict(name=PKG_NAME, fmt=LOG_FORMAT, level=5) if args.debug else dict(name=PKG_NAME, fmt=LOG_FORMAT)
     _LOGGER = logmuse.setup_logger(**logger_args)
     selected_cfg = select_genome_config(args.config)
-    # this RefGenConf object will be used in the server, so it's read-only
-    rgc = RefGenConf(filepath=selected_cfg, writable=False)
     assert selected_cfg is not None, "You must provide a config file or set the {} environment variable".\
         format("or ".join(CFG_ENV_VARS))
+    # this RefGenConf object will be used in the server, so it's read-only
+    rgc = RefGenConf(filepath=selected_cfg, writable=False)
     if args.command == "archive":
         arp = [parse_registry_path(x) for x in args.asset_registry_paths] \
             if args.asset_registry_paths is not None else None
@@ -41,12 +41,3 @@ def main():
         app.include_router(version1.router, prefix="/v1")
         app.include_router(version2.router, prefix="/v2")
         uvicorn.run(app, host="0.0.0.0", port=args.port)
-
-
-if __name__ == "__main__":
-    try:
-        sys.exit(main())
-    except KeyboardInterrupt:
-        _LOGGER.info("Program canceled by user")
-        sys.exit(1)
-

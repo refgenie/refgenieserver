@@ -59,7 +59,7 @@ setup(
     license="BSD2",
     entry_points={
         "console_scripts": [
-            "{p} = {p}.main:main".format(p=PACKAGE),
+            "{p} = {p}.__main__:main".format(p=PACKAGE),
         ],
     },
     include_package_data=True,
