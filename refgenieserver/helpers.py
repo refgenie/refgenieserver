@@ -1,13 +1,7 @@
-import argparse
 from .const import *
 from ._version import __version__ as v
 from yacman import get_first_env_var
-
-
-class _VersionInHelpParser(argparse.ArgumentParser):
-    def format_help(self):
-        """ Add version information to help text. """
-        return "version: {}\n".format(v) + super(_VersionInHelpParser, self).format_help()
+from ubiquerg import VersionInHelpParser
 
 
 def build_parser():
@@ -21,7 +15,8 @@ def build_parser():
     additional_description = "For subcommand-specific options, type: '%(prog)s <subcommand> -h'"
     additional_description += "\nhttps://github.com/databio/refgenieserver"
 
-    parser = _VersionInHelpParser(
+    parser = VersionInHelpParser(
+        prog=PKG_NAME,
         description=banner,
         epilog=additional_description)
 
