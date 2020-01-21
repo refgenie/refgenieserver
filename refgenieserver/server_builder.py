@@ -101,8 +101,7 @@ def archive(rgc, registry_paths, force, remove, cfg_path, genomes_desc):
         genome_checksum = rgc[CFG_GENOMES_KEY][genome].setdefault(CFG_CHECKSUM_KEY, CHECKSUM_PLACEHOLDER)
         genome_attrs = {CFG_GENOME_DESC_KEY: genome_desc,
                         CFG_CHECKSUM_KEY: genome_checksum}
-        with rgc_server as r:
-            r.update_genomes(genome, genome_attrs)
+        rgc_server.update_genomes(genome, genome_attrs)
         _LOGGER.debug("Updating '{}' genome attributes...".format(genome))
         asset = asset_list[counter] if asset_list is not None else None
         assets = asset or rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY].keys()
