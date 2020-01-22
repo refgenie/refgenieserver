@@ -101,7 +101,12 @@ def archive(rgc, registry_paths, force, remove, cfg_path, genomes_desc):
         genome_checksum = rgc[CFG_GENOMES_KEY][genome].setdefault(CFG_CHECKSUM_KEY, CHECKSUM_PLACEHOLDER)
         genome_attrs = {CFG_GENOME_DESC_KEY: genome_desc,
                         CFG_CHECKSUM_KEY: genome_checksum}
-        rgc_server.update_genomes(genome, genome_attrs)
+        with rgc_server as r:
+            r.update_genomes(genome, genome_attrs)
+            # need to remove 'assets' key before writing to file since an empty PathExtAttmap's string
+            # repr is 'OrderedDict()' string which leads to an error later on, when the setdefault()
+            # method is used in update_assets() method. The removed key is added in update_assets() below.
+            del r[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY]
         _LOGGER.debug("Updating '{}' genome attributes...".format(genome))
         asset = asset_list[counter] if asset_list is not None else None
         assets = asset or rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY].keys()
