@@ -143,7 +143,7 @@ def archive(rgc, registry_paths, force, remove, cfg_path, genomes_desc):
                 asset_digest = rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][asset_name][CFG_ASSET_TAGS_KEY][tag_name]. \
                     setdefault(CFG_ASSET_CHECKSUM_KEY, None)
                 if not os.path.exists(target_file) or force:
-                    _LOGGER.info("Creating asset '{}' from '{}'".format(target_file, input_file))
+                    _LOGGER.info("Creating archive '{}' from '{}' asset".format(target_file, input_file))
                     try:
                         _check_tgz(input_file, target_file, asset_name)
                         _copy_recipe(input_file, target_dir, asset_name, tag_name)
@@ -165,7 +165,7 @@ def archive(rgc, registry_paths, force, remove, cfg_path, genomes_desc):
                         with rgc_server as r:
                             for parent in parents:
                                 # here we update any pre-existing parents' children attr with the newly added asset
-                                _LOGGER.debug("updating {} children list with {}".
+                                _LOGGER.debug("Updating {} children list with {}".
                                               format(parent, "{}/{}:{}".format(genome, asset_name, tag_name)))
                                 rp = parse_registry_path(parent)
                                 parent_genome = rp["namespace"]
