@@ -131,7 +131,7 @@ def archive(rgc, registry_paths, force, remove, cfg_path, genomes_desc):
                 if not rgc.is_asset_complete(genome, asset_name, tag_name):
                     _LOGGER.info("'{}/{}:{}' is incomplete, skipping".format(genome, asset_name, tag_name))
                     with rgc_server as r:
-                        r.remove_assets(genome, asset_name, tag_name)
+                        r.cfg_remove_assets(genome, asset_name, tag_name)
                     continue
                 file_name = rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][asset_name][CFG_ASSET_TAGS_KEY][tag_name][
                     CFG_ASSET_PATH_KEY]
@@ -271,9 +271,9 @@ def _purge_nonservable(rgc):
             try:
                 for tag_name, tag in asset[CFG_ASSET_TAGS_KEY].items():
                     if not _check_servable(rgc, genome_name, asset_name, tag_name):
-                        rgc.remove_assets(genome_name, asset_name, tag_name)
+                        rgc.cfg_remove_assets(genome_name, asset_name, tag_name)
             except KeyError:
-                rgc.remove_assets(genome_name, asset_name)
+                rgc.cfg_remove_assets(genome_name, asset_name)
     return rgc
 
 
@@ -291,9 +291,9 @@ def _remove_archive(rgc, registry_paths, cfg_archive_folder_key=CFG_ARCHIVE_KEY)
         genome, asset, tag = registry_path["namespace"], registry_path["item"], registry_path["tag"]
         try:
             if asset is None:
-                [rgc.remove_assets(genome, x, None) for x in rgc.list_assets_by_genome(genome)]
+                [rgc.cfg_remove_assets(genome, x, None) for x in rgc.list_assets_by_genome(genome)]
             else:
-                rgc.remove_assets(genome, asset, tag)
+                rgc.cfg_remove_assets(genome, asset, tag)
             _LOGGER.info("{}/{}{} removed".format(genome, asset, ":" + tag if tag else ""))
         except KeyError:
             _LOGGER.warning("{}/{}{} not found and not removed.".format(genome, asset, ":" + tag if tag else ""))
