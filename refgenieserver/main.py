@@ -10,7 +10,12 @@ import sys
 import uvicorn
 from ubiquerg import parse_registry_path
 
-app = FastAPI()
+app = FastAPI(
+    title=PKG_NAME,
+    description="a web interface and RESTful API for reference genome assets",
+    version=server_v
+)
+
 app.mount("/" + STATIC_DIRNAME, StaticFiles(directory=STATIC_PATH), name=STATIC_DIRNAME)
 templates = Jinja2Templates(directory=TEMPLATES_PATH)
 
