@@ -57,7 +57,8 @@ FROM tiangolo/uvicorn-gunicorn:python3.7-alpine3.8
 LABEL authors="Nathan Sheffield, Michal Stolarczyk"
 
 COPY . /app
-
+# RUN pip install https://github.com/databio/refgenconf/archive/dev.zip
+# RUN pip install https://github.com/databio/refgenieserver/archive/dev.zip
 RUN pip install https://github.com/databio/refgenieserver/archive/master.zip
 
 EOF
@@ -111,6 +112,21 @@ refgenie pull -c $REFGENIE test/fasta || ErrorExit "$LINENO: Failed to pull remo
 
 echo -e "\n-- List local assets --\n"
 refgenie list -c $REFGENIE || ErrorExit "$LINENO: Failed to list local assets."
+
+echo -e "\n-- Tag asset --\n"
+refgenie tag -c $REFGENIE test/fasta:default --tag test || ErrorExit "$LINENO: Failed to tag asset."
+
+echo -e "\n-- Remove asset --\n"
+refgenie remove -c $REFGENIE test/fasta --force || ErrorExit "$LINENO: Failed to remove asset."
+
+echo -e "\n-- Get asset digest --\n"
+refgenie id -c $REFGENIE rCRS/fasta || ErrorExit "$LINENO: Failed to get asset digest."
+
+echo -e "\n-- Subscribe --\n"
+refgenie subscribe -c $REFGENIE -s http://faulty.com  || ErrorExit "$LINENO: Failed to subscribe."
+
+echo -e "\n-- Unsubscribe --\n"
+refgenie subscribe -c $REFGENIE -s http://faulty.com  || ErrorExit "$LINENO: Failed to unsubscribe."
 
 echo -e "\n-- Shut down local servers --\n"
 docker stop refgenieservercon || ErrorExit "$LINENO: Failed to stop remote rCRS server."

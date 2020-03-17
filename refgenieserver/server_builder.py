@@ -4,7 +4,8 @@ import logging
 from glob import glob
 from subprocess import run
 from refgenconf import RefGenConf
-from refgenconf.exceptions import GenomeConfigFormatError, ConfigNotCompliantError, RefgenconfError
+from refgenconf.exceptions import RefgenconfError, ConfigNotCompliantError, \
+    GenomeConfigFormatError, MissingConfigDataError
 from ubiquerg import checksum, size, is_command_callable, parse_registry_path
 
 from .const import *
@@ -98,11 +99,11 @@ def archive(rgc, registry_paths, force, remove, cfg_path, genomes_desc):
             os.makedirs(target_dir)
         genome_desc = rgc[CFG_GENOMES_KEY][genome].setdefault(CFG_GENOME_DESC_KEY, DESC_PLACEHOLDER) \
             if genomes_desc is None or genome not in descs else descs[genome]
-        genome_checksum = rgc[CFG_GENOMES_KEY][genome].setdefault(CFG_CHECKSUM_KEY, CHECKSUM_PLACEHOLDER)
+        genome_checksum = rgc[CFG_GENOMES_KEY][genome].\
+            setdefault(CFG_CHECKSUM_KEY, CHECKSUM_PLACEHOLDER)
         genome_attrs = {CFG_GENOME_DESC_KEY: genome_desc,
                         CFG_CHECKSUM_KEY: genome_checksum}
-        with rgc_server as r:
-            r.update_genomes(genome, genome_attrs)
+        rgc_server.update_genomes(genome, genome_attrs)
         _LOGGER.debug("Updating '{}' genome attributes...".format(genome))
         asset = asset_list[counter] if asset_list is not None else None
         assets = asset or rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY].keys()
@@ -112,23 +113,26 @@ def archive(rgc, registry_paths, force, remove, cfg_path, genomes_desc):
         else:
             _LOGGER.debug("Assets to be processed: {}".format(str(assets)))
         for asset_name in assets if isinstance(assets, list) else [assets]:
-            asset_desc = rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][asset_name].setdefault(CFG_ASSET_DESC_KEY,
-                                                                                             DESC_PLACEHOLDER)
-            default_tag = rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][asset_name].setdefault(CFG_ASSET_DEFAULT_TAG_KEY,
-                                                                                              DEFAULT_TAG)
+            asset_desc = rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][asset_name]\
+                .setdefault(CFG_ASSET_DESC_KEY, DESC_PLACEHOLDER)
+            default_tag = rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][asset_name]\
+                .setdefault(CFG_ASSET_DEFAULT_TAG_KEY, DEFAULT_TAG)
             asset_attrs = {CFG_ASSET_DESC_KEY: asset_desc,
                            CFG_ASSET_DEFAULT_TAG_KEY: default_tag}
             _LOGGER.debug("Updating '{}/{}' asset attributes...".format(genome, asset_name))
             with rgc_server as r:
                 r.update_assets(genome, asset_name, asset_attrs)
+
             tag = tag_list[counter] if tag_list is not None else None
             tags = tag or rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][asset_name][CFG_ASSET_TAGS_KEY].keys()
             for tag_name in tags if isinstance(tags, list) else [tags]:
                 if not rgc.is_asset_complete(genome, asset_name, tag_name):
-                    _LOGGER.info("'{}/{}:{}' is incomplete, skipping".format(genome, asset_name, tag_name))
-                    with rgc_server as r:
-                        r.remove_assets(genome, asset_name, tag_name)
-                    continue
+                    raise MissingConfigDataError(
+                        "Asset '{}/{}:{}' is incomplete. This probably means an"
+                        " attempt to archive a partially pulled parent. "
+                        "refgenieserver archive requires all assets to be built"
+                        " prior to archiving.".format(genome, asset_name, tag_name)
+                    )
                 file_name = rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][asset_name][CFG_ASSET_TAGS_KEY][tag_name][
                     CFG_ASSET_PATH_KEY]
                 target_file = os.path.join(target_dir, "{}__{}".format(asset_name, tag_name) + ".tgz")
@@ -144,7 +148,7 @@ def archive(rgc, registry_paths, force, remove, cfg_path, genomes_desc):
                 asset_digest = rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][asset_name][CFG_ASSET_TAGS_KEY][tag_name]. \
                     setdefault(CFG_ASSET_CHECKSUM_KEY, None)
                 if not os.path.exists(target_file) or force:
-                    _LOGGER.info("Creating asset '{}' from '{}'".format(target_file, input_file))
+                    _LOGGER.info("Creating archive '{}' from '{}' asset".format(target_file, input_file))
                     try:
                         _check_tgz(input_file, target_file, asset_name)
                         _copy_recipe(input_file, target_dir, asset_name, tag_name)
@@ -166,7 +170,7 @@ def archive(rgc, registry_paths, force, remove, cfg_path, genomes_desc):
                         with rgc_server as r:
                             for parent in parents:
                                 # here we update any pre-existing parents' children attr with the newly added asset
-                                _LOGGER.debug("updating {} children list with {}".
+                                _LOGGER.debug("Updating {} children list with {}".
                                               format(parent, "{}/{}:{}".format(genome, asset_name, tag_name)))
                                 rp = parse_registry_path(parent)
                                 parent_genome = rp["namespace"]
@@ -267,9 +271,10 @@ def _purge_nonservable(rgc):
             try:
                 for tag_name, tag in asset[CFG_ASSET_TAGS_KEY].items():
                     if not _check_servable(rgc, genome_name, asset_name, tag_name):
-                        rgc.remove_assets(genome_name, asset_name, tag_name)
+                        _LOGGER.debug("Removing '{}/{}:{}', it's not servable".format(genome_name, asset_name, tag_name))
+                        rgc.cfg_remove_assets(genome_name, asset_name, tag_name)
             except KeyError:
-                rgc.remove_assets(genome_name, asset_name)
+                rgc.cfg_remove_assets(genome_name, asset_name)
     return rgc
 
 
@@ -287,9 +292,9 @@ def _remove_archive(rgc, registry_paths, cfg_archive_folder_key=CFG_ARCHIVE_KEY)
         genome, asset, tag = registry_path["namespace"], registry_path["item"], registry_path["tag"]
         try:
             if asset is None:
-                [rgc.remove_assets(genome, x, None) for x in rgc.list_assets_by_genome(genome)]
+                [rgc.cfg_remove_assets(genome, x, None) for x in rgc.list_assets_by_genome(genome)]
             else:
-                rgc.remove_assets(genome, asset, tag)
+                rgc.cfg_remove_assets(genome, asset, tag)
             _LOGGER.info("{}/{}{} removed".format(genome, asset, ":" + tag if tag else ""))
         except KeyError:
             _LOGGER.warning("{}/{}{} not found and not removed.".format(genome, asset, ":" + tag if tag else ""))

@@ -54,7 +54,7 @@ async def list_available_assets():
     """
     Returns a list of all assets that can be downloaded. No inputs required.
     """
-    ret_dict = rgc.assets_dict(include_tags=True)
+    ret_dict = rgc.list(include_tags=True)
     _LOGGER.info("serving assets dict: {}".format(ret_dict))
     return ret_dict
 
