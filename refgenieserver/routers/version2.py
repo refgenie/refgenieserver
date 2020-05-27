@@ -1,4 +1,5 @@
 from starlette.responses import FileResponse, JSONResponse
+from starlette.responses import RedirectResponse
 from starlette.requests import Request
 from fastapi import HTTPException, APIRouter
 
@@ -58,7 +59,6 @@ async def list_available_assets():
     _LOGGER.info("serving assets dict: {}".format(ret_dict))
     return ret_dict
 
-
 @router.get("/asset/{genome}/{asset}/archive", operation_id=API_ID_ARCHIVE)
 async def download_asset(genome: str, asset: str, tag: str = None):
     """
@@ -70,7 +70,13 @@ async def download_asset(genome: str, asset: str, tag: str = None):
     file_name = "{}__{}{}".format(asset, tag, ".tgz")
     asset_file = "{base}/{genome}/{file_name}".format(base=BASE_DIR, genome=genome, file_name=file_name)
     _LOGGER.info("serving asset file: '{}'".format(asset_file))
-    if os.path.isfile(asset_file):
+
+    _LOGGER.info("remote url base: '{}'".format(rgc.remote_url_base))
+    if rgc.remote_url_base:
+        asset_url = "{base}/{genome}/{file_name}".format(base=rgc.remote_url_base, genome=genome, file_name=file_name)
+        _LOGGER.info("asset url: '{}'".format(asset_url))
+        return RedirectResponse(asset_url)
+    elif os.path.isfile(asset_file):
         return FileResponse(asset_file, filename=file_name, media_type="application/octet-stream")
     else:
         msg = MSG_404.format("asset ({})".format(asset))
