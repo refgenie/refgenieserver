@@ -36,7 +36,9 @@ def archive(rgc, registry_paths, force, remove, cfg_path, genomes_desc):
     cfg_archive_folder_key = CFG_ARCHIVE_KEY \
         if CFG_ARCHIVE_KEY in rgc else CFG_ARCHIVE_KEY_OLD
     if CFG_ARCHIVE_CONFIG_KEY in rgc:
-        server_rgc_path = rgc[CFG_ARCHIVE_CONFIG_KEY]
+        srp = rgc[CFG_ARCHIVE_CONFIG_KEY]
+        server_rgc_path = srp if os.path.isabs(srp) \
+            else os.path.join(os.path.dirname(rgc.file_path), srp)
     else:
         try:
             server_rgc_path = os.path.join(rgc[cfg_archive_folder_key], os.path.basename(cfg_path))
