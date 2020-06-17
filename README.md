@@ -16,7 +16,13 @@ docker build -t refgenieserverim .
 
 ### Running container for development:
 
-Mount a directory of files to serve at `/genomes`:
+You can run it directly after installing with `pip install`, like this:
+
+```
+refgenieserver serve -c refgenie.yaml -p 5000
+```
+
+Better, though, is to use the container. Mount a directory of files to serve at `/genomes`:
 
 ```
 docker run --rm -p 80:80 --name refgenieservercon \
