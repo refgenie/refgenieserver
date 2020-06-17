@@ -72,8 +72,8 @@ async def download_asset(genome: str, asset: str, tag: str = None):
     """
     tag = tag or rgc.get_default_tag(genome, asset)  # returns 'default' for nonexistent genome/asset; no need to catch
     file_name = "{}__{}{}".format(asset, tag, ".tgz")
-    _LOGGER.info("remote url base: '{}'".format(rgc[CFG_REMOTE_URL_BASE_KEY]))
     if CFG_REMOTE_URL_BASE_KEY in rgc and rgc[CFG_REMOTE_URL_BASE_KEY] is not None:
+        _LOGGER.info("remote url base: '{}'".format(rgc[CFG_REMOTE_URL_BASE_KEY]))
         asset_url = "{base}/{genome}/{file_name}".format(base=rgc[CFG_REMOTE_URL_BASE_KEY], genome=genome, file_name=file_name)
         _LOGGER.info("redirecting to URL: '{}'".format(asset_url))
         return RedirectResponse(asset_url)
