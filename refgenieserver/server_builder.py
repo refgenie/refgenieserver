@@ -32,16 +32,13 @@ def archive(rgc, registry_paths, force, remove, cfg_path, genomes_desc):
         raise ConfigNotCompliantError("You need to update the genome config to v{} in order to use the archiver. "
                                       "The required version can be generated with refgenie >= {}".
                                       format(REQ_CFG_VERSION, REFGENIE_BY_CFG[REQ_CFG_VERSION]))
-    # backwards compatibility: both CFG_ARCHIVE_KEY_OLD and CFG_ARCHIVE_KEY are accepted. The new one is given priority
-    cfg_archive_folder_key = CFG_ARCHIVE_KEY \
-        if CFG_ARCHIVE_KEY in rgc else CFG_ARCHIVE_KEY_OLD
     if CFG_ARCHIVE_CONFIG_KEY in rgc:
         srp = rgc[CFG_ARCHIVE_CONFIG_KEY]
         server_rgc_path = srp if os.path.isabs(srp) \
             else os.path.join(os.path.dirname(rgc.file_path), srp)
     else:
         try:
-            server_rgc_path = os.path.join(rgc[cfg_archive_folder_key], os.path.basename(cfg_path))
+            server_rgc_path = os.path.join(rgc[CFG_ARCHIVE_KEY], os.path.basename(cfg_path))
         except KeyError:
             raise GenomeConfigFormatError("The config '{}' is missing a {} entry. Can't determine the desired archive.".
                                           format(cfg_path, " or ".join([CFG_ARCHIVE_KEY, CFG_ARCHIVE_KEY_OLD])))
@@ -62,7 +59,7 @@ def archive(rgc, registry_paths, force, remove, cfg_path, genomes_desc):
                 _LOGGER.error("To remove archives you have to specify them. Use 'asset_registry_path' argument.")
                 exit(1)
             with rgc_server as r:
-                _remove_archive(r, registry_paths, cfg_archive_folder_key)
+                _remove_archive(r, registry_paths, CFG_ARCHIVE_KEY)
             exit(0)
     else:
         if remove:
@@ -96,7 +93,7 @@ def archive(rgc, registry_paths, force, remove, cfg_path, genomes_desc):
     counter = 0
     for genome in genomes:
         genome_dir = os.path.join(rgc[CFG_FOLDER_KEY], genome)
-        target_dir = os.path.join(rgc[cfg_archive_folder_key], genome)
+        target_dir = os.path.join(rgc[CFG_ARCHIVE_KEY], genome)
         if not os.path.exists(target_dir):
             os.makedirs(target_dir)
         genome_desc = rgc[CFG_GENOMES_KEY][genome].setdefault(CFG_GENOME_DESC_KEY, DESC_PLACEHOLDER) \

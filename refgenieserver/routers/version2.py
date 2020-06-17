@@ -12,6 +12,9 @@ from ..helpers import get_openapi_version
 
 router = APIRouter()
 
+# move the key below to refgenconf
+CFG_REMOTE_URL_BASE_KEY = "remote_url_base"
+
 
 @router.get("/")
 @router.get("/index")
