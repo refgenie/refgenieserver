@@ -6,6 +6,7 @@ from subprocess import run
 from refgenconf import RefGenConf
 from refgenconf.exceptions import RefgenconfError, ConfigNotCompliantError, \
     GenomeConfigFormatError, MissingConfigDataError
+from attmap import PathExAttMap as PXAM
 from ubiquerg import checksum, size, is_command_callable, parse_registry_path
 
 from .const import *
@@ -102,7 +103,9 @@ def archive(rgc, registry_paths, force, remove, cfg_path, genomes_desc):
             setdefault(CFG_CHECKSUM_KEY, CHECKSUM_PLACEHOLDER)
         genome_attrs = {CFG_GENOME_DESC_KEY: genome_desc,
                         CFG_CHECKSUM_KEY: genome_checksum}
-        rgc_server.update_genomes(genome, genome_attrs)
+        with rgc_server as r:
+            r[CFG_GENOMES_KEY].setdefault(genome, PXAM())
+            r[CFG_GENOMES_KEY][genome].update(genome_attrs)
         _LOGGER.debug("Updating '{}' genome attributes...".format(genome))
         asset = asset_list[counter] if asset_list is not None else None
         assets = asset or rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY].keys()
@@ -176,7 +179,7 @@ def archive(rgc, registry_paths, force, remove, cfg_path, genomes_desc):
                                 parent_asset = rp["item"]
                                 parent_tag = rp["tag"]
                                 try:
-                                    r.get_asset(parent_genome, parent_asset, parent_tag)
+                                    r.seek(parent_genome, parent_asset, parent_tag, strict_exists=True)
                                 except RefgenconfError:
                                     _LOGGER.warning("'{}/{}:{}'s parent '{}' does not exist, "
                                                     "skipping relationship updates".
@@ -191,7 +194,7 @@ def archive(rgc, registry_paths, force, remove, cfg_path, genomes_desc):
         counter += 1
     with rgc_server as r:
         _purge_nonservable(r)
-        _LOGGER.info("Builder finished; server config file saved to: '{}'".format(r.write(server_rgc_path)))
+    _LOGGER.info("Builder finished; server config file saved to {}".format(rgc_server.file_path))
 
 
 def _check_tgz(path, output, asset_name):
