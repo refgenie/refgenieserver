@@ -50,7 +50,7 @@
     }
   ],
   "placementConstraints": [],
-  "memory": "256",
+  "memory": "512",
   "taskRoleArn": "ecsTaskExecutionRole",
   "compatibilities": [
     "EC2"
@@ -87,7 +87,7 @@
     "EC2"
   ],
   "networkMode": "bridge",
-  "cpu": "128",
+  "cpu": "256",
   "revision": 1,
   "status": "ACTIVE",
   "inferenceAccelerators": null,
