@@ -8,12 +8,9 @@ from refgenconf.refgenconf import map_paths_by_id
 
 from ..const import *
 from ..main import rgc, templates, _LOGGER, app
-from ..helpers import get_openapi_version
+from ..helpers import get_openapi_version, get_datapath_for_genome
 
 router = APIRouter()
-
-# move the key below to refgenconf
-CFG_REMOTE_URL_BASE_KEY = "remote_url_base"
 
 
 @router.get("/")
@@ -62,7 +59,6 @@ async def list_available_assets():
     _LOGGER.info("serving assets dict: {}".format(ret_dict))
     return ret_dict
 
-
 @router.get("/asset/{genome}/{asset}/archive", operation_id=API_ID_ARCHIVE)
 async def download_asset(genome: str, asset: str, tag: str = None):
     """
@@ -72,15 +68,14 @@ async def download_asset(genome: str, asset: str, tag: str = None):
     """
     tag = tag or rgc.get_default_tag(genome, asset)  # returns 'default' for nonexistent genome/asset; no need to catch
     file_name = "{}__{}{}".format(asset, tag, ".tgz")
-    if CFG_REMOTE_URL_BASE_KEY in rgc and rgc[CFG_REMOTE_URL_BASE_KEY] is not None:
-        _LOGGER.info("remote url base: '{}'".format(rgc[CFG_REMOTE_URL_BASE_KEY]))
-        asset_url = "{base}/{genome}/{file_name}".format(base=rgc[CFG_REMOTE_URL_BASE_KEY], genome=genome, file_name=file_name)
-        _LOGGER.info("redirecting to URL: '{}'".format(asset_url))
-        return RedirectResponse(asset_url)
-    asset_file = "{base}/{genome}/{file_name}".format(base=BASE_DIR, genome=genome, file_name=file_name)
-    _LOGGER.info("serving asset file: '{}'".format(asset_file))
-    if os.path.isfile(asset_file):
-        return FileResponse(asset_file, filename=file_name, media_type="application/octet-stream")
+    path, remote = get_datapath_for_genome(rgc, dict(genome=genome, file_name=file_name))
+    _LOGGER.info("file source: {}".format(path))
+    if remote:
+        _LOGGER.info("redirecting to URL: '{}'".format(path))
+        return RedirectResponse(path)
+    _LOGGER.info("serving asset file: '{}'".format(path))
+    if os.path.isfile(path):
+        return FileResponse(path, filename=file_name, media_type="application/octet-stream")
     else:
         msg = MSG_404.format("asset ({})".format(asset))
         _LOGGER.warning(msg)
@@ -130,10 +125,13 @@ async def download_asset_build_log(genome: str, asset: str, tag: str = None):
     """
     tag = tag or rgc.get_default_tag(genome, asset)  # returns 'default' for nonexistent genome/asset; no need to catch
     file_name = TEMPLATE_LOG.format(asset, tag)
-    log_file = "{base}/{genome}/{file_name}".format(base=BASE_DIR, genome=genome, file_name=file_name)
-    _LOGGER.info("serving build log file: '{}'".format(log_file))
-    if os.path.isfile(log_file):
-        return FileResponse(log_file, filename=file_name, media_type="application/octet-stream")
+    path, remote = get_datapath_for_genome(rgc, dict(genome=genome, file_name=file_name))
+    if remote:
+        _LOGGER.info("redirecting to URL: '{}'".format(path))
+        return RedirectResponse(path)
+    _LOGGER.info("serving build log file: '{}'".format(path))
+    if os.path.isfile(path):
+        return FileResponse(path, filename=file_name, media_type="application/octet-stream")
     else:
         msg = MSG_404.format("asset ({})".format(asset))
         _LOGGER.warning(msg)
@@ -147,13 +145,16 @@ async def download_asset_build_recipe(genome: str, asset: str, tag: str = None):
 
     Optionally, 'tag' query parameter can be specified to get a tagged asset archive. Default tag is returned otherwise.
     """
-    import json
     tag = tag or rgc.get_default_tag(genome, asset)  # returns 'default' for nonexistent genome/asset; no need to catch
     file_name = TEMPLATE_RECIPE_JSON.format(asset, tag)
-    recipe_file = "{base}/{genome}/{file_name}".format(base=BASE_DIR, genome=genome, file_name=file_name)
-    _LOGGER.info("serving build recipe file: '{}'".format(recipe_file))
-    if os.path.isfile(recipe_file):
-        with open(recipe_file, 'r') as f:
+    path, remote = get_datapath_for_genome(rgc, dict(genome=genome, file_name=file_name))
+    if remote:
+        _LOGGER.info("redirecting to URL: '{}'".format(path))
+        return RedirectResponse(path)
+    _LOGGER.info("serving build log file: '{}'".format(path))
+    if os.path.isfile(path):
+        import json
+        with open(path, 'r') as f:
             recipe = json.load(f)
         return JSONResponse(recipe)
     else:
