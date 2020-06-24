@@ -59,6 +59,7 @@ async def list_available_assets():
     _LOGGER.info("serving assets dict: {}".format(ret_dict))
     return ret_dict
 
+
 @router.get("/asset/{genome}/{asset}/archive", operation_id=API_ID_ARCHIVE)
 async def download_asset(genome: str, asset: str, tag: str = None):
     """

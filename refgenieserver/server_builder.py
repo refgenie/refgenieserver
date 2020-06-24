@@ -192,8 +192,6 @@ def archive(rgc, registry_paths, force, remove, cfg_path, genomes_desc):
                 else:
                     _LOGGER.debug("'{}' exists".format(target_file))
         counter += 1
-    with rgc_server as r:
-        _purge_nonservable(r)
     _LOGGER.info("Builder finished; server config file saved to {}".format(rgc_server.file_path))
 
 
@@ -255,29 +253,6 @@ def _copy_recipe(input_dir, target_dir, asset_name, tag_name):
         _LOGGER.debug("Recipe copied to: {}".format(target_dir))
     else:
         _LOGGER.warning("Recipe not found: {}".format(recipe_path))
-
-
-def _purge_nonservable(rgc):
-    """
-    Remove entries in RefGenConf object that were not processed by the archiver and should not be served
-
-    :param refgenconf.RefGenConf rgc: object to check
-    :return refgenconf.RefGenConf: object with just the servable entries
-    """
-    def _check_servable(rgc, genome, asset, tag):
-        tag_data = rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][asset][CFG_ASSET_TAGS_KEY][tag]
-        return all([r in tag_data for r in [CFG_ARCHIVE_CHECKSUM_KEY, CFG_ARCHIVE_SIZE_KEY]])
-
-    for genome_name, genome in rgc[CFG_GENOMES_KEY].items():
-        for asset_name, asset in genome[CFG_ASSETS_KEY].items():
-            try:
-                for tag_name, tag in asset[CFG_ASSET_TAGS_KEY].items():
-                    if not _check_servable(rgc, genome_name, asset_name, tag_name):
-                        _LOGGER.debug("Removing '{}/{}:{}', it's not servable".format(genome_name, asset_name, tag_name))
-                        rgc.cfg_remove_assets(genome_name, asset_name, tag_name)
-            except KeyError:
-                rgc.cfg_remove_assets(genome_name, asset_name)
-    return rgc
 
 
 def _remove_archive(rgc, registry_paths, cfg_archive_folder_key=CFG_ARCHIVE_KEY):

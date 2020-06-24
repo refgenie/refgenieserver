@@ -1,9 +1,13 @@
+import logging
 from .const import *
 from ._version import __version__ as v
 from yacman import get_first_env_var
 from ubiquerg import VersionInHelpParser
 
 from string import Formatter
+
+global _LOGGER
+_LOGGER = logging.getLogger(PKG_NAME)
 
 
 def build_parser():
@@ -133,3 +137,26 @@ def get_datapath_for_genome(rgc, fill_dict,
         fill_dict["base"] = rgc[CFG_REMOTE_URL_BASE_KEY].rstrip("/")
         remote = True
     return pth_templ.format(**fill_dict), remote
+
+
+def purge_nonservable(rgc):
+    """
+    Remove entries in RefGenConf object that were not processed by the archiver and should not be served
+
+    :param refgenconf.RefGenConf rgc: object to check
+    :return refgenconf.RefGenConf: object with just the servable entries
+    """
+    def _check_servable(rgc, genome, asset, tag):
+        tag_data = rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][asset][CFG_ASSET_TAGS_KEY][tag]
+        return all([r in tag_data for r in [CFG_ARCHIVE_CHECKSUM_KEY, CFG_ARCHIVE_SIZE_KEY]])
+
+    for genome_name, genome in rgc[CFG_GENOMES_KEY].items():
+        for asset_name, asset in genome[CFG_ASSETS_KEY].items():
+            try:
+                for tag_name, tag in asset[CFG_ASSET_TAGS_KEY].items():
+                    if not _check_servable(rgc, genome_name, asset_name, tag_name):
+                        _LOGGER.debug("Removing '{}/{}:{}', it's not servable".format(genome_name, asset_name, tag_name))
+                        rgc.cfg_remove_assets(genome_name, asset_name, tag_name)
+            except KeyError:
+                rgc.cfg_remove_assets(genome_name, asset_name)
+    return rgc
