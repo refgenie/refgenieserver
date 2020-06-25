@@ -3,6 +3,7 @@ import logging
 
 from glob import glob
 from subprocess import run
+
 from refgenconf import RefGenConf
 from refgenconf.exceptions import RefgenconfError, ConfigNotCompliantError, \
     GenomeConfigFormatError, MissingConfigDataError
@@ -47,13 +48,11 @@ def archive(rgc, registry_paths, force, remove, cfg_path, genomes_desc):
         raise OSError("The determined archive config path is not writable: {}".format(server_rgc_path))
     if force:
         _LOGGER.info("Build forced; file existence will be ignored")
-        if os.path.exists(server_rgc_path):
-            _LOGGER.debug("'{}' file was found and will be updated".format(server_rgc_path))
     _LOGGER.debug("Registry_paths: {}".format(registry_paths))
-
     # original RefGenConf has been created in read-only mode,
     # make it RW compatible and point to new target path for server use or initialize a new object
     if os.path.exists(server_rgc_path):
+        _LOGGER.debug("'{}' file was found and will be updated".format(server_rgc_path))
         rgc_server = RefGenConf(filepath=server_rgc_path)
         if remove:
             if not registry_paths:
@@ -66,6 +65,7 @@ def archive(rgc, registry_paths, force, remove, cfg_path, genomes_desc):
         if remove:
             _LOGGER.error("You can't remove archives since the genome_archive path does not exist yet.")
             exit(1)
+        _LOGGER.debug("'{}' file was not found and will be created".format(server_rgc_path))
         rgc_server = RefGenConf(filepath=rgc.file_path)
         rgc_server.make_writable(filepath=server_rgc_path)
         rgc_server.make_readonly()

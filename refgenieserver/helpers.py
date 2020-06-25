@@ -126,7 +126,6 @@ def get_datapath_for_genome(rgc, fill_dict,
     :return (str, bool): a pair of file source and the flag indicationg whether
      the source is remote
     """
-    CFG_REMOTE_URL_BASE_KEY = "remote_url_base"
     req_keys = [i[1] for i in Formatter().parse(pth_templ) if i[1] is not None]
     assert all([k in req_keys for k in list(fill_dict.keys())]), \
         "Only the following keys are allowed in the fill_dict: {}".format(req_keys)
