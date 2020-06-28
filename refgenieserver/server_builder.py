@@ -96,7 +96,7 @@ def archive(rgc, registry_paths, force, remove, cfg_path, genomes_desc):
         genome_dir = os.path.join(rgc[CFG_FOLDER_KEY], genome)
         target_dir = os.path.join(rgc[CFG_ARCHIVE_KEY], genome)
         if not os.path.exists(target_dir):
-            os.makedirs(target_dir)
+            os.makedirs(target_dir, exist_ok=True)
         genome_desc = rgc[CFG_GENOMES_KEY][genome].setdefault(CFG_GENOME_DESC_KEY, DESC_PLACEHOLDER) \
             if genomes_desc is None or genome not in descs else descs[genome]
         genome_checksum = rgc[CFG_GENOMES_KEY][genome].\
