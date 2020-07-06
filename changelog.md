@@ -2,6 +2,17 @@
 
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) and [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) format. 
 
+## [0.5.0] -- 2020-07-06
+### Added
+- support for external asset sources via `remote_url_base` key in the config
+### Changed
+- path specified in `genome_archive_config` is considered relative to the refgenie genome config file, unless absolute.
+- non-servable assets purging is now performed prior to serving rather than after each archive job completion
+- dropped Python 2 support 
+### Removed
+- support for old `genome_archive` key; use `genome_archive_folder` and `genome_archive_config` from now on.
+
+
 ## [0.4.4] -- 2020-03-17
 ### Changed
 - `refgenieserver archive` requires all assets to be complete prior to archiving

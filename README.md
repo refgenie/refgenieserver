@@ -16,7 +16,13 @@ docker build -t refgenieserverim .
 
 ### Running container for development:
 
-Mount a directory of files to serve at `/genomes`:
+You can run it directly after installing with `pip install`, like this:
+
+```
+refgenieserver serve -c refgenie.yaml -p 5000
+```
+
+Better, though, is to use the container. Mount a directory of files to serve at `/genomes`:
 
 ```
 docker run --rm -p 80:80 --name refgenieservercon \
@@ -78,7 +84,9 @@ docker exec -it refgenieservercon sh
 
 Refgenieserver can also archive your assets, creating the directory for asset archives needed to `serve`.
 
-First, make sure the config has a `genome_archive` key that points to the directory where you want to store the servable archives (`genome_archive` is __not__ added automatically by [`refgenie init`](http://refgenie.databio.org/en/latest/usage/#refgenie-init-help)). Your first time you will need to manually add this to tell refgenieserver where to store the archives.
+First, make sure the config has a `genome_archive_folder` key that points to the directory where you want to store the servable archives (`genome_archive_folder` is __not__ added automatically by [`refgenie init`](http://refgenie.databio.org/en/latest/usage/#refgenie-init-help)). Your first time you will need to manually add this to tell refgenieserver where to store the archives.
+
+Secondly, if you wish to store the refgenieserver configuration file separately from the `genome_archive_folder`, specify a `genome_archive_config` key. The path that this key points to will be considered relative to the refgenie configuration file, unless it's absolute.
 
 Then run: 
 ```

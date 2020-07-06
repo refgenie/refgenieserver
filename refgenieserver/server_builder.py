@@ -3,9 +3,11 @@ import logging
 
 from glob import glob
 from subprocess import run
+
 from refgenconf import RefGenConf
 from refgenconf.exceptions import RefgenconfError, ConfigNotCompliantError, \
     GenomeConfigFormatError, MissingConfigDataError
+from attmap import PathExAttMap as PXAM
 from ubiquerg import checksum, size, is_command_callable, parse_registry_path
 
 from .const import *
@@ -32,14 +34,13 @@ def archive(rgc, registry_paths, force, remove, cfg_path, genomes_desc):
         raise ConfigNotCompliantError("You need to update the genome config to v{} in order to use the archiver. "
                                       "The required version can be generated with refgenie >= {}".
                                       format(REQ_CFG_VERSION, REFGENIE_BY_CFG[REQ_CFG_VERSION]))
-    # backwards compatibility: both CFG_ARCHIVE_KEY_OLD and CFG_ARCHIVE_KEY are accepted. The new one is given priority
-    cfg_archive_folder_key = CFG_ARCHIVE_KEY \
-        if CFG_ARCHIVE_KEY in rgc else CFG_ARCHIVE_KEY_OLD
     if CFG_ARCHIVE_CONFIG_KEY in rgc:
-        server_rgc_path = rgc[CFG_ARCHIVE_CONFIG_KEY]
+        srp = rgc[CFG_ARCHIVE_CONFIG_KEY]
+        server_rgc_path = srp if os.path.isabs(srp) \
+            else os.path.join(os.path.dirname(rgc.file_path), srp)
     else:
         try:
-            server_rgc_path = os.path.join(rgc[cfg_archive_folder_key], os.path.basename(cfg_path))
+            server_rgc_path = os.path.join(rgc[CFG_ARCHIVE_KEY], os.path.basename(cfg_path))
         except KeyError:
             raise GenomeConfigFormatError("The config '{}' is missing a {} entry. Can't determine the desired archive.".
                                           format(cfg_path, " or ".join([CFG_ARCHIVE_KEY, CFG_ARCHIVE_KEY_OLD])))
@@ -47,25 +48,24 @@ def archive(rgc, registry_paths, force, remove, cfg_path, genomes_desc):
         raise OSError("The determined archive config path is not writable: {}".format(server_rgc_path))
     if force:
         _LOGGER.info("Build forced; file existence will be ignored")
-        if os.path.exists(server_rgc_path):
-            _LOGGER.debug("'{}' file was found and will be updated".format(server_rgc_path))
     _LOGGER.debug("Registry_paths: {}".format(registry_paths))
-
     # original RefGenConf has been created in read-only mode,
     # make it RW compatible and point to new target path for server use or initialize a new object
     if os.path.exists(server_rgc_path):
+        _LOGGER.debug("'{}' file was found and will be updated".format(server_rgc_path))
         rgc_server = RefGenConf(filepath=server_rgc_path)
         if remove:
             if not registry_paths:
                 _LOGGER.error("To remove archives you have to specify them. Use 'asset_registry_path' argument.")
                 exit(1)
             with rgc_server as r:
-                _remove_archive(r, registry_paths, cfg_archive_folder_key)
+                _remove_archive(r, registry_paths, CFG_ARCHIVE_KEY)
             exit(0)
     else:
         if remove:
             _LOGGER.error("You can't remove archives since the genome_archive path does not exist yet.")
             exit(1)
+        _LOGGER.debug("'{}' file was not found and will be created".format(server_rgc_path))
         rgc_server = RefGenConf(filepath=rgc.file_path)
         rgc_server.make_writable(filepath=server_rgc_path)
         rgc_server.make_readonly()
@@ -94,16 +94,18 @@ def archive(rgc, registry_paths, force, remove, cfg_path, genomes_desc):
     counter = 0
     for genome in genomes:
         genome_dir = os.path.join(rgc[CFG_FOLDER_KEY], genome)
-        target_dir = os.path.join(rgc[cfg_archive_folder_key], genome)
+        target_dir = os.path.join(rgc[CFG_ARCHIVE_KEY], genome)
         if not os.path.exists(target_dir):
-            os.makedirs(target_dir)
+            os.makedirs(target_dir, exist_ok=True)
         genome_desc = rgc[CFG_GENOMES_KEY][genome].setdefault(CFG_GENOME_DESC_KEY, DESC_PLACEHOLDER) \
             if genomes_desc is None or genome not in descs else descs[genome]
         genome_checksum = rgc[CFG_GENOMES_KEY][genome].\
             setdefault(CFG_CHECKSUM_KEY, CHECKSUM_PLACEHOLDER)
         genome_attrs = {CFG_GENOME_DESC_KEY: genome_desc,
                         CFG_CHECKSUM_KEY: genome_checksum}
-        rgc_server.update_genomes(genome, genome_attrs)
+        with rgc_server as r:
+            r[CFG_GENOMES_KEY].setdefault(genome, PXAM())
+            r[CFG_GENOMES_KEY][genome].update(genome_attrs)
         _LOGGER.debug("Updating '{}' genome attributes...".format(genome))
         asset = asset_list[counter] if asset_list is not None else None
         assets = asset or rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY].keys()
@@ -177,7 +179,7 @@ def archive(rgc, registry_paths, force, remove, cfg_path, genomes_desc):
                                 parent_asset = rp["item"]
                                 parent_tag = rp["tag"]
                                 try:
-                                    r.get_asset(parent_genome, parent_asset, parent_tag)
+                                    r.seek(parent_genome, parent_asset, parent_tag, strict_exists=True)
                                 except RefgenconfError:
                                     _LOGGER.warning("'{}/{}:{}'s parent '{}' does not exist, "
                                                     "skipping relationship updates".
@@ -190,9 +192,7 @@ def archive(rgc, registry_paths, force, remove, cfg_path, genomes_desc):
                 else:
                     _LOGGER.debug("'{}' exists".format(target_file))
         counter += 1
-    with rgc_server as r:
-        _purge_nonservable(r)
-        _LOGGER.info("Builder finished; server config file saved to: '{}'".format(r.write(server_rgc_path)))
+    _LOGGER.info("Builder finished; server config file saved to {}".format(rgc_server.file_path))
 
 
 def _check_tgz(path, output, asset_name):
@@ -253,29 +253,6 @@ def _copy_recipe(input_dir, target_dir, asset_name, tag_name):
         _LOGGER.debug("Recipe copied to: {}".format(target_dir))
     else:
         _LOGGER.warning("Recipe not found: {}".format(recipe_path))
-
-
-def _purge_nonservable(rgc):
-    """
-    Remove entries in RefGenConf object that were not processed by the archiver and should not be served
-
-    :param refgenconf.RefGenConf rgc: object to check
-    :return refgenconf.RefGenConf: object with just the servable entries
-    """
-    def _check_servable(rgc, genome, asset, tag):
-        tag_data = rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][asset][CFG_ASSET_TAGS_KEY][tag]
-        return all([r in tag_data for r in [CFG_ARCHIVE_CHECKSUM_KEY, CFG_ARCHIVE_SIZE_KEY]])
-
-    for genome_name, genome in rgc[CFG_GENOMES_KEY].items():
-        for asset_name, asset in genome[CFG_ASSETS_KEY].items():
-            try:
-                for tag_name, tag in asset[CFG_ASSET_TAGS_KEY].items():
-                    if not _check_servable(rgc, genome_name, asset_name, tag_name):
-                        _LOGGER.debug("Removing '{}/{}:{}', it's not servable".format(genome_name, asset_name, tag_name))
-                        rgc.cfg_remove_assets(genome_name, asset_name, tag_name)
-            except KeyError:
-                rgc.cfg_remove_assets(genome_name, asset_name)
-    return rgc
 
 
 def _remove_archive(rgc, registry_paths, cfg_archive_folder_key=CFG_ARCHIVE_KEY):
