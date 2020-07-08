@@ -2,6 +2,10 @@
 
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) and [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) format. 
 
+## [0.5.1] -- unreleased
+### Changed
+- implement safer way of asset archive creation
+
 ## [0.5.0] -- 2020-07-06
 ### Added
 - support for external asset sources via `remote_url_base` key in the config
