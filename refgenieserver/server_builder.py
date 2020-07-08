@@ -210,14 +210,16 @@ def _check_tgz(path, output, asset_name):
     # of refgenie CLI. The difference is that refgenie < 0.7.0 requires the asset to be archived with the asset-named
     # enclosing dir, but with no tag-named directory as this concept did not exist back then.
     if os.path.exists(path):
-        # move the asset files to asset-named dir
-        cmd = "cd {p}; mkdir {an}; mv `find . -type f -not -path './_refgenie_build*'` {an}  2>/dev/null; "
-        # tar gzip
-        cmd += "tar -cvf - {an} | pigz > {o}; " if is_command_callable("pigz") else "tar -cvzf {o} {an}; "
-        # move the files back to the tag-named dir and remove asset-named dir
-        cmd += "mv {an}/* .; rm -r {an}"
-        _LOGGER.debug("command: {}".format(cmd.format(p=path, o=output, an=asset_name)))
-        run(cmd.format(p=path, o=output, an=asset_name), shell=True)
+        # copy the asset files to asset-named dir, excluding _refgenie_build dir, which may change digests
+        cmd = "rsync -rv --exclude '_refgenie_build' {p}/ {p}/{an}/; cd {p}; "
+        # tar gzip the new dir
+        cmd += "tar -cvf - {an} | pigz > {o}; " if is_command_callable("pigz") \
+            else "tar -cvzf {o} {an}; "
+        # remove the new dir
+        cmd += "rm -r {p}/{an}"
+        command = cmd.format(p=path, o=output, an=asset_name)
+        _LOGGER.debug("command: {}".format(command))
+        run(command, shell=True)
     else:
         raise OSError("Entity '{}' does not exist".format(path))
 
