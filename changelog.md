@@ -4,7 +4,9 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [0.5.1] -- unreleased
 ### Changed
-- implement safer way of asset archive creation
+- in `refgenieserver archive`:
+    - implement safer way of asset archive creation
+    - follow symlinks
 
 ## [0.5.0] -- 2020-07-06
 ### Added

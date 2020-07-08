@@ -211,7 +211,7 @@ def _check_tgz(path, output, asset_name):
     # enclosing dir, but with no tag-named directory as this concept did not exist back then.
     if os.path.exists(path):
         # copy the asset files to asset-named dir, excluding _refgenie_build dir, which may change digests
-        cmd = "rsync -rv --exclude '_refgenie_build' {p}/ {p}/{an}/; cd {p}; "
+        cmd = "rsync -rvL --exclude '_refgenie_build' {p}/ {p}/{an}/; cd {p}; "
         # tar gzip the new dir
         cmd += "tar -cvf - {an} | pigz > {o}; " if is_command_callable("pigz") \
             else "tar -cvzf {o} {an}; "
