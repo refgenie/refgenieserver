@@ -43,8 +43,9 @@ def main():
         # the router imports need to be after the RefGenConf object is declared
         with rgc as r:
             purge_nonservable(r)
-        from .routers import version1, version2
+        from .routers import version1, version2, version3
         app.include_router(version1.router)
         app.include_router(version1.router, prefix="/v1")
         app.include_router(version2.router, prefix="/v2")
+        app.include_router(version3.router, prefix="/v3")
         uvicorn.run(app, host="0.0.0.0", port=args.port)

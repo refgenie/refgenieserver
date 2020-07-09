@@ -81,6 +81,7 @@ def archive(rgc, registry_paths, force, remove, cfg_path, genomes_desc):
         exit(1)
     else:
         _LOGGER.debug("Genomes to be processed: {}".format(str(genomes)))
+    genomes = [rgc.get_genome_alias_digest(g) for g in genomes]
     if genomes_desc is not None:
         if os.path.exists(genomes_desc):
             import csv
