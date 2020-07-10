@@ -21,10 +21,10 @@ async def index(request: Request):
     Returns a landing page HTML with the server resources ready do download. No inputs required.
     """
     _LOGGER.debug("RefGenConf object:\n{}".format(rgc))
-    templ_vars = {"request": request, "genomes": rgc[CFG_GENOMES_KEY], "rgc": rgc[CFG_GENOMES_KEY],
+    templ_vars = {"request": request, "genomes": rgc[CFG_GENOMES_KEY], "rgc": rgc,
                   "openapi_version": get_openapi_version(app)}
     _LOGGER.debug("merged vars: {}".format(dict(templ_vars, **ALL_VERSIONS)))
-    return templates.TemplateResponse("index.html", dict(templ_vars, **ALL_VERSIONS))
+    return templates.TemplateResponse("v3/index.html", dict(templ_vars, **ALL_VERSIONS))
 
 
 @router.get("/asset/{genome}/{asset}/splash")
@@ -32,7 +32,6 @@ async def asset_splash_page(request: Request, genome: str, asset: str, tag: str 
     """
     Returns an asset splash page
     """
-
     tag = tag or rgc.get_default_tag(genome, asset)  # returns 'default' for nonexistent genome/asset; no need to catch
     links_dict = {OPERATION_IDS["asset"][oid]: path.format(genome=genome, asset=asset, tag=tag)
                   for oid, path in map_paths_by_id(app.openapi()).items() if oid in OPERATION_IDS["asset"].keys()}
@@ -40,7 +39,7 @@ async def asset_splash_page(request: Request, genome: str, asset: str, tag: str 
                   "tag": tag, "rgc": rgc, "prp": parse_registry_path, "links_dict": links_dict,
                   "openapi_version": get_openapi_version(app)}
     _LOGGER.debug("merged vars: {}".format(dict(templ_vars, **ALL_VERSIONS)))
-    return templates.TemplateResponse("asset.html", dict(templ_vars, **ALL_VERSIONS))
+    return templates.TemplateResponse("v3/asset.html", dict(templ_vars, **ALL_VERSIONS))
 
 
 @router.get("/genomes")
