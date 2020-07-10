@@ -33,7 +33,7 @@ async def asset_splash_page(request: Request, genome: str, asset: str, tag: str 
     Returns an asset splash page
     """
     tag = tag or rgc.get_default_tag(genome, asset)  # returns 'default' for nonexistent genome/asset; no need to catch
-    links_dict = {OPERATION_IDS["asset"][oid]: path.format(genome=genome, asset=asset, tag=tag)
+    links_dict = {OPERATION_IDS["asset"][API_VERSION + oid]: path.format(genome=genome, asset=asset, tag=tag)
                   for oid, path in map_paths_by_id(app.openapi()).items() if oid in OPERATION_IDS["asset"].keys()}
     templ_vars = {"request": request, "genome": genome, "asset": asset,
                   "tag": tag, "rgc": rgc, "prp": parse_registry_path, "links_dict": links_dict,
@@ -61,7 +61,8 @@ async def list_available_assets():
     return ret_dict
 
 
-@router.get("/asset/{genome}/{asset}/archive", operation_id=API_ID_ARCHIVE)
+@router.get("/asset/{genome}/{asset}/archive",
+            operation_id=API_VERSION + API_ID_ARCHIVE)
 async def download_asset(genome: str, asset: str, tag: str = None):
     """
     Returns an archive. Requires the genome name and the asset name as an input.
@@ -84,7 +85,8 @@ async def download_asset(genome: str, asset: str, tag: str = None):
         raise HTTPException(status_code=404, detail=msg)
 
 
-@router.get("/asset/{genome}/{asset}/default_tag", operation_id=API_ID_DEFAULT_TAG)
+@router.get("/asset/{genome}/{asset}/default_tag",
+            operation_id=API_VERSION + API_ID_DEFAULT_TAG)
 async def get_asset_default_tag(genome: str, asset: str):
     """
     Returns the default tag name. Requires genome name and asset name as an input.
@@ -92,7 +94,8 @@ async def get_asset_default_tag(genome: str, asset: str):
     return rgc.get_default_tag(genome, asset)
 
 
-@router.get("/asset/{genome}/{asset}/{tag}/asset_digest", operation_id=API_ID_DIGEST)
+@router.get("/asset/{genome}/{asset}/{tag}/asset_digest",
+            operation_id=API_VERSION + API_ID_DIGEST)
 async def get_asset_digest(genome: str, asset: str, tag: str):
     """
     Returns the asset digest. Requires genome name asset name and tag name as an input.
@@ -105,7 +108,8 @@ async def get_asset_digest(genome: str, asset: str, tag: str):
         raise HTTPException(status_code=404, detail=msg)
 
 
-@router.get("/asset/{genome}/{asset}/{tag}/archive_digest", operation_id=API_ID_ARCHIVE_DIGEST)
+@router.get("/asset/{genome}/{asset}/{tag}/archive_digest",
+            operation_id=API_VERSION + API_ID_ARCHIVE_DIGEST)
 async def get_asset_digest(genome: str, asset: str, tag: str):
     """
     Returns the archive digest. Requires genome name asset name and tag name as an input.
@@ -118,7 +122,8 @@ async def get_asset_digest(genome: str, asset: str, tag: str):
         raise HTTPException(status_code=404, detail=msg)
 
 
-@router.get("/asset/{genome}/{asset}/log", operation_id=API_ID_LOG)
+@router.get("/asset/{genome}/{asset}/log",
+            operation_id=API_VERSION + API_ID_LOG)
 async def download_asset_build_log(genome: str, asset: str, tag: str = None):
     """
     Returns a build log. Requires the genome name and the asset name as an input.
@@ -140,7 +145,8 @@ async def download_asset_build_log(genome: str, asset: str, tag: str = None):
         raise HTTPException(status_code=404, detail=msg)
 
 
-@router.get("/asset/{genome}/{asset}/recipe", operation_id=API_ID_RECIPE)
+@router.get("/asset/{genome}/{asset}/recipe",
+            operation_id=API_VERSION + API_ID_RECIPE)
 async def download_asset_build_recipe(genome: str, asset: str, tag: str = None):
     """
     Returns a build recipe. Requires the genome name and the asset name as an input.
@@ -165,7 +171,8 @@ async def download_asset_build_recipe(genome: str, asset: str, tag: str = None):
         raise HTTPException(status_code=404, detail=msg)
 
 
-@router.get("/asset/{genome}/{asset}", operation_id=API_ID_ASSET_ATTRS)
+@router.get("/asset/{genome}/{asset}",
+            operation_id=API_VERSION + API_ID_ASSET_ATTRS)
 async def download_asset_attributes(genome: str, asset: str, tag: str = None):
     """
     Returns a dictionary of asset attributes, like archive size, archive digest etc.
@@ -224,7 +231,8 @@ async def list_genomes_by_asset(asset: str):
     return genomes
 
 
-@router.get("/alias/genome_digest/{alias}")
+@router.get("/alias/genome_digest/{alias}",
+            operation_id=API_VERSION + API_ID_ALIAS_DIGEST)
 async def get_genome_alias_digest(alias: str):
     """
     Returns the genome digest. Requires the genome name as an input
@@ -239,7 +247,8 @@ async def get_genome_alias_digest(alias: str):
         raise HTTPException(status_code=404, detail=msg)
 
 
-@router.get("/alias/alias/{genome_digest}")
+@router.get("/alias/alias/{genome_digest}",
+            operation_id=API_VERSION + API_ID_ALIAS_ALIAS)
 async def get_genome_alias(genome_digest: str):
     """
     Returns the genome digest. Requires the genome name as an input
