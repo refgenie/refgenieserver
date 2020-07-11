@@ -33,8 +33,8 @@ async def asset_splash_page(request: Request, genome: str, asset: str, tag: str 
     Returns an asset splash page
     """
     tag = tag or rgc.get_default_tag(genome, asset)  # returns 'default' for nonexistent genome/asset; no need to catch
-    links_dict = {OPERATION_IDS["asset"][API_VERSION + oid]: path.format(genome=genome, asset=asset, tag=tag)
-                  for oid, path in map_paths_by_id(app.openapi()).items() if oid in OPERATION_IDS["asset"].keys()}
+    links_dict = {OPERATION_IDS["v3_asset"][oid]: path.format(genome=genome, asset=asset, tag=tag)
+                  for oid, path in map_paths_by_id(app.openapi()).items() if oid in OPERATION_IDS["v3_asset"].keys()}
     templ_vars = {"request": request, "genome": genome, "asset": asset,
                   "tag": tag, "rgc": rgc, "prp": parse_registry_path, "links_dict": links_dict,
                   "openapi_version": get_openapi_version(app)}
@@ -51,7 +51,7 @@ async def list_available_genomes():
     return rgc.genomes_list()
 
 
-@router.get("/assets", operation_id=API_ID_ASSETS)
+@router.get("/assets", operation_id=API_VERSION + API_ID_ASSETS)
 async def list_available_assets():
     """
     Returns a list of all assets that can be downloaded. No inputs required.
