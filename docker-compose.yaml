@@ -1,0 +1,27 @@
+# .env file in the compose directory is loaded automatically and the env vars defined there are available
+# for use in this file, but are not passed to the container runtimes. In order to pass these to a specific
+# container, 'env_file' section needs to be used: https://docs.docker.com/compose/environment-variables/#the-env-file
+version: '3'
+services:
+  refgenieserver-api:
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db/${POSTGRES_DB}
+    build:
+      dockerfile: postgres-compatible.Dockerfile
+      context: .
+    ports:
+      - 80:80
+    volumes:
+      - ${ARCHIVE_PATH}:/genomes
+    depends_on:
+      - db
+    command: ["./wait-for-it/wait-for-it.sh", "db:${POSTGRES_PORT}", "--timeout=60" ,"--", "refgenieserver", "serve", "-c", "/genomes/g.yaml"]
+  db:
+    env_file: .env
+    image: postgres:12
+    container_name: my_postgres
+    restart: always
+    ports:
+      - ${POSTGRES_PORT}:${POSTGRES_PORT}
+    volumes:
+      - ${POSTGRES_LOCAL_DATA}:/var/lib/postgresql/data
