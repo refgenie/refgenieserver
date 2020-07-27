@@ -190,7 +190,16 @@ def archive(rgc, registry_paths, force, remove, cfg_path, genomes_desc):
                                                           children=True)
                             r.update_tags(genome, asset_name, tag_name, tag_attrs)
                 else:
-                    _LOGGER.debug("'{}' exists".format(target_file))
+                    exists_msg = "'{}' exists".format(target_file)
+                    try:
+                        rgc_server[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][asset_name][CFG_ASSET_TAGS_KEY][tag_name][CFG_ARCHIVE_CHECKSUM_KEY]
+                        _LOGGER.debug(exists_msg + " skipping")
+                    except KeyError:
+                        _LOGGER.debug(exists_msg + " calculating archive digest")
+                        tag_attrs = {CFG_ARCHIVE_CHECKSUM_KEY: checksum(target_file)}
+                        with rgc_server as r:
+                            r.update_tags(genome, asset_name, tag_name, tag_attrs)
+
         counter += 1
     _LOGGER.info("Builder finished; server config file saved to {}".format(rgc_server.file_path))
 
