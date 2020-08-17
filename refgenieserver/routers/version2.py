@@ -1,5 +1,4 @@
-from starlette.responses import FileResponse, JSONResponse
-from starlette.responses import RedirectResponse
+from starlette.responses import FileResponse, JSONResponse, RedirectResponse
 from starlette.requests import Request
 from fastapi import HTTPException, APIRouter
 
@@ -69,7 +68,9 @@ async def download_asset(genome: str, asset: str, tag: str = None):
     """
     tag = tag or rgc.get_default_tag(genome, asset)  # returns 'default' for nonexistent genome/asset; no need to catch
     file_name = "{}__{}{}".format(asset, tag, ".tgz")
-    path, remote = get_datapath_for_genome(rgc, dict(genome=genome, file_name=file_name))
+    path, remote = get_datapath_for_genome(
+        rgc, dict(genome=rgc.get_genome_alias_digest(alias=genome),
+                  file_name=file_name))
     _LOGGER.info("file source: {}".format(path))
     if remote:
         _LOGGER.info("redirecting to URL: '{}'".format(path))
@@ -105,7 +106,7 @@ async def get_asset_digest(genome: str, asset: str, tag: str):
 
 
 @router.get("/asset/{genome}/{asset}/{tag}/archive_digest", operation_id=API_ID_ARCHIVE_DIGEST)
-async def get_asset_digest(genome: str, asset: str, tag: str):
+async def get_archive_digest(genome: str, asset: str, tag: str):
     """
     Returns the archive digest. Requires genome name asset name and tag name as an input.
     """
@@ -126,7 +127,9 @@ async def download_asset_build_log(genome: str, asset: str, tag: str = None):
     """
     tag = tag or rgc.get_default_tag(genome, asset)  # returns 'default' for nonexistent genome/asset; no need to catch
     file_name = TEMPLATE_LOG.format(asset, tag)
-    path, remote = get_datapath_for_genome(rgc, dict(genome=genome, file_name=file_name))
+    path, remote = get_datapath_for_genome(
+        rgc, dict(genome=rgc.get_genome_alias_digest(alias=genome),
+                  file_name=file_name))
     if remote:
         _LOGGER.info("redirecting to URL: '{}'".format(path))
         return RedirectResponse(path)
@@ -148,7 +151,9 @@ async def download_asset_build_recipe(genome: str, asset: str, tag: str = None):
     """
     tag = tag or rgc.get_default_tag(genome, asset)  # returns 'default' for nonexistent genome/asset; no need to catch
     file_name = TEMPLATE_RECIPE_JSON.format(asset, tag)
-    path, remote = get_datapath_for_genome(rgc, dict(genome=genome, file_name=file_name))
+    path, remote = get_datapath_for_genome(
+        rgc, dict(genome=rgc.get_genome_alias_digest(alias=genome),
+                  file_name=file_name))
     if remote:
         _LOGGER.info("redirecting to URL: '{}'".format(path))
         return RedirectResponse(path)
@@ -188,7 +193,7 @@ async def download_genome_digest(genome: str):
     Returns the genome digest. Requires the genome name as an input
     """
     try:
-        digest = rgc[CFG_GENOMES_KEY][genome][CFG_CHECKSUM_KEY]
+        digest = rgc.get_genome_alias_digest(alias=genome)
         _LOGGER.info("digest returned for '{}': {}".format(genome, digest))
         return digest
     except KeyError:
