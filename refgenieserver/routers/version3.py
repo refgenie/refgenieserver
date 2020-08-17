@@ -255,7 +255,7 @@ async def get_genome_alias(genome_digest: str):
     Returns the genome digest. Requires the genome name as an input
     """
     try:
-        alias = rgc.get_genome_alias(digest=genome_digest)
+        alias = rgc[CFG_GENOMES_KEY][genome_digest][CFG_ALIASES_KEY]
         _LOGGER.info("alias returned for '{}': {}".format(genome_digest, alias))
         return alias
     except (KeyError, UndefinedAliasError):
