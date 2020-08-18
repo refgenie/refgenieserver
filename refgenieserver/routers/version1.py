@@ -1,11 +1,11 @@
-from starlette.responses import FileResponse
+from starlette.responses import FileResponse, RedirectResponse
 from starlette.requests import Request
 from fastapi import HTTPException, APIRouter
 
 from ..const import *
 from ..helpers import preprocess_attrs
 from ..main import rgc, templates, _LOGGER, app
-from ..helpers import get_openapi_version
+from ..helpers import get_openapi_version, get_datapath_for_genome
 
 router = APIRouter()
 
@@ -37,26 +37,35 @@ def list_available_assets():
     """
     Returns a list of all assets that can be downloaded. No inputs required.
     """
-    _LOGGER.info("serving assets dict: '{}'".format(rgc.assets_dict()))
-    return rgc.assets_dict()
+    ret_dict = rgc.list(include_tags=True)
+    _LOGGER.info("serving assets dict: {}".format(ret_dict))
+    return ret_dict
 
 
 @router.get("/asset/{genome}/{asset}/archive")
-async def download_asset(genome: str, asset: str):
+async def download_asset(genome: str, asset: str, tag: str = None):
     """
     Returns an archive. Requires the genome name and the asset name as an input.
 
     Since the refgenconf.RefGenConf object structure has changed (tags were introduced),
     the default tag has to be selected behind the scenes
     """
-    file_name = "{}__{}{}".format(asset, DEFAULT_TAG, ".tgz")
-    asset_file = "{base}/{genome}/{file_name}".format(base=BASE_DIR, genome=genome, file_name=file_name)
-    _LOGGER.info("serving asset file: '{}'".format(asset_file))
-    if os.path.isfile(asset_file):
-        return FileResponse(asset_file, filename=file_name, media_type="application/octet-stream")
+    tag = tag or rgc.get_default_tag(genome, asset)  # returns 'default' for nonexistent genome/asset; no need to catch
+    file_name = "{}__{}{}".format(asset, tag, ".tgz")
+    path, remote = get_datapath_for_genome(
+        rgc, dict(genome=rgc.get_genome_alias_digest(alias=genome),
+                  file_name=file_name))
+    _LOGGER.info("file source: {}".format(path))
+    if remote:
+        _LOGGER.info("redirecting to URL: '{}'".format(path))
+        return RedirectResponse(path)
+    _LOGGER.info("serving asset file: '{}'".format(path))
+    if os.path.isfile(path):
+        return FileResponse(path, filename=file_name, media_type="application/octet-stream")
     else:
-        _LOGGER.warning(MSG_404.format("asset"))
-        raise HTTPException(status_code=404, detail=MSG_404.format("asset"))
+        msg = MSG_404.format("asset ({})".format(asset))
+        _LOGGER.warning(msg)
+        raise HTTPException(status_code=404, detail=msg)
 
 
 @router.get("/asset/{genome}/{asset}")
@@ -77,20 +86,20 @@ def download_asset_attributes(genome: str, asset: str):
         raise HTTPException(status_code=404, detail=MSG_404.format("genome, asset or tag"))
 
 
-@router.get("/genome/{genome}")
-async def download_genome(genome: str):
-    """
-    Returns a tarball with **all** the archived assets available for the genome. Requires the genome name as an input.
-    """
-    file_name = "{}{}".format(genome, ".tar")
-    genome_file = "{base}/{file_name}".format(base=rgc[CFG_ARCHIVE_KEY], file_name=file_name)
-    _LOGGER.info("serving genome archive: '{}'".format(genome_file))
-    # url = "{base}/{genome}/{asset}.{ext}".format(base=BASE_URL, genome="example_data", asset="rCRS.fa.gz", ext=ext)
-    if os.path.isfile(genome_file):
-        return FileResponse(genome_file, filename=file_name, media_type="application/octet-stream")
-    else:
-        _LOGGER.warning(MSG_404.format("genome"))
-        raise HTTPException(status_code=404, detail=MSG_404.format("genome"))
+# @router.get("/genome/{genome}")
+# async def download_genome(genome: str):
+#     """
+#     Returns a tarball with **all** the archived assets available for the genome. Requires the genome name as an input.
+#     """
+#     file_name = "{}{}".format(genome, ".tar")
+#     genome_file = "{base}/{file_name}".format(base=rgc[CFG_ARCHIVE_KEY], file_name=file_name)
+#     _LOGGER.info("serving genome archive: '{}'".format(genome_file))
+#     # url = "{base}/{genome}/{asset}.{ext}".format(base=BASE_URL, genome="example_data", asset="rCRS.fa.gz", ext=ext)
+#     if os.path.isfile(genome_file):
+#         return FileResponse(genome_file, filename=file_name, media_type="application/octet-stream")
+#     else:
+#         _LOGGER.warning(MSG_404.format("genome"))
+#         raise HTTPException(status_code=404, detail=MSG_404.format("genome"))
 
 
 @router.get("/genomes/{asset}")

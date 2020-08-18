@@ -81,6 +81,7 @@ def archive(rgc, registry_paths, force, remove, cfg_path, genomes_desc):
         exit(1)
     else:
         _LOGGER.debug("Genomes to be processed: {}".format(str(genomes)))
+    genomes = [rgc.get_genome_alias_digest(g) for g in genomes]
     if genomes_desc is not None:
         if os.path.exists(genomes_desc):
             import csv
@@ -93,16 +94,13 @@ def archive(rgc, registry_paths, force, remove, cfg_path, genomes_desc):
             sys.exit(1)
     counter = 0
     for genome in genomes:
-        genome_dir = os.path.join(rgc[CFG_FOLDER_KEY], genome)
+        genome_dir = os.path.join(rgc.data_dir, genome)
         target_dir = os.path.join(rgc[CFG_ARCHIVE_KEY], genome)
         if not os.path.exists(target_dir):
             os.makedirs(target_dir, exist_ok=True)
         genome_desc = rgc[CFG_GENOMES_KEY][genome].setdefault(CFG_GENOME_DESC_KEY, DESC_PLACEHOLDER) \
             if genomes_desc is None or genome not in descs else descs[genome]
-        genome_checksum = rgc[CFG_GENOMES_KEY][genome].\
-            setdefault(CFG_CHECKSUM_KEY, CHECKSUM_PLACEHOLDER)
-        genome_attrs = {CFG_GENOME_DESC_KEY: genome_desc,
-                        CFG_CHECKSUM_KEY: genome_checksum}
+        genome_attrs = {CFG_GENOME_DESC_KEY: genome_desc}
         with rgc_server as r:
             r[CFG_GENOMES_KEY].setdefault(genome, PXAM())
             r[CFG_GENOMES_KEY][genome].update(genome_attrs)
