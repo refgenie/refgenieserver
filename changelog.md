@@ -2,7 +2,11 @@
 
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) and [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) format. 
 
-## [0.5.1] -- unreleased
+## [0.5.2] -- unreleased
+### Added
+- in `refgenieserver archive`, when a `archive_checksum` is missing for a previously archived asset it will be recalculated.
+
+## [0.5.1] -- 2020-07-10
 ### Changed
 - in `refgenieserver archive`:
     - implement safer way of asset archive creation
