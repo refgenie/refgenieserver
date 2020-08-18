@@ -30,9 +30,22 @@ async def index(request: Request):
     """
     _LOGGER.debug("RefGenConf object:\n{}".format(rgc))
     templ_vars = {"request": request, "genomes": rgc[CFG_GENOMES_KEY], "rgc": rgc,
-                  "openapi_version": get_openapi_version(app)}
+                  "openapi_version": get_openapi_version(app), "columns": ["aliases", "digest", "description", "fasta asset", "# assets"]}
     _LOGGER.debug("merged vars: {}".format(dict(templ_vars, **ALL_VERSIONS)))
     return templates.TemplateResponse("v3/index.html", dict(templ_vars, **ALL_VERSIONS))
+
+
+@router.get("/genome/{genome}/splash")
+async def genome_splash_page(request: Request, genome: str = g):
+    """
+    Returns a genome splash page
+    """
+    templ_vars = {"openapi_version": get_openapi_version(app), "genome": genome,
+                  "genome_dict": rgc[CFG_GENOMES_KEY][genome], "request": request,
+                  "columns": ["download", "asset name:tag", "asset description",
+                              "asset/archive size", "archive digest"]}
+    _LOGGER.debug("merged vars: {}".format(dict(templ_vars, **ALL_VERSIONS)))
+    return templates.TemplateResponse("v3/genome.html", dict(templ_vars, **ALL_VERSIONS))
 
 
 @router.get("/asset/{genome}/{asset}/splash")
