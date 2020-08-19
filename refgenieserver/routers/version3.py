@@ -72,6 +72,15 @@ async def list_available_genomes():
     return rgc.genomes_list()
 
 
+@router.get("/genomes_dict", operation_id=API_VERSION + API_ID_GENOMES_DICT)
+async def get_genomes_dict():
+    """
+    Returns the 'genomes' part of the config
+    """
+    _LOGGER.info("serving genomes dict: '{}'".format(rgc[CFG_GENOMES_KEY]))
+    return rgc[CFG_GENOMES_KEY]
+
+
 @router.get("/assets", operation_id=API_VERSION + API_ID_ASSETS)
 async def list_available_assets():
     """
