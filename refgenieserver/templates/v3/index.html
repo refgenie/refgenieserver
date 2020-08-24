@@ -75,7 +75,7 @@
                     {% for genome_name, genome_dict in genomes.items() | sort %}
                         <tr>
                             <td>
-                                <a href="/genome/{{ genome_name }}/splash" data-toggle="tooltip" title="Genome splash page"><b>{{ ", ".join(genome_dict["aliases"]) }}</b></a>
+                                <a href="/genome/{{ genome_name }}/splash" data-toggle="tooltip" title="Genome splash page"><b>{{ genome_dict["aliases"][0] }}</b></a>
                             </td>
                             <td>
                                 <code>{{ genome_name }}</code>
