@@ -36,6 +36,8 @@ on:
   pull_request:
     branches:
       - staging
+  workflow_dispatch:
+    inputs: null      
 
 name: Deploy to Amazon ECS - software-staging
 
