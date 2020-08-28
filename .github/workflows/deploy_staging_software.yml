@@ -58,6 +58,7 @@ jobs:
         password: ${{ secrets.DOCKER_PASSWORD }}
         repository: databio/refgenieserver
         tags: staging
+        dockerfile: staging.Dockerfile
 
 
     - name: Checkout demo repo
