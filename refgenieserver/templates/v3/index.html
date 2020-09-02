@@ -75,7 +75,7 @@
                     {% for genome_name, genome_dict in genomes.items() | sort %}
                         <tr>
                             <td>
-                                <a href="/genome/{{ genome_name }}/splash" data-toggle="tooltip" title="Genome splash page"><b>{{ genome_dict["aliases"][0] }}</b></a>
+                                <a href="/genome/{{ genome_name }}/splash" data-toggle="tooltip" title="Genome splash page"><b>{{ ", ".join(genome_dict["aliases"]) }}</b></a>
                             </td>
                             <td>
                                 <code>{{ genome_name }}</code>
@@ -84,7 +84,7 @@
                                 {{ safe_show_asset_attr(genome_dict["genome_description"]) }}
                             </td>
                             <td>
-                                {% set default_tag =  rgc.get_default_tag(genome=genome_name, asset="fasta") %}
+                                {% set default_tag = rgc.get_default_tag(genome=genome_name, asset="fasta") %}
                                 <a href="/asset/{{ genome_name }}/fasta/splash?tag={{ default_tag }}" data-toggle="tooltip" title="Asset splash page"><b>fasta</b>:{{ default_tag }}</a>
                             </td>
                             <td>

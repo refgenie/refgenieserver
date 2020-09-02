@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}{{ genome_dict["aliases"][0] }}{% endblock %}
+{% block title %}{{ " | ".join(genome_dict["aliases"]) }}{% endblock %}
 {% block head %}
     {{ super() }}
     <link rel="stylesheet" type="text/css" href="https://netdna.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css">
