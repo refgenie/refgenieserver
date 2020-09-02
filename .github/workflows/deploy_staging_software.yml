@@ -37,7 +37,7 @@ on:
     branches:
       - staging
   workflow_dispatch:
-    inputs: null      
+    inputs: null
 
 name: Deploy to Amazon ECS - software-staging
 
