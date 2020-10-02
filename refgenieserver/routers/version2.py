@@ -12,6 +12,7 @@ from ..helpers import get_openapi_version, get_datapath_for_genome
 
 router = APIRouter()
 
+
 @router.get("/")
 @router.get("/index")
 async def index(request: Request):
@@ -69,7 +70,7 @@ async def download_asset(genome: str, asset: str, tag: str = None):
     tag = tag or rgc.get_default_tag(genome, asset)  # returns 'default' for nonexistent genome/asset; no need to catch
     file_name = "{}__{}{}".format(asset, tag, ".tgz")
     path, remote = get_datapath_for_genome(
-        rgc, dict(genome=rgc.get_genome_alias_digest(alias=genome),
+        rgc, dict(genome=rgc.get_genome_alias(digest=genome, fallback=True),
                   file_name=file_name))
     _LOGGER.info("file source: {}".format(path))
     if remote:
@@ -128,7 +129,7 @@ async def download_asset_build_log(genome: str, asset: str, tag: str = None):
     tag = tag or rgc.get_default_tag(genome, asset)  # returns 'default' for nonexistent genome/asset; no need to catch
     file_name = TEMPLATE_LOG.format(asset, tag)
     path, remote = get_datapath_for_genome(
-        rgc, dict(genome=rgc.get_genome_alias_digest(alias=genome),
+        rgc, dict(genome=rgc.get_genome_alias(digest=genome, fallback=True),
                   file_name=file_name))
     if remote:
         _LOGGER.info("redirecting to URL: '{}'".format(path))
@@ -152,7 +153,7 @@ async def download_asset_build_recipe(genome: str, asset: str, tag: str = None):
     tag = tag or rgc.get_default_tag(genome, asset)  # returns 'default' for nonexistent genome/asset; no need to catch
     file_name = TEMPLATE_RECIPE_JSON.format(asset, tag)
     path, remote = get_datapath_for_genome(
-        rgc, dict(genome=rgc.get_genome_alias_digest(alias=genome),
+        rgc, dict(genome=rgc.get_genome_alias(digest=genome, fallback=True),
                   file_name=file_name))
     if remote:
         _LOGGER.info("redirecting to URL: '{}'".format(path))

@@ -108,6 +108,7 @@ def get_openapi_version(app):
     try:
         return app.openapi()["openapi"]
     except Exception as e:
+        _LOGGER.debug(f"Could not determine openAPI version: {str(e)}")
         return "3.0.2"
 
 
@@ -120,15 +121,15 @@ def get_datapath_for_genome(rgc, fill_dict,
     either a remote URL to the file or a file path along with a flag indicating
     the source
 
-    :param refgenconf.RefGenConf rgc: configiration object to use
+    :param refgenconf.RefGenConf rgc: configuration object to use
     :param dict fill_dict: a dictionary to use to fill in the path template
-    :param str fill_dict: the path template
-    :return (str, bool): a pair of file source and the flag indicationg whether
-     the source is remote
+    :param str pth_templ: the path template
+    :return (str, bool): a pair of file source and the flag indicating whether
+        the source is remote
     """
     req_keys = [i[1] for i in Formatter().parse(pth_templ) if i[1] is not None]
     assert all([k in req_keys for k in list(fill_dict.keys())]), \
-        "Only the following keys are allowed in the fill_dict: {}".format(req_keys)
+        "Only the these keys are allowed in the fill_dict: {}".format(req_keys)
     remote = False
     fill_dict.update({"base": BASE_DIR})
     if CFG_REMOTE_URL_BASE_KEY in rgc \

@@ -55,7 +55,7 @@ async def download_asset(genome: str, asset: str, tag: str = None):
     tag = tag or rgc.get_default_tag(genome, asset)  # returns 'default' for nonexistent genome/asset; no need to catch
     file_name = "{}__{}{}".format(asset, tag, ".tgz")
     path, remote = get_datapath_for_genome(
-        rgc, dict(genome=rgc.get_genome_alias_digest(alias=genome),
+        rgc, dict(genome=rgc.get_genome_alias(digest=genome, fallback=True),
                   file_name=file_name))
     _LOGGER.info("file source: {}".format(path))
     if remote:
