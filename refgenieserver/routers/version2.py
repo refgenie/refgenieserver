@@ -4,13 +4,13 @@ from fastapi import HTTPException, APIRouter
 
 from ubiquerg import parse_registry_path
 from refgenconf.refgenconf import map_paths_by_id
+from refgenconf.helpers import replace_str_in_obj
 
 from ..const import *
 from ..main import rgc, templates, _LOGGER, app
 from ..helpers import get_openapi_version, get_datapath_for_genome
 
 router = APIRouter()
-
 
 @router.get("/")
 @router.get("/index")
@@ -180,7 +180,11 @@ async def download_asset_attributes(genome: str, asset: str, tag: str = None):
     try:
         attrs = rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][asset][CFG_ASSET_TAGS_KEY][tag]
         _LOGGER.info("attributes returned for {}/{}:{}: \n{}".format(genome, asset, tag, attrs))
-        return attrs
+        return replace_str_in_obj(
+            attrs,
+            x=rgc.get_genome_alias_digest(alias=genome, fallback=True),
+            y=rgc.get_genome_alias(digest=genome, fallback=True)
+        )
     except KeyError:
         msg = MSG_404.format("genome/asset:tag combination ({}/{}:{})".format(genome, asset, tag))
         _LOGGER.warning(msg)
