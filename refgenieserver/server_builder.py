@@ -7,6 +7,7 @@ from subprocess import run
 from refgenconf import RefGenConf
 from refgenconf.exceptions import RefgenconfError, ConfigNotCompliantError, \
     GenomeConfigFormatError, MissingConfigDataError
+from refgenconf.helpers import swap_names_in_tree, replace_str_in_obj
 from attmap import PathExAttMap as PXAM
 from ubiquerg import checksum, size, is_command_callable, parse_registry_path
 
@@ -96,8 +97,12 @@ def archive(rgc, registry_paths, force, remove, cfg_path, genomes_desc):
     for genome in genomes:
         genome_dir = os.path.join(rgc.data_dir, genome)
         target_dir = os.path.join(rgc[CFG_ARCHIVE_KEY], genome)
+        alias_target_dir = os.path.join(rgc[CFG_ARCHIVE_KEY], rgc.get_genome_alias(digest=genome, fallback=True))
         if not os.path.exists(target_dir):
             os.makedirs(target_dir, exist_ok=True)
+            # create legacy directory for archive
+            # TODO: remove in the future
+            os.makedirs(alias_target_dir, exist_ok=True)
         genome_desc = rgc[CFG_GENOMES_KEY][genome].setdefault(CFG_GENOME_DESC_KEY, DESC_PLACEHOLDER) \
             if genomes_desc is None or genome not in descs else descs[genome]
         genome_attrs = {CFG_GENOME_DESC_KEY: genome_desc}
@@ -153,6 +158,16 @@ def archive(rgc, registry_paths, force, remove, cfg_path, genomes_desc):
                         _check_tgz(input_file, target_file, asset_name)
                         _copy_recipe(input_file, target_dir, asset_name, tag_name)
                         _copy_log(input_file, target_dir, asset_name, tag_name)
+                        # TODO: remove the rest of the try block in the future
+                        _check_tgz_legacy(
+                            input_file,
+                            target_file,
+                            asset_name,
+                            rgc.get_genome_alias_digest(alias=genome, fallback=True),
+                            rgc.get_genome_alias(digest=genome, fallback=True)
+                        )
+                        _copy_recipe(input_file, alias_target_dir, asset_name, tag_name)
+                        _copy_log(input_file, alias_target_dir, asset_name, tag_name)
                     except OSError as e:
                         _LOGGER.warning(e)
                         continue
@@ -229,6 +244,42 @@ def _check_tgz(path, output, asset_name):
         run(command, shell=True)
     else:
         raise OSError("Entity '{}' does not exist".format(path))
+
+
+def _check_tgz_legacy(path, output, asset_name, genome_name, alias):
+    """
+    NOTE: This is a duplication of the _check_tgz function, kept separate as in
+    the future this step will be simply removed.
+
+    Check if file exists and tar it.
+    If gzipping is requested, the availability of pigz software is checked and used.
+
+    :param str path: path to the file to be tarred
+    :param str output: path to the result file
+    :param str asset_name: name of the asset
+    :raise OSError: if the file/directory meant to be archived does not exist
+    """
+    # TODO: remove in the future
+    if isinstance(alias, str):
+        alias = [alias]
+    for a in alias:
+        if os.path.exists(path):
+            aliased_output = replace_str_in_obj(output, x=genome_name, y=a)
+            cmd = "rsync -rvL --exclude '_refgenie_build' {p}/ {p}/{an}/; "
+            command = cmd.format(p=path, o=output, an=asset_name)
+            _LOGGER.debug("command: {}".format(command))
+            run(command, shell=True)
+            swap_names_in_tree(os.path.join(path, asset_name), a, genome_name)
+            # tar gzip the new dir
+            cmd = "cd {p}; tar -cvf - {an} | pigz > {oa}; " \
+                if is_command_callable("pigz") else "tar -cvzf {oa} {an}; "
+            # remove the new dir
+            cmd += "rm -r {p}/{an}"
+            command = cmd.format(p=path, oa=aliased_output, an=asset_name)
+            _LOGGER.debug("command: {}".format(command))
+            run(command, shell=True)
+        else:
+            raise OSError("Entity '{}' does not exist".format(path))
 
 
 def _copy_log(input_dir, target_dir, asset_name, tag_name):
