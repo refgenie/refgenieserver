@@ -11,11 +11,13 @@ from yacman import UndefinedAliasError
 from ..const import *
 from ..main import rgc, templates, _LOGGER, app
 from ..helpers import get_openapi_version, get_datapath_for_genome
+from ..data_models import Tag, Asset, Genome, Dict, List
 
 router = APIRouter()
 
 # API query path definitions
 g = Path(..., description="Genome digest", regex=r"^\w+$", max_length=48, min_length=48)
+al = Path(..., description="Genome alias", regex=r"^\S+$")
 a = Path(..., description="Asset name", regex=r"^\S+$")
 t = Path(..., description="Tag name", regex=r"^\S+$")
 # API query parameter definitions
@@ -63,7 +65,7 @@ async def asset_splash_page(request: Request, genome: str = g, asset: str = a, t
     return templates.TemplateResponse("v3/asset.html", dict(templ_vars, **ALL_VERSIONS))
 
 
-@router.get("/genomes")
+@router.get("/genomes", response_model=List[str])
 async def list_available_genomes():
     """
     Returns a list of genomes this server holds at least one asset for. No inputs required.
@@ -72,7 +74,8 @@ async def list_available_genomes():
     return rgc.genomes_list()
 
 
-@router.get("/genomes_dict", operation_id=API_VERSION + API_ID_GENOMES_DICT)
+@router.get("/genomes_dict", operation_id=API_VERSION + API_ID_GENOMES_DICT,
+            response_model=Dict[str, Genome])
 async def get_genomes_dict():
     """
     Returns the 'genomes' part of the config
@@ -81,7 +84,8 @@ async def get_genomes_dict():
     return rgc[CFG_GENOMES_KEY]
 
 
-@router.get("/assets", operation_id=API_VERSION + API_ID_ASSETS)
+@router.get("/assets", operation_id=API_VERSION + API_ID_ASSETS,
+            response_model=Dict[str, List[str]])
 async def list_available_assets():
     """
     Returns a list of all assets that can be downloaded. No inputs required.
@@ -116,7 +120,7 @@ async def download_asset(genome: str = g, asset: str = a, tag: Optional[str] = t
 
 
 @router.get("/asset/{genome}/{asset}/default_tag",
-            operation_id=API_VERSION + API_ID_DEFAULT_TAG)
+            operation_id=API_VERSION + API_ID_DEFAULT_TAG, response_model=str)
 async def get_asset_default_tag(genome: str = g, asset: str = a):
     """
     Returns the default tag name. Requires genome name and asset name as an input.
@@ -125,7 +129,7 @@ async def get_asset_default_tag(genome: str = g, asset: str = a):
 
 
 @router.get("/asset/{genome}/{asset}/{tag}/asset_digest",
-            operation_id=API_VERSION + API_ID_DIGEST)
+            operation_id=API_VERSION + API_ID_DIGEST, response_model=str)
 async def get_asset_digest(genome: str = g, asset: str = a, tag: str = t):
     """
     Returns the asset digest. Requires genome name asset name and tag name as an input.
@@ -139,8 +143,8 @@ async def get_asset_digest(genome: str = g, asset: str = a, tag: str = t):
 
 
 @router.get("/asset/{genome}/{asset}/{tag}/archive_digest",
-            operation_id=API_VERSION + API_ID_ARCHIVE_DIGEST)
-async def get_asset_digest(genome: str = g, asset: str = a, tag: str = t):
+            operation_id=API_VERSION + API_ID_ARCHIVE_DIGEST, response_model=str)
+async def get_archive_digest(genome: str = g, asset: str = a, tag: str = t):
     """
     Returns the archive digest. Requires genome name asset name and tag name as an input.
     """
@@ -202,7 +206,8 @@ async def download_asset_build_recipe(genome: str = g, asset: str = a, tag: Opti
 
 
 @router.get("/asset/{genome}/{asset}",
-            operation_id=API_VERSION + API_ID_ASSET_ATTRS)
+            operation_id=API_VERSION + API_ID_ASSET_ATTRS,
+            response_model=Tag)
 async def download_asset_attributes(genome: str = g, asset: str = a, tag: Optional[str] = tq):
     """
     Returns a dictionary of asset attributes, like archive size, archive digest etc.
@@ -220,23 +225,17 @@ async def download_asset_attributes(genome: str = g, asset: str = a, tag: Option
         raise HTTPException(status_code=404, detail=msg)
 
 
-@router.get("/genome/{genome}/genome_digest")
-async def download_genome_digest(genome: str = g):
+@router.get("/genome/{alias}/genome_digest", response_model=str)
+async def download_genome_digest(alias: str = al):
     """
     Returns the genome digest. Requires the genome name as an input
     """
-    try:
-        digest = rgc[CFG_GENOMES_KEY][genome][CFG_CHECKSUM_KEY]
-        _LOGGER.info("digest returned for '{}': {}".format(genome, digest))
-        return digest
-    except KeyError:
-        msg = MSG_404.format("genome ({})".format(genome))
-        _LOGGER.warning(msg)
-        raise HTTPException(status_code=404, detail=msg)
+    return RedirectResponse(f"/alias/genome_digest/{alias}")
 
 
 @router.get("/genome/{genome}",
-            operation_id=API_VERSION + API_ID_GENOME_ATTRS)
+            operation_id=API_VERSION + API_ID_GENOME_ATTRS,
+            response_model=Dict[str, str])
 async def download_genome_attributes(genome: str = g):
     """
     Returns a dictionary of genome attributes, like archive size, archive digest etc.
@@ -252,7 +251,7 @@ async def download_genome_attributes(genome: str = g):
         raise HTTPException(status_code=404, detail=msg)
 
 
-@router.get("/genomes/{asset}")
+@router.get("/genomes/{asset}", response_model=List[str])
 async def list_genomes_by_asset(asset: str = a):
     """
     Returns a list of genomes that have the requested asset defined. Requires the asset name as an input.
@@ -263,8 +262,9 @@ async def list_genomes_by_asset(asset: str = a):
 
 
 @router.get("/alias/genome_digest/{alias}",
-            operation_id=API_VERSION + API_ID_ALIAS_DIGEST)
-async def get_genome_alias_digest(alias: str = a):
+            operation_id=API_VERSION + API_ID_ALIAS_DIGEST,
+            response_model=str)
+async def get_genome_alias_digest(alias: str = al):
     """
     Returns the genome digest. Requires the genome name as an input
     """
@@ -278,7 +278,9 @@ async def get_genome_alias_digest(alias: str = a):
         raise HTTPException(status_code=404, detail=msg)
 
 
-@router.get("/alias/alias/{genome_digest}", operation_id=API_VERSION + API_ID_ALIAS_ALIAS)
+@router.get("/alias/alias/{genome_digest}",
+            operation_id=API_VERSION + API_ID_ALIAS_ALIAS,
+            response_model=List[str])
 async def get_genome_alias(genome_digest: str = g):
     """
     Returns the genome digest. Requires the genome name as an input
