@@ -10,6 +10,7 @@ class Tag(BaseModel):
     asset_digest: str
     archive_digest: str
     asset_size: str
+    archive_size: str
     seek_keys: Dict[str, str]
     asset_parents: List[str]
     asset_children: List[str]
@@ -30,4 +31,3 @@ class Genome(BaseModel):
     """
     genome_description: str
     assets: Dict[str, Asset]
-    default_tag: str
