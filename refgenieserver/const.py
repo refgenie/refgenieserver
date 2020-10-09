@@ -20,3 +20,6 @@ CHECKSUM_PLACEHOLDER = "No digest"
 # Here we define the key name changes; format: {"new_key": "old_key"}
 # This dict is then used to pre-process the attributes dict before serving to the old versions of the client
 CHANGED_KEYS = {CFG_ASSET_PATH_KEY: "path"}
+
+# TODO: to be removed in the future
+CFG_LEGACY_ARCHIVE_CHECKSUM_KEY = "legacy_archive_digest"

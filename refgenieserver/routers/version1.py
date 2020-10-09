@@ -1,6 +1,7 @@
 from starlette.responses import FileResponse, RedirectResponse
 from starlette.requests import Request
 from fastapi import HTTPException, APIRouter
+from copy import copy
 
 from refgenconf.helpers import replace_str_in_obj
 
@@ -81,10 +82,18 @@ def download_asset_attributes(genome: str, asset: str):
     """
     try:
         attrs = preprocess_attrs(rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][asset][CFG_ASSET_TAGS_KEY][DEFAULT_TAG])
-        _LOGGER.info("Attributes returned for '{}/{}:{}': \n{}".format(asset, genome, DEFAULT_TAG, attrs))
-        # return attrs
+        attrs_copy = copy(attrs)
+        if CFG_LEGACY_ARCHIVE_CHECKSUM_KEY in attrs_copy:
+            # new asset archives consist of different file names, so the new
+            # archive digest does not match the old archives. Therefore the
+            # archiver saves the old archive digest along with the new. So in
+            # this API version we need to swap them and remove the old
+            # afterwards
+            attrs_copy[CFG_ARCHIVE_CHECKSUM_KEY] = attrs_copy[CFG_LEGACY_ARCHIVE_CHECKSUM_KEY]
+            del attrs_copy[CFG_LEGACY_ARCHIVE_CHECKSUM_KEY]
+        _LOGGER.info(f"attributes returned for {genome}/{asset}:{tag}: \n{attrs_copy}")
         return replace_str_in_obj(
-            attrs,
+            attrs_copy,
             x=rgc.get_genome_alias_digest(alias=genome, fallback=True),
             y=rgc.get_genome_alias(digest=genome, fallback=True)
         )

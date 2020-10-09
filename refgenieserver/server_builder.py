@@ -181,6 +181,18 @@ def archive(rgc, registry_paths, force, remove, cfg_path, genomes_desc):
                                      CFG_ASSET_PARENTS_KEY: parents,
                                      CFG_ASSET_CHILDREN_KEY: children,
                                      CFG_ASSET_CHECKSUM_KEY: asset_digest}
+                        # TODO: legacy checksum generation and tag dictionary
+                        #  update to be removed in the future
+                        legacy_digest = checksum(
+                            replace_str_in_obj(target_file,
+                                               x=rgc.get_genome_alias_digest(
+                                                   alias=genome, fallback=True),
+                                               y=rgc.get_genome_alias(
+                                                   digest=genome, fallback=True)
+                                               )
+                        )
+                        tag_attrs.update(
+                            {CFG_LEGACY_ARCHIVE_CHECKSUM_KEY: legacy_digest})
                         _LOGGER.debug("attr dict: {}".format(tag_attrs))
                         with rgc_server as r:
                             for parent in parents:

@@ -2,6 +2,7 @@ from starlette.responses import FileResponse, JSONResponse, RedirectResponse
 from starlette.requests import Request
 from fastapi import HTTPException, APIRouter, Path, Query
 from typing import Optional
+from copy import copy
 
 
 from ubiquerg import parse_registry_path
@@ -11,7 +12,7 @@ from yacman import UndefinedAliasError
 from ..const import *
 from ..main import rgc, templates, _LOGGER, app
 from ..helpers import get_openapi_version, get_datapath_for_genome
-from ..data_models import Tag, Asset, Genome, Dict, List
+from ..data_models import Tag, Genome, Dict, List
 
 router = APIRouter()
 
@@ -217,8 +218,15 @@ async def download_asset_attributes(genome: str = g, asset: str = a, tag: Option
     tag = tag or rgc.get_default_tag(genome, asset)  # returns 'default' for nonexistent genome/asset; no need to catch
     try:
         attrs = rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][asset][CFG_ASSET_TAGS_KEY][tag]
-        _LOGGER.info("attributes returned for {}/{}:{}: \n{}".format(genome, asset, tag, attrs))
-        return attrs
+        attrs_copy = copy(attrs)
+        if CFG_LEGACY_ARCHIVE_CHECKSUM_KEY in attrs_copy:
+            # new asset archives consist of different file names, so the new
+            # archive digest does not match the old archives. Therefore the
+            # archiver saves the old archive digest along with the new. So in
+            # this API version we need remove the old entry from served attrs
+            del attrs_copy[CFG_LEGACY_ARCHIVE_CHECKSUM_KEY]
+        _LOGGER.info("attributes returned for {}/{}:{}: \n{}".format(genome, asset, tag, attrs_copy))
+        return attrs_copy
     except KeyError:
         msg = MSG_404.format("genome/asset:tag combination ({}/{}:{})".format(genome, asset, tag))
         _LOGGER.warning(msg)
