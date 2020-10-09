@@ -31,3 +31,4 @@ class Genome(BaseModel):
     """
     genome_description: str
     assets: Dict[str, Asset]
+    aliases: List[str]
