@@ -26,8 +26,8 @@
 
 
 # 1. push the base refgenieserver image to dockerhub
-# 2. check out the demo repo, then run the aws deploy
-  # 2a. build aws package with demo config file, push, deploy to cluster
+# 2. check out the test-data repo, then run the aws deploy
+  # 2a. build aws package with test-data config file, push, deploy to cluster
 
 on:
   push:
@@ -44,7 +44,8 @@ name: Deploy to Amazon ECS - software-staging
 jobs:
   deploy:
     env:
-      server: software-staging
+      service: software-staging
+      data-repo: test-data
     name: Deploy
     runs-on: ubuntu-latest
     steps:
@@ -64,7 +65,7 @@ jobs:
     - name: Checkout demo repo
       uses: actions/checkout@v2   
       with:
-        repository: refgenie/refgenomes.databio.org
+        repository: refgenie/${{ env.data-repo }}
         refs: refs/heads/master
         path: server_data
 
@@ -90,7 +91,7 @@ jobs:
         # push it to ECR so that it can
         # be deployed to ECS.
         cd server_data
-        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f Dockerfiles/staging.Dockerfile .
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f Dockerfiles/${{ env.data-repo }}.Dockerfile .
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
         echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
 
@@ -98,7 +99,7 @@ jobs:
       id: task-def
       uses: aws-actions/amazon-ecs-render-task-definition@v1
       with:
-        task-definition: task_defs/${{ env.server }}.json
+        task-definition: task_defs/${{ env.service }}.json
         container-name: rgs-container
         image: ${{ steps.build-image.outputs.image }}
 
@@ -106,6 +107,6 @@ jobs:
       uses: aws-actions/amazon-ecs-deploy-task-definition@v1
       with:
         task-definition: ${{ steps.task-def.outputs.task-definition }}
-        service: rgs-service-${{ env.server }}
+        service: rgs-service-${{ env.service }}
         cluster: hydra
         wait-for-service-stability: true
