@@ -216,7 +216,7 @@ async def download_genome_digest(genome: str):
         raise HTTPException(status_code=404, detail=msg)
 
 
-@router.get("/genome/{genome}")
+@router.get("/genome/{genome}", operation_id=API_ID_GENOME_ATTRS)
 async def download_genome_attributes(genome: str):
     """
     Returns a dictionary of genome attributes, like archive size, archive digest etc.
