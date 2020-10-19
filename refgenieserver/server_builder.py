@@ -242,8 +242,8 @@ def _check_tgz(path, output):
     if os.path.exists(path):
         # tar gzip the asset, exclude _refgenie_build dir, it may change digests
         cmd = "tar --exclude '_refgenie_build' -C {p} "
-        cmd += "-cvf - {tn} | pigz > {o}; " if is_command_callable("pigz") \
-            else "tar -cvzf {o} {tn}; "
+        cmd += "-cvf - {tn} | pigz > {o}" if is_command_callable("pigz") \
+            else "-cvzf {o} {tn}"
         command = cmd.format(p=pth, o=output, tn=tag_name)
         _LOGGER.info("command: {}".format(command))
         run(command, shell=True)
