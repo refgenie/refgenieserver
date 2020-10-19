@@ -155,7 +155,7 @@ def archive(rgc, registry_paths, force, remove, cfg_path, genomes_desc):
                 if not os.path.exists(target_file) or force:
                     _LOGGER.info("Creating archive '{}' from '{}' asset".format(target_file, input_file))
                     try:
-                        _check_tgz(input_file, target_file, asset_name)
+                        _check_tgz(input_file, target_file)
                         _copy_recipe(input_file, target_dir, asset_name, tag_name)
                         _copy_log(input_file, target_dir, asset_name, tag_name)
                         # TODO: remove the rest of the try block in the future
@@ -229,30 +229,23 @@ def archive(rgc, registry_paths, force, remove, cfg_path, genomes_desc):
     _LOGGER.info("Builder finished; server config file saved to {}".format(rgc_server.file_path))
 
 
-def _check_tgz(path, output, asset_name):
+def _check_tgz(path, output):
     """
     Check if file exists and tar it.
-    If gzipping is requested, the availability of pigz software is checked and used.
+    If gzipping is requested, the pigz software is used if available.
 
     :param str path: path to the file to be tarred
     :param str output: path to the result file
-    :param str asset_name: name of the asset
     :raise OSError: if the file/directory meant to be archived does not exist
     """
-    # since the genome directory structure changed (added tag layer) in refgenie >= 0.7.0 we need to perform some
-    # extra file manipulation before archiving to make the produced archive compatible with new and old versions
-    # of refgenie CLI. The difference is that refgenie < 0.7.0 requires the asset to be archived with the asset-named
-    # enclosing dir, but with no tag-named directory as this concept did not exist back then.
+    pth, tag_name = os.path.split(path)
     if os.path.exists(path):
-        # copy the asset files to asset-named dir, excluding _refgenie_build dir, which may change digests
-        cmd = "rsync -rvL --exclude '_refgenie_build' {p}/ {p}/{an}/; cd {p}; "
-        # tar gzip the new dir
-        cmd += "tar -cvf - {an} | pigz > {o}; " if is_command_callable("pigz") \
-            else "tar -cvzf {o} {an}; "
-        # remove the new dir
-        cmd += "rm -r {p}/{an}"
-        command = cmd.format(p=path, o=output, an=asset_name)
-        _LOGGER.debug("command: {}".format(command))
+        # tar gzip the asset, exclude _refgenie_build dir, it may change digests
+        cmd = "tar --exclude '_refgenie_build' -C {p} "
+        cmd += "-cvf - {tn} | pigz > {o}; " if is_command_callable("pigz") \
+            else "tar -cvzf {o} {tn}; "
+        command = cmd.format(p=pth, o=output, tn=tag_name)
+        _LOGGER.info("command: {}".format(command))
         run(command, shell=True)
     else:
         raise OSError("Entity '{}' does not exist".format(path))
