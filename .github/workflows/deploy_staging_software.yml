@@ -108,5 +108,5 @@ jobs:
       with:
         task-definition: ${{ steps.task-def.outputs.task-definition }}
         service: rgs-service-${{ env.service }}
-        cluster: hydra
+        cluster: yeti
         wait-for-service-stability: true
