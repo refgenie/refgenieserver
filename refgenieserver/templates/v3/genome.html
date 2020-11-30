@@ -69,7 +69,7 @@
                                         </a>
                                     </td>
                                     <td><a href="/v3/asset/{{ genome }}/{{ asset_name }}/splash?tag={{ tag_name }}" data-toggle="tooltip" title="Asset splash page"><b>{{ asset_name }}</b>:{{ tag_name }}</a></td>
-                                    <td>{{ safe_show_asset_attr(asset_data["asset_description"]) }}</td>
+                                    <td class="text-wrap"><span style="max-width:150px;">{{ safe_show_asset_attr(asset_data["asset_description"]) }}</span></td>
                                     <td>{{ safe_show_asset_attr(tag_data["asset_size"]) }}/{{ safe_show_asset_attr(tag_data["archive_size"]) }}</td>
                                     <td><code>{{ safe_show_asset_attr(tag_data["archive_digest"]) }}</code></td>
                                 </tr>

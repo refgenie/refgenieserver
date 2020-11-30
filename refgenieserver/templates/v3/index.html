@@ -80,8 +80,10 @@
                             <td>
                                 <code>{{ genome_name }}</code>
                             </td>
-                            <td>
-                                {{ safe_show_asset_attr(genome_dict["genome_description"]) }}
+                            <td class="text-wrap">
+                                <span style="max-width:150px;">
+                                    {{ safe_show_asset_attr(genome_dict["genome_description"]) }}
+                                </span>
                             </td>
                             <td>
                                 {% set default_tag = rgc.get_default_tag(genome=genome_name, asset="fasta") %}
