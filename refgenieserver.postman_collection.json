@@ -35,7 +35,7 @@
 						"{{urlBase}}"
 					],
 					"path": [
-						"v3",
+						"v3_fail",
 						"genomes"
 					]
 				}
