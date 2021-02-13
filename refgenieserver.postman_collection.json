@@ -29,13 +29,13 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "http://{{urlBase}}/v3_fail/genomes",
+					"raw": "http://{{urlBase}}/v3/genomes",
 					"protocol": "http",
 					"host": [
 						"{{urlBase}}"
 					],
 					"path": [
-						"v3_fail",
+						"v3",
 						"genomes"
 					]
 				}
