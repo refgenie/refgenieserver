@@ -110,12 +110,8 @@ jobs:
         service: rgs-service-${{ env.service }}
         cluster: yeti
         wait-for-service-stability: true
-  test:
-    runs-on: ubuntu-latest
-    name: test REST API
-    steps:
-      - name: Newman Action
-        uses: matt-ball/newman-action@v0.2.4
-        with:
-          collection: refgenieserver.postman_collection.json
-          environment: refgenieserver.postman_environment.json
+    - name: test REST API with Newman 
+      uses: matt-ball/newman-action@v0.2.4
+      with:
+        collection: refgenieserver.postman_collection.json
+        environment: refgenieserver.postman_environment.json
