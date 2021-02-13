@@ -1,0 +1,171 @@
+{
+	"info": {
+		"_postman_id": "100f4ef0-cb8a-47b4-8e49-e02f2789e0ca",
+		"name": "refgenieserver",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "get_all_genomes",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"const jsonData = pm.response.json();",
+							"pm.test(\"Test data type of the response\", () => {",
+							"  pm.expect(jsonData).to.be.an(\"array\");",
+							"});",
+							"pm.environment.set(\"genome\", jsonData[0])"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://{{urlBase}}/v3/genomes",
+					"protocol": "http",
+					"host": [
+						"{{urlBase}}"
+					],
+					"path": [
+						"v3",
+						"genomes"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get_genomes_by_asset",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"pm.environment.set(\"asset\", \"fasta\");"
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://{{urlBase}}/v3/genomes/{{asset}}",
+					"protocol": "http",
+					"host": [
+						"{{urlBase}}"
+					],
+					"path": [
+						"v3",
+						"genomes",
+						"{{asset}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get_genome_alias_digest",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"var jsonData = pm.response.json();",
+							"pm.test(\"Test data type of the response\", () => {",
+							"  pm.expect(jsonData).to.be.a(\"string\");",
+							"});",
+							"pm.environment.set(\"genomeDigest\", jsonData)"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://{{urlBase}}/v3/alias/genome_digest/{{genome}}",
+					"protocol": "http",
+					"host": [
+						"{{urlBase}}"
+					],
+					"path": [
+						"v3",
+						"alias",
+						"genome_digest",
+						"{{genome}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get_genome_alias",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"var jsonData = pm.response.json();",
+							"pm.test(\"Test data type of the response\", () => {",
+							"  pm.expect(jsonData).to.be.an(\"array\");",
+							"});",
+							"",
+							"pm.test(\"Test data value\", () => {",
+							"  var testVal = pm.environment.get(\"genome\")",
+							"  pm.expect(jsonData[0]).to.equal(testVal);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://{{urlBase}}/v3/alias/alias/{{genomeDigest}}",
+					"protocol": "http",
+					"host": [
+						"{{urlBase}}"
+					],
+					"path": [
+						"v3",
+						"alias",
+						"alias",
+						"{{genomeDigest}}"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
