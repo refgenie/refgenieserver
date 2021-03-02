@@ -14,6 +14,7 @@ router = APIRouter()
 
 api_version_tags = [f"APIv1"]
 
+
 @router.get("/", tags=api_version_tags)
 @router.get("/index", tags=api_version_tags)
 async def index(request: Request):

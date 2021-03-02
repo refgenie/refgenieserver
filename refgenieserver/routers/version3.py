@@ -346,6 +346,7 @@ async def download_asset_attributes(
         _LOGGER.warning(msg)
         raise HTTPException(status_code=404, detail=msg)
 
+
 # /genome/{genome}"
 @router.get(
     "/genomes/attrs/{genome}",
