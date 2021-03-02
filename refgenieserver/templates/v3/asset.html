@@ -51,7 +51,7 @@
                                 {% set parent_genome = parsed["namespace"] %}
                                 {% set parent_alias = rgc.get_genome_alias(digest=parsed["namespace"]) %}
                             {% endif %}
-                            <li><code><a href="/v3/asset/{{ parent_genome }}/{{ parsed['item'] }}/splash?tag={{ parsed['tag'] }}" data-toggle="tooltip" title="Asset splash page">{{ parent_alias }}/{{ parsed['item'] }}:{{ parsed['tag'] }}</a></code>{{ "," if not loop.last }}</li>
+                            <li><code><a href="/v3/assets/splash/{{ parent_genome }}/{{ parsed['item'] }}?tag={{ parsed['tag'] }}" data-toggle="tooltip" title="Asset splash page">{{ parent_alias }}/{{ parsed['item'] }}:{{ parsed['tag'] }}</a></code>{{ "," if not loop.last }}</li>
                         {% endfor %}
                         </ul>
                         </li>

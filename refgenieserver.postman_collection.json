@@ -19,7 +19,7 @@
 							"pm.test(\"Test data type of the response\", () => {",
 							"  pm.expect(jsonData).to.be.an(\"array\");",
 							"});",
-							"pm.environment.set(\"genome\", jsonData[0])"
+							"pm.variables.set(\"genome\", jsonData[0])"
 						],
 						"type": "text/javascript"
 					}
@@ -98,7 +98,7 @@
 							"pm.test(\"Test data type of the response\", () => {",
 							"  pm.expect(jsonData).to.be.a(\"string\");",
 							"});",
-							"pm.environment.set(\"genomeDigest\", jsonData)"
+							"pm.variables.set(\"genomeDigest\", jsonData)"
 						],
 						"type": "text/javascript"
 					}
@@ -140,7 +140,7 @@
 							"});",
 							"",
 							"pm.test(\"Test data value\", () => {",
-							"  var testVal = pm.environment.get(\"genome\")",
+							"  var testVal = pm.variables.get(\"genome\")",
 							"  pm.expect(jsonData[0]).to.equal(testVal);",
 							"});"
 						],
@@ -162,6 +162,314 @@
 						"alias",
 						"alias",
 						"{{genomeDigest}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get_default_tag",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"var jsonData = pm.response.json();",
+							"pm.test(\"Test data type of the response\", () => {",
+							"  pm.expect(jsonData).to.be.a(\"string\");",
+							"});",
+							"pm.variables.set(\"defaultTag\", jsonData)"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://{{urlBase}}/v3/asset/{{genomeDigest}}/{{asset}}/default_tag",
+					"protocol": "http",
+					"host": [
+						"{{urlBase}}"
+					],
+					"path": [
+						"v3",
+						"asset",
+						"{{genomeDigest}}",
+						"{{asset}}",
+						"default_tag"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get_assset_digest",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"var jsonData = pm.response.json();",
+							"pm.test(\"Test data type of the response\", () => {",
+							"  pm.expect(jsonData).to.be.a(\"string\");",
+							"});",
+							"pm.variables.set(\"assetDigest\", jsonData)"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://{{urlBase}}/v3/asset/{{genomeDigest}}/{{asset}}/{{defaultTag}}/asset_digest",
+					"protocol": "http",
+					"host": [
+						"{{urlBase}}"
+					],
+					"path": [
+						"v3",
+						"asset",
+						"{{genomeDigest}}",
+						"{{asset}}",
+						"{{defaultTag}}",
+						"asset_digest"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get_archive_digest",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"var jsonData = pm.response.json();",
+							"pm.test(\"Test data type of the response\", () => {",
+							"  pm.expect(jsonData).to.be.a(\"string\");",
+							"});",
+							"pm.variables.set(\"archiveDigest\", jsonData)"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://{{urlBase}}/v3/asset/{{genomeDigest}}/{{asset}}/{{defaultTag}}/archive_digest",
+					"protocol": "http",
+					"host": [
+						"{{urlBase}}"
+					],
+					"path": [
+						"v3",
+						"asset",
+						"{{genomeDigest}}",
+						"{{asset}}",
+						"{{defaultTag}}",
+						"archive_digest"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get_asset_attributes",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"var jsonData = pm.response.json();",
+							"pm.test(\"Test data type of the response\", () => {",
+							"  pm.expect(jsonData).to.be.a(\"object\");",
+							"});",
+							"",
+							"pm.test(\"Test data value\", () => {",
+							"  var archiveDigest = pm.variables.get(\"archiveDigest\", jsonData)",
+							"  var assetDigest = pm.variables.get(\"assetDigest\", jsonData)",
+							"  pm.expect(jsonData[\"asset_digest\"]).to.equal(assetDigest);",
+							"  pm.expect(jsonData[\"archive_digest\"]).to.equal(archiveDigest);",
+							"});",
+							"",
+							"",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://{{urlBase}}/v3/asset/{{genomeDigest}}/{{asset}}?tag={{defaultTag}}",
+					"protocol": "http",
+					"host": [
+						"{{urlBase}}"
+					],
+					"path": [
+						"v3",
+						"asset",
+						"{{genomeDigest}}",
+						"{{asset}}"
+					],
+					"query": [
+						{
+							"key": "tag",
+							"value": "{{defaultTag}}"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get_asset_archive",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"pm.test(\"Content-Type is present\", function () {",
+							"    pm.response.to.have.header(\"Content-Type\");",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://{{urlBase}}/v3/asset/{{genomeDigest}}/{{asset}}/archive?tag={{defaultTag}}",
+					"protocol": "http",
+					"host": [
+						"{{urlBase}}"
+					],
+					"path": [
+						"v3",
+						"asset",
+						"{{genomeDigest}}",
+						"{{asset}}",
+						"archive"
+					],
+					"query": [
+						{
+							"key": "tag",
+							"value": "{{defaultTag}}"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get_asset_log",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"pm.test(\"Content-Type is present\", function () {",
+							"    pm.response.to.have.header(\"Content-Type\");",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://{{urlBase}}/v3/asset/{{genomeDigest}}/{{asset}}/log?tag={{defaultTag}}",
+					"protocol": "http",
+					"host": [
+						"{{urlBase}}"
+					],
+					"path": [
+						"v3",
+						"asset",
+						"{{genomeDigest}}",
+						"{{asset}}",
+						"log"
+					],
+					"query": [
+						{
+							"key": "tag",
+							"value": "{{defaultTag}}"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get_asset_recipe",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"pm.test(\"Content-Type is present\", function () {",
+							"    pm.response.to.have.header(\"Content-Type\");",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://{{urlBase}}/v3/asset/{{genomeDigest}}/{{asset}}/recipe?tag={{defaultTag}}",
+					"protocol": "http",
+					"host": [
+						"{{urlBase}}"
+					],
+					"path": [
+						"v3",
+						"asset",
+						"{{genomeDigest}}",
+						"{{asset}}",
+						"recipe"
+					],
+					"query": [
+						{
+							"key": "tag",
+							"value": "{{defaultTag}}"
+						}
 					]
 				}
 			},

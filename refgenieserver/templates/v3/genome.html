@@ -58,17 +58,17 @@
                             {% if tag_name != "default_tag" %}
                                 <tr>
                                     <td>
-                                        <a href="/v3/asset/{{ genome }}/{{ asset_name }}/archive?tag={{ tag_name }}" class="btn btn-outline-dark btn-sm mr-0" role="button" data-toggle="tooltip" title="Archive">
+                                        <a href="/v3/archive/assets{{ genome }}/{{ asset_name }}?tag={{ tag_name }}" class="btn btn-outline-dark btn-sm mr-0" role="button" data-toggle="tooltip" title="Archive">
                                             <i class="fa fa-download" aria-hidden="true"></i>
                                         </a>
-                                        <a href="/v3/asset/{{ genome }}/{{ asset_name }}?tag={{ tag_name }}" class="btn btn-outline-dark btn-sm ml-0" role="button" data-toggle="tooltip" title="Attributes">
+                                        <a href="/v3/assets/attrs/{{ genome }}/{{ asset_name }}?tag={{ tag_name }}" class="btn btn-outline-dark btn-sm ml-0" role="button" data-toggle="tooltip" title="Attributes">
                                             <i class="fa fa-tags" aria-hidden="true"></i>
                                         </a>
-                                        <a href="/v3/asset/{{ genome }}/{{ asset_name }}/recipe?tag={{ tag_name }}" class="btn btn-outline-dark btn-sm ml-0" role="button" data-toggle="tooltip" title="Build recipe">
+                                        <a href="/v3/assets/recipe/{{ genome }}/{{ asset_name }}?tag={{ tag_name }}" class="btn btn-outline-dark btn-sm ml-0" role="button" data-toggle="tooltip" title="Build recipe">
                                             <i class="fa fa-file-code-o" aria-hidden="true"></i>
                                         </a>
                                     </td>
-                                    <td><a href="/v3/asset/{{ genome }}/{{ asset_name }}/splash?tag={{ tag_name }}" data-toggle="tooltip" title="Asset splash page"><b>{{ asset_name }}</b>:{{ tag_name }}</a></td>
+                                    <td><a href="/v3/assets/splash/{{ genome }}/{{ asset_name }}?tag={{ tag_name }}" data-toggle="tooltip" title="Asset splash page"><b>{{ asset_name }}</b>:{{ tag_name }}</a></td>
                                     <td class="text-wrap"><span style="max-width:150px;">{{ safe_show_asset_attr(asset_data["asset_description"]) }}</span></td>
                                     <td>{{ safe_show_asset_attr(tag_data["asset_size"]) }}/{{ safe_show_asset_attr(tag_data["archive_size"]) }}</td>
                                     <td><code>{{ safe_show_asset_attr(tag_data["archive_digest"]) }}</code></td>
