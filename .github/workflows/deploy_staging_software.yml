@@ -26,8 +26,8 @@
 
 
 # 1. push the base refgenieserver image to dockerhub
-# 2. check out the test-data repo, then run the aws deploy
-  # 2a. build aws package with test-data config file, push, deploy to cluster
+# 2. check out the rg.databio.org repo, then run the aws deploy
+  # 2a. build aws package with rg.databio.org config file, push, deploy to cluster
 
 on:
   push:
@@ -45,7 +45,7 @@ jobs:
   deploy:
     env:
       service: dev1
-      data-repo: test-data
+      data-repo: rg.databio.org
     name: Deploy
     runs-on: ubuntu-latest
     steps:
