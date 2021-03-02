@@ -346,16 +346,6 @@ async def download_asset_attributes(
         _LOGGER.warning(msg)
         raise HTTPException(status_code=404, detail=msg)
 
-
-# "/genome/{alias}/genome_digest"
-@router.get("/genomes/genome_digest/{alias}", response_model=str, tags=api_version_tags)
-async def download_genome_digest(alias: str = al):
-    """
-    Returns the genome digest. Requires the genome name as an input
-    """
-    return RedirectResponse(f"/genomes/genome_digest/{alias}")
-
-
 # /genome/{genome}"
 @router.get(
     "/genomes/attrs/{genome}",
