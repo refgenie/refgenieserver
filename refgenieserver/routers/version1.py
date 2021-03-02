@@ -12,7 +12,7 @@ from ..helpers import get_openapi_version, get_datapath_for_genome
 
 router = APIRouter()
 
-api_version_tags = [f"API v1"]
+api_version_tags = [f"APIv1"]
 
 @router.get("/", tags=api_version_tags)
 @router.get("/index", tags=api_version_tags)

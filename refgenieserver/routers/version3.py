@@ -24,7 +24,7 @@ t = Path(..., description="Tag name", regex=r"^\S+$")
 # API query parameter definitions
 tq = Query(None, description="Tag name", regex=r"^\S+$")
 
-api_version_tags = [f"API {API_VERSION}"]
+api_version_tags = [f"API{API_VERSION}"]
 
 
 @router.get("/", tags=api_version_tags)
