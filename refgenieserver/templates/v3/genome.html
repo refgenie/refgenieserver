@@ -58,7 +58,7 @@
                             {% if tag_name != "default_tag" %}
                                 <tr>
                                     <td>
-                                        <a href="/v3/archive/assets{{ genome }}/{{ asset_name }}?tag={{ tag_name }}" class="btn btn-outline-dark btn-sm mr-0" role="button" data-toggle="tooltip" title="Archive">
+                                        <a href="/v3/assets/archive/{{ genome }}/{{ asset_name }}?tag={{ tag_name }}" class="btn btn-outline-dark btn-sm mr-0" role="button" data-toggle="tooltip" title="Archive">
                                             <i class="fa fa-download" aria-hidden="true"></i>
                                         </a>
                                         <a href="/v3/assets/attrs/{{ genome }}/{{ asset_name }}?tag={{ tag_name }}" class="btn btn-outline-dark btn-sm ml-0" role="button" data-toggle="tooltip" title="Attributes">
