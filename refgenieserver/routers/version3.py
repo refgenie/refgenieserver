@@ -353,7 +353,7 @@ async def download_genome_digest(alias: str = al):
     """
     Returns the genome digest. Requires the genome name as an input
     """
-    return RedirectResponse(f"/alias/genome_digest/{alias}")
+    return RedirectResponse(f"/genomes/genome_digest/{alias}")
 
 
 # /genome/{genome}"
@@ -415,7 +415,7 @@ async def get_genome_alias_digest(alias: str = al):
 
 # "/alias/alias/{genome_digest}"
 @router.get(
-    "/genomes/alias/{genome_digest}",
+    "/genomes/aliases/{genome_digest}",
     operation_id=API_VERSION + API_ID_ALIAS_ALIAS,
     response_model=List[str],
     tags=api_version_tags,
