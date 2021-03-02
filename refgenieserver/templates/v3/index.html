@@ -63,7 +63,7 @@
 <div class="container">
     <div class="row">
         <div class="col-12">
-            <table class="table table-hover table-sm" id="genome-table" data-toggle="table" data-search="true" data-sort-stable="true">
+            <table class="table table-hover table-sm" id="genome-table" data-toggle="table" data-search="true" data-sortable="true">
                 <thead class="thead-light">
                     <tr>
                         {% for column in columns %}
@@ -75,7 +75,7 @@
                     {% for genome_name, genome_dict in genomes.items() | sort %}
                         <tr>
                             <td>
-                                <a href="/genomes/splash/{{ genome_name }}" data-toggle="tooltip" title="Genome splash page"><b>{{ ", ".join(genome_dict["aliases"]) }}</b></a>
+                                <a id="{{genome_dict['aliases'][0]}}" href="/genomes/splash/{{ genome_name }}" data-toggle="tooltip" title="Genome splash page"><b>{{ ", ".join(genome_dict["aliases"]) }}</b></a>
                             </td>
                             <td>
                                 <code>{{ genome_name }}</code>
