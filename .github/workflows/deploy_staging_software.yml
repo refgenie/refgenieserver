@@ -115,6 +115,7 @@ jobs:
     runs-on: ubuntu-latest
     name: test REST API
     steps:
+      - uses: actions/checkout@master
       - uses: matt-ball/newman-action@master
         name: Newman Action
         with:
