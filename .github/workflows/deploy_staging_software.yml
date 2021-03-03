@@ -115,8 +115,8 @@ jobs:
     runs-on: ubuntu-latest
     name: test REST API
     steps:
-      - name: Newman Action
       - uses: matt-ball/newman-action@master
+        name: Newman Action
         with:
           collection: refgenieserver.postman_collection.json
           environment: refgenieserver.postman_environment.json
