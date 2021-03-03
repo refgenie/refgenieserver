@@ -18,8 +18,7 @@
 							"const jsonData = pm.response.json();",
 							"pm.test(\"Test data type of the response\", () => {",
 							"  pm.expect(jsonData).to.be.an(\"array\");",
-							"});",
-							"pm.variables.set(\"genome\", jsonData[0])"
+							"});"
 						],
 						"type": "text/javascript"
 					}
@@ -29,14 +28,14 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "http://{{urlBase}}/v3/genomes",
+					"raw": "http://{{urlBase}}/genomes/list",
 					"protocol": "http",
 					"host": [
 						"{{urlBase}}"
 					],
 					"path": [
-						"v3",
-						"genomes"
+						"genomes",
+						"list"
 					]
 				}
 			},
@@ -70,14 +69,14 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "http://{{urlBase}}/v3/genomes/{{asset}}",
+					"raw": "http://{{urlBase}}/genomes/by_asset/{{asset}}",
 					"protocol": "http",
 					"host": [
 						"{{urlBase}}"
 					],
 					"path": [
-						"v3",
 						"genomes",
+						"by_asset",
 						"{{asset}}"
 					]
 				}
@@ -108,14 +107,13 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "http://{{urlBase}}/v3/alias/genome_digest/{{genome}}",
+					"raw": "http://{{urlBase}}/genomes/genome_digest/{{genome}}",
 					"protocol": "http",
 					"host": [
 						"{{urlBase}}"
 					],
 					"path": [
-						"v3",
-						"alias",
+						"genomes",
 						"genome_digest",
 						"{{genome}}"
 					]
@@ -152,15 +150,14 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "http://{{urlBase}}/v3/alias/alias/{{genomeDigest}}",
+					"raw": "http://{{urlBase}}/genomes/aliases/{{genomeDigest}}",
 					"protocol": "http",
 					"host": [
 						"{{urlBase}}"
 					],
 					"path": [
-						"v3",
-						"alias",
-						"alias",
+						"genomes",
+						"aliases",
 						"{{genomeDigest}}"
 					]
 				}
@@ -191,17 +188,16 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "http://{{urlBase}}/v3/asset/{{genomeDigest}}/{{asset}}/default_tag",
+					"raw": "http://{{urlBase}}/assets/default_tag/{{genomeDigest}}/{{asset}}",
 					"protocol": "http",
 					"host": [
 						"{{urlBase}}"
 					],
 					"path": [
-						"v3",
-						"asset",
+						"assets",
+						"default_tag",
 						"{{genomeDigest}}",
-						"{{asset}}",
-						"default_tag"
+						"{{asset}}"
 					]
 				}
 			},
@@ -231,18 +227,22 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "http://{{urlBase}}/v3/asset/{{genomeDigest}}/{{asset}}/{{defaultTag}}/asset_digest",
+					"raw": "http://{{urlBase}}/assets/asset_digest/{{genomeDigest}}/{{asset}}?tag={{defaultTag}}",
 					"protocol": "http",
 					"host": [
 						"{{urlBase}}"
 					],
 					"path": [
-						"v3",
-						"asset",
+						"assets",
+						"asset_digest",
 						"{{genomeDigest}}",
-						"{{asset}}",
-						"{{defaultTag}}",
-						"asset_digest"
+						"{{asset}}"
+					],
+					"query": [
+						{
+							"key": "tag",
+							"value": "{{defaultTag}}"
+						}
 					]
 				}
 			},
@@ -272,18 +272,22 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "http://{{urlBase}}/v3/asset/{{genomeDigest}}/{{asset}}/{{defaultTag}}/archive_digest",
+					"raw": "http://{{urlBase}}/assets/archive_digest/{{genomeDigest}}/{{asset}}?tag={{defaultTag}}",
 					"protocol": "http",
 					"host": [
 						"{{urlBase}}"
 					],
 					"path": [
-						"v3",
-						"asset",
+						"assets",
+						"archive_digest",
 						"{{genomeDigest}}",
-						"{{asset}}",
-						"{{defaultTag}}",
-						"archive_digest"
+						"{{asset}}"
+					],
+					"query": [
+						{
+							"key": "tag",
+							"value": "{{defaultTag}}"
+						}
 					]
 				}
 			},
@@ -322,14 +326,14 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "http://{{urlBase}}/v3/asset/{{genomeDigest}}/{{asset}}?tag={{defaultTag}}",
+					"raw": "http://{{urlBase}}/assets/attrs/{{genomeDigest}}/{{asset}}?tag={{defaultTag}}",
 					"protocol": "http",
 					"host": [
 						"{{urlBase}}"
 					],
 					"path": [
-						"v3",
-						"asset",
+						"assets",
+						"attrs",
 						"{{genomeDigest}}",
 						"{{asset}}"
 					],
@@ -365,17 +369,16 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "http://{{urlBase}}/v3/asset/{{genomeDigest}}/{{asset}}/archive?tag={{defaultTag}}",
+					"raw": "http://{{urlBase}}/assets/archive/{{genomeDigest}}/{{asset}}?tag={{defaultTag}}",
 					"protocol": "http",
 					"host": [
 						"{{urlBase}}"
 					],
 					"path": [
-						"v3",
-						"asset",
+						"assets",
+						"archive",
 						"{{genomeDigest}}",
-						"{{asset}}",
-						"archive"
+						"{{asset}}"
 					],
 					"query": [
 						{
@@ -409,17 +412,16 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "http://{{urlBase}}/v3/asset/{{genomeDigest}}/{{asset}}/log?tag={{defaultTag}}",
+					"raw": "http://{{urlBase}}/assets/log/{{genomeDigest}}/{{asset}}?tag={{defaultTag}}",
 					"protocol": "http",
 					"host": [
 						"{{urlBase}}"
 					],
 					"path": [
-						"v3",
-						"asset",
+						"assets",
+						"log",
 						"{{genomeDigest}}",
-						"{{asset}}",
-						"log"
+						"{{asset}}"
 					],
 					"query": [
 						{
@@ -453,17 +455,16 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "http://{{urlBase}}/v3/asset/{{genomeDigest}}/{{asset}}/recipe?tag={{defaultTag}}",
+					"raw": "http://{{urlBase}}/assets/recipe/{{genomeDigest}}/{{asset}}?tag={{defaultTag}}",
 					"protocol": "http",
 					"host": [
 						"{{urlBase}}"
 					],
 					"path": [
-						"v3",
-						"asset",
+						"assets",
+						"recipe",
 						"{{genomeDigest}}",
-						"{{asset}}",
-						"recipe"
+						"{{asset}}"
 					],
 					"query": [
 						{

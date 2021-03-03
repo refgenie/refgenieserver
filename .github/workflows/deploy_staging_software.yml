@@ -116,7 +116,7 @@ jobs:
     name: test REST API
     steps:
       - name: Newman Action
-        uses: matt-ball/newman-action@v0.2.4
+      - uses: matt-ball/newman-action@master
         with:
           collection: refgenieserver.postman_collection.json
           environment: refgenieserver.postman_environment.json
