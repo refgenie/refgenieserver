@@ -165,7 +165,141 @@
 			"response": []
 		},
 		{
-			"name": "get_default_tag",
+			"name": "get_genome_attributes",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"var jsonData = pm.response.json();",
+							"pm.test(\"Test data type of the response\", () => {",
+							"  pm.expect(jsonData).to.be.a(\"object\");",
+							"});",
+							"",
+							"pm.test(\"Test data value type\", () => {",
+							"  pm.expect(jsonData[\"genome_description\"]).to.be.a(\"string\");",
+							"});",
+							"",
+							"",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://{{urlBase}}/genomes/attrs/{{genomeDigest}}",
+					"protocol": "http",
+					"host": [
+						"{{urlBase}}"
+					],
+					"path": [
+						"genomes",
+						"attrs",
+						"{{genomeDigest}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get_genomes_by_asset",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"var jsonData = pm.response.json();",
+							"pm.test(\"Test data type of the response\", () => {",
+							"  pm.expect(jsonData).to.be.a(\"array\");",
+							"});",
+							"",
+							"var genome = pm.variables.get(\"genome\")",
+							"pm.test(\"Test data includes genome\", () => {",
+							"  pm.expect(jsonData).to.include(genome);",
+							"});",
+							"",
+							"",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://{{urlBase}}/genomes/by_asset/{{asset}}",
+					"protocol": "http",
+					"host": [
+						"{{urlBase}}"
+					],
+					"path": [
+						"genomes",
+						"by_asset",
+						"{{asset}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get_all_assets",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"const jsonData = pm.response.json();",
+							"pm.test(\"Test data type of the response\", () => {",
+							"  pm.expect(jsonData).to.be.an(\"object\");",
+							"});",
+							"",
+							"var genome = pm.variables.get(\"genome\")",
+							"pm.test(\"Test data includes genome\", () => {",
+							"  pm.expect(jsonData).haveOwnProperty(genome);",
+							"});",
+							"pm.test(\"Test data type\", () => {",
+							"  pm.expect(jsonData[genome]).to.be.an(\"array\");",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://{{urlBase}}/assets/list",
+					"protocol": "http",
+					"host": [
+						"{{urlBase}}"
+					],
+					"path": [
+						"assets",
+						"list"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get_asset_default_tag",
 			"event": [
 				{
 					"listen": "test",
@@ -249,7 +383,7 @@
 			"response": []
 		},
 		{
-			"name": "get_archive_digest",
+			"name": "get_asset_archive_digest",
 			"event": [
 				{
 					"listen": "test",
@@ -280,6 +414,51 @@
 					"path": [
 						"assets",
 						"archive_digest",
+						"{{genomeDigest}}",
+						"{{asset}}"
+					],
+					"query": [
+						{
+							"key": "tag",
+							"value": "{{defaultTag}}"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get_asset_digest",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"var jsonData = pm.response.json();",
+							"pm.test(\"Test data type of the response\", () => {",
+							"  pm.expect(jsonData).to.be.a(\"string\");",
+							"});",
+							"pm.variables.set(\"assetDigest\", jsonData)"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://{{urlBase}}/assets/asset_digest/{{genomeDigest}}/{{asset}}?tag={{defaultTag}}",
+					"protocol": "http",
+					"host": [
+						"{{urlBase}}"
+					],
+					"path": [
+						"assets",
+						"asset_digest",
 						"{{genomeDigest}}",
 						"{{asset}}"
 					],
