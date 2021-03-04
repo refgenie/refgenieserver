@@ -45,7 +45,6 @@ async def index(request: Request):
     return templates.TemplateResponse("v3/index.html", dict(templ_vars, **ALL_VERSIONS))
 
 
-# @router.get("/genome/{genome}/splash")
 @router.get("/genomes/splash/{genome}", tags=api_version_tags)
 async def genome_splash_page(request: Request, genome: str = g):
     """
@@ -70,7 +69,6 @@ async def genome_splash_page(request: Request, genome: str = g):
     )
 
 
-# @router.get("/asset/{genome}/{asset}/splash")
 @router.get("/assets/splash/{genome}/{asset}", tags=api_version_tags)
 async def asset_splash_page(
     request: Request, genome: str = g, asset: str = a, tag: Optional[str] = tq
@@ -100,7 +98,6 @@ async def asset_splash_page(
     return templates.TemplateResponse("v3/asset.html", dict(templ_vars, **ALL_VERSIONS))
 
 
-# /genomes
 @router.get("/genomes/list", response_model=List[str], tags=api_version_tags)
 async def list_available_genomes():
     """
@@ -111,7 +108,6 @@ async def list_available_genomes():
     return rgc.genomes_list()
 
 
-# /genomes_dict
 @router.get(
     "/genomes/dict",
     operation_id=API_VERSION + API_ID_GENOMES_DICT,
@@ -126,23 +122,27 @@ async def get_genomes_dict():
     return rgc[CFG_GENOMES_KEY]
 
 
-# assets
 @router.get(
     "/assets/list",
     operation_id=API_VERSION + API_ID_ASSETS,
     response_model=Dict[str, List[str]],
     tags=api_version_tags,
 )
-async def list_available_assets():
+async def list_available_assets(
+    includeSeekKeys: Optional[bool] = Query(
+        False, description="Whether to include seek keys in the response"
+    )
+):
     """
     Returns a list of all assets that can be downloaded. No inputs required.
     """
-    ret_dict = rgc.list(include_tags=True)
+    ret_dict = (
+        rgc.list(include_tags=True) if includeSeekKeys else rgc.list_assets_by_genome()
+    )
     _LOGGER.info(f"serving assets dict: {ret_dict}")
     return ret_dict
 
 
-# "/asset/{genome}/{asset}/archive"
 @router.get(
     "/assets/archive/{genome}/{asset}",
     operation_id=API_VERSION + API_ID_ARCHIVE,
@@ -177,7 +177,6 @@ async def download_asset(genome: str = g, asset: str = a, tag: Optional[str] = t
         raise HTTPException(status_code=404, detail=msg)
 
 
-# "/asset/{genome}/{asset}/default_tag"
 @router.get(
     "/assets/default_tag/{genome}/{asset}",
     operation_id=API_VERSION + API_ID_DEFAULT_TAG,
@@ -191,7 +190,6 @@ async def get_asset_default_tag(genome: str = g, asset: str = a):
     return rgc.get_default_tag(genome, asset)
 
 
-# "/asset/{genome}/{asset}/{tag}/asset_digest"
 @router.get(
     "/assets/asset_digest/{genome}/{asset}",
     operation_id=API_VERSION + API_ID_DIGEST,
@@ -213,7 +211,6 @@ async def get_asset_digest(genome: str = g, asset: str = a, tag: Optional[str] =
         raise HTTPException(status_code=404, detail=msg)
 
 
-# "/asset/{genome}/{asset}/{tag}/archive_digest",
 @router.get(
     "/assets/archive_digest/{genome}/{asset}",
     operation_id=API_VERSION + API_ID_ARCHIVE_DIGEST,
@@ -235,7 +232,6 @@ async def get_archive_digest(genome: str = g, asset: str = a, tag: Optional[str]
         raise HTTPException(status_code=404, detail=msg)
 
 
-# "/asset/{genome}/{asset}/log"
 @router.get(
     "/assets/log/{genome}/{asset}",
     operation_id=API_VERSION + API_ID_LOG,
@@ -271,7 +267,6 @@ async def download_asset_build_log(
         raise HTTPException(status_code=404, detail=msg)
 
 
-#  /asset/{genome}/{asset}/recipe
 @router.get(
     "/assets/recipe/{genome}/{asset}",
     operation_id=API_VERSION + API_ID_RECIPE,
@@ -309,7 +304,6 @@ async def download_asset_build_recipe(
         raise HTTPException(status_code=404, detail=msg)
 
 
-# /asset/{genome}/{asset}
 @router.get(
     "/assets/attrs/{genome}/{asset}",
     operation_id=API_VERSION + API_ID_ASSET_ATTRS,
@@ -347,7 +341,6 @@ async def download_asset_attributes(
         raise HTTPException(status_code=404, detail=msg)
 
 
-# /genome/{genome}"
 @router.get(
     "/genomes/attrs/{genome}",
     operation_id=API_VERSION + API_ID_GENOME_ATTRS,
@@ -369,7 +362,6 @@ async def download_genome_attributes(genome: str = g):
         raise HTTPException(status_code=404, detail=msg)
 
 
-# "/genomes/{asset}"
 @router.get(
     "/genomes/by_asset/{asset}", response_model=List[str], tags=api_version_tags
 )
@@ -383,7 +375,6 @@ async def list_genomes_by_asset(asset: str = a):
     return genomes
 
 
-# "/alias/genome_digest/{alias}"
 @router.get(
     "/genomes/genome_digest/{alias}",
     operation_id=API_VERSION + API_ID_ALIAS_DIGEST,
@@ -404,7 +395,6 @@ async def get_genome_alias_digest(alias: str = al):
         raise HTTPException(status_code=404, detail=msg)
 
 
-# "/alias/alias/{genome_digest}"
 @router.get(
     "/genomes/aliases/{genome_digest}",
     operation_id=API_VERSION + API_ID_ALIAS_ALIAS,
