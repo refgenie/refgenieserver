@@ -148,7 +148,10 @@ async def list_available_genomes():
 
 
 @router.get(
-    "/genomes/alias_dict", response_model=Dict[str, List[str]], tags=api_version_tags
+    "/genomes/alias_dict",
+    response_model=Dict[str, List[str]],
+    tags=api_version_tags,
+    operation_id=API_VERSION + API_ID_ALIASES_DICT,
 )
 async def get_alias_dict():
     """
