@@ -15,7 +15,10 @@ from ..helpers import get_openapi_version, get_datapath_for_genome, safely_get_e
 from ..data_models import Tag, Genome, Dict, List
 
 ex_alias = safely_get_example(
-    rgc, "genome digest", "genomes_list", "2230c535660fb4774114bfa966a62f823fdb6d21acf138d4"
+    rgc,
+    "genome digest",
+    "genomes_list",
+    "2230c535660fb4774114bfa966a62f823fdb6d21acf138d4",
 )
 ex_digest = safely_get_example(
     rgc, "genome alias", "get_genome_alias_digest", "hg38", alias=ex_alias
