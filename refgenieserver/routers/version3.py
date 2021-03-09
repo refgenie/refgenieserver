@@ -7,7 +7,7 @@ from copy import copy
 
 from ubiquerg import parse_registry_path
 from refgenconf.refgenconf import map_paths_by_id
-from yacman import UndefinedAliasError
+from yacman import UndefinedAliasError, IK
 
 from ..const import *
 from ..main import rgc, templates, _LOGGER, app
@@ -141,25 +141,21 @@ async def asset_splash_page(
 @router.get("/genomes/list", response_model=List[str], tags=api_version_tags)
 async def list_available_genomes():
     """
-    Returns a list of genomes this server holds at least one asset for.
-    No inputs required.
+    Returns a list of **genome digests** this server serves at least one asset for.
     """
-    _LOGGER.info("serving genomes string: '{}'".format(rgc.genomes_str()))
-    return rgc.genomes_list()
+    _LOGGER.info("serving genomes list")
+    return list(rgc.genomes[IK]["aliases_raw"].keys())
 
 
 @router.get(
-    "/genomes/dict",
-    operation_id=API_VERSION + API_ID_GENOMES_DICT,
-    response_model=Dict[str, Genome],
-    tags=api_version_tags,
+    "/genomes/alias_dict", response_model=Dict[str, List[str]], tags=api_version_tags
 )
-async def get_genomes_dict():
+async def get_alias_dict():
     """
-    Returns the 'genomes' part of the config
+    Returns a dictionary of lists of aliases keyed by the respective genome digests.
     """
-    _LOGGER.info(f"serving genomes dict: '{rgc[CFG_GENOMES_KEY]}'")
-    return rgc[CFG_GENOMES_KEY]
+    _LOGGER.info("serving genomes alias dict")
+    return rgc.genomes[IK]["aliases_raw"]
 
 
 @router.get(
@@ -174,13 +170,17 @@ async def list_available_assets(
     )
 ):
     """
-    Returns a list of all assets that can be downloaded. No inputs required.
+    Returns a list of assets that can be downloaded, keyed by the respective genome digests.
     """
     ret_dict = (
         rgc.list(include_tags=True) if includeSeekKeys else rgc.list_assets_by_genome()
     )
-    _LOGGER.info(f"serving assets dict: {ret_dict}")
-    return ret_dict
+    digest_dict = {
+        rgc.get_genome_alias_digest(alias=alias): assets
+        for alias, assets in ret_dict.items()
+    }
+    _LOGGER.info(f"serving assets dict: {digest_dict}")
+    return digest_dict
 
 
 @router.get(
