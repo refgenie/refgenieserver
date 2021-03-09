@@ -11,20 +11,57 @@ from yacman import UndefinedAliasError
 
 from ..const import *
 from ..main import rgc, templates, _LOGGER, app
-from ..helpers import get_openapi_version, get_datapath_for_genome
+from ..helpers import get_openapi_version, get_datapath_for_genome, safely_get_example
 from ..data_models import Tag, Genome, Dict, List
+
+ex_alias = safely_get_example(
+    rgc, "genome digest", "genomes_list", "2230c535660fb4774114bfa966a62f823fdb6d21acf138d4"
+)
+ex_digest = safely_get_example(
+    rgc, "genome alias", "get_genome_alias_digest", "hg38", alias=ex_alias
+)
+ex_asset = safely_get_example(
+    rgc, "asset", "list_assets_by_genome", "fasta", genome=ex_alias
+)
 
 router = APIRouter()
 
 # API query path definitions
-g = Path(..., description="Genome digest", regex=r"^\w+$", max_length=48, min_length=48)
-al = Path(..., description="Genome alias", regex=r"^\S+$")
-a = Path(..., description="Asset name", regex=r"^\S+$")
-t = Path(..., description="Tag name", regex=r"^\S+$")
-# API query parameter definitions
-tq = Query(None, description="Tag name", regex=r"^\S+$")
+g = Path(
+    ...,
+    description="Genome digest",
+    regex=r"^\w+$",
+    max_length=48,
+    min_length=48,
+    example=ex_digest,
+)
+al = Path(
+    ...,
+    description="Genome alias",
+    regex=r"^\S+$",
+    example=ex_alias,
+)
+a = Path(
+    ...,
+    description="Asset name",
+    regex=r"^\S+$",
+    example=ex_asset,
+)
+t = Path(
+    ...,
+    description="Tag name",
+    regex=r"^\S+$",
+    example=DEFAULT_TAG,
+)
 
-api_version_tags = [f"API{API_VERSION}"]
+# API query parameter definitions
+tq = Query(
+    None,
+    description="Tag name",
+    regex=r"^\S+$",
+)
+
+api_version_tags = [API3_ID]
 
 
 @router.get("/", tags=api_version_tags)

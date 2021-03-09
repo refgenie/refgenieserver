@@ -30,3 +30,25 @@ CHANGED_KEYS = {CFG_ASSET_PATH_KEY: "path"}
 
 # TODO: to be removed in the future
 CFG_LEGACY_ARCHIVE_CHECKSUM_KEY = "legacy_archive_digest"
+
+API1_ID = "APIv1"
+API2_ID = "APIv2"
+API3_ID = "APIv3"
+
+TAGS_METADATA = [
+    {
+        "name": API3_ID,
+        "description": "These are the most recent API endpoints. "
+        "They are prepended with `v3` or nothing. ",
+    },
+    {
+        "name": API2_ID,
+        "description": "These are deprecated endpoints that may be removed in the future. "
+        "They are prepended with `v2`.",
+    },
+    {
+        "name": API1_ID,
+        "description": "These are deprecated endpoints that may be removed in the future. "
+        "They are prepended with `v1`.",
+    },
+]

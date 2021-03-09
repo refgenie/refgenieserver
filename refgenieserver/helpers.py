@@ -190,3 +190,15 @@ def purge_nonservable(rgc):
             except KeyError:
                 rgc.cfg_remove_assets(genome_name, asset_name)
     return rgc
+
+
+def safely_get_example(rgc, entity, rgc_method, default, **kwargs):
+    try:
+        res = rgc.__getattr__(rgc_method)(**kwargs)
+        return res[0] if isinstance(res, list) else res
+    except Exception as e:
+        _LOGGER.warning(
+            f"Caught exception: {e}\n"
+            f"Failed to create {entity} example! Using '{default}', which might not exist"
+        )
+        return default

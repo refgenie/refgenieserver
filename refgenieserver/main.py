@@ -14,6 +14,7 @@ app = FastAPI(
     title=PKG_NAME,
     description="a web interface and RESTful API for reference genome assets",
     version=server_v,
+    openapi_tags=TAGS_METADATA,
 )
 
 app.mount("/" + STATIC_DIRNAME, StaticFiles(directory=STATIC_PATH), name=STATIC_DIRNAME)
