@@ -654,6 +654,54 @@
 				}
 			},
 			"response": []
+		},
+		{
+			"name": "get_alias_dict",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"var jsonData = pm.response.json();",
+							"var genomeDigest = pm.variables.get(\"genomeDigest\")",
+							"var genome = pm.variables.get(\"genome\")",
+							"",
+							"pm.test(\"Test data type of the response\", () => {",
+							"  pm.expect(jsonData).to.be.a(\"object\");",
+							"});",
+							"",
+							"pm.test(\"Test data includes genomeDigest\", () => {",
+							"  pm.expect(jsonData).haveOwnProperty(genomeDigest);",
+							"});",
+							"",
+							"pm.test(\"Test data value\", () => {",
+							"  pm.expect(jsonData[genomeDigest]).to.include(genome);",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://{{urlBase}}/genomes/alias_dict",
+					"protocol": "http",
+					"host": [
+						"{{urlBase}}"
+					],
+					"path": [
+						"genomes",
+						"alias_dict"
+					]
+				}
+			},
+			"response": []
 		}
 	]
 }
