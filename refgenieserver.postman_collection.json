@@ -268,7 +268,7 @@
 							"  pm.expect(jsonData).to.be.an(\"object\");",
 							"});",
 							"",
-							"var genome = pm.variables.get(\"genome\")",
+							"var genome = pm.variables.get(\"genomeDigest\")",
 							"pm.test(\"Test data includes genome\", () => {",
 							"  pm.expect(jsonData).haveOwnProperty(genome);",
 							"});",
