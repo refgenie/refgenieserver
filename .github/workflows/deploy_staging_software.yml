@@ -26,8 +26,8 @@
 
 
 # 1. push the base refgenieserver image to dockerhub
-# 2. check out the demo repo, then run the aws deploy
-  # 2a. build aws package with demo config file, push, deploy to cluster
+# 2. check out the rg.databio.org repo, then run the aws deploy
+  # 2a. build aws package with rg.databio.org config file, push, deploy to cluster
 
 on:
   push:
@@ -36,13 +36,16 @@ on:
   pull_request:
     branches:
       - staging
+  workflow_dispatch:
+    inputs: null
 
 name: Deploy to Amazon ECS - software-staging
 
 jobs:
   deploy:
     env:
-      server: software-staging
+      service: dev1
+      data-repo: rg.databio.org
     name: Deploy
     runs-on: ubuntu-latest
     steps:
@@ -56,14 +59,15 @@ jobs:
         password: ${{ secrets.DOCKER_PASSWORD }}
         repository: databio/refgenieserver
         tags: staging
+        dockerfile: staging.Dockerfile
 
 
     - name: Checkout demo repo
       uses: actions/checkout@v2   
       with:
-        repository: refgenie/refgenomes.databio.org
+        repository: refgenie/${{ env.data-repo }}
         refs: refs/heads/master
-        path: server_data
+        path: ${{ env.data-repo }}
 
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v1
@@ -86,8 +90,8 @@ jobs:
         # Build a docker container and
         # push it to ECR so that it can
         # be deployed to ECS.
-        cd server_data
-        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f Dockerfiles/staging.Dockerfile .
+        cd ${{ env.data-repo }}
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f Dockerfiles/${{ env.data-repo }}.Dockerfile .
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
         echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
 
@@ -95,7 +99,7 @@ jobs:
       id: task-def
       uses: aws-actions/amazon-ecs-render-task-definition@v1
       with:
-        task-definition: task_defs/${{ env.server }}.json
+        task-definition: task_defs/${{ env.service }}.json
         container-name: rgs-container
         image: ${{ steps.build-image.outputs.image }}
 
@@ -103,6 +107,17 @@ jobs:
       uses: aws-actions/amazon-ecs-deploy-task-definition@v1
       with:
         task-definition: ${{ steps.task-def.outputs.task-definition }}
-        service: rgs-service-${{ env.server }}
-        cluster: hydra
+        service: rgs-service-${{ env.service }}
+        cluster: yeti
         wait-for-service-stability: true
+  test:
+    needs: deploy
+    runs-on: ubuntu-latest
+    name: test REST API
+    steps:
+      - uses: actions/checkout@master
+      - uses: matt-ball/newman-action@master
+        name: Newman Action
+        with:
+          collection: refgenieserver.postman_collection.json
+          environment: refgenieserver.postman_environment.json
