@@ -2,6 +2,19 @@
 
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) and [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) format. 
 
+## [0.6.0] -- 2021-03-11
+### Added
+- API v3, which is a complete redesign and extension of the previous version
+- in `refgenieserver archive`, when a `archive_checksum` is missing for a previously archived asset it will be recalculated.
+- response models to API endpoints
+- API version tags in the openAPI specification
+- a `legacy_archive_digest` to the tag attributes
+
+### Changed
+- split the user interface into: index, genome and asset pages
+- grouped endpoints by API version in the swagger docs
+- the archives created with `refgenieserver archive` are now named after digests
+
 ## [0.5.1] -- 2020-07-10
 ### Changed
 - in `refgenieserver archive`:

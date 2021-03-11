@@ -2,7 +2,9 @@ on:
   release:
     types:
       - created
-
+  workflow_dispatch:
+    inputs: null
+    
 name: Deploy to Dockerhub on release
 
 jobs:
