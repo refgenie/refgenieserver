@@ -37,10 +37,8 @@ def archive(rgc, registry_paths, force, remove, cfg_path, genomes_desc):
     """
     if float(rgc[CFG_VERSION_KEY]) < float(REQ_CFG_VERSION):
         raise ConfigNotCompliantError(
-            "You need to update the genome config to v{} in order to use the archiver. "
-            "The required version can be generated with refgenie >= {}".format(
-                REQ_CFG_VERSION, REFGENIE_BY_CFG[REQ_CFG_VERSION]
-            )
+            f"You need to update the genome config to v{REQ_CFG_VERSION} in order to use the archiver. "
+            f"The required version can be generated with refgenie >= {REFGENIE_BY_CFG[REQ_CFG_VERSION]}"
         )
     if CFG_ARCHIVE_CONFIG_KEY in rgc:
         srp = rgc[CFG_ARCHIVE_CONFIG_KEY]
@@ -56,9 +54,7 @@ def archive(rgc, registry_paths, force, remove, cfg_path, genomes_desc):
             )
         except KeyError:
             raise GenomeConfigFormatError(
-                "The config '{}' is missing a {} entry. Can't determine the desired archive.".format(
-                    cfg_path, " or ".join([CFG_ARCHIVE_KEY, CFG_ARCHIVE_KEY_OLD])
-                )
+                f"The config '{cfg_path}' is missing a {' or '.join([CFG_ARCHIVE_KEY, CFG_ARCHIVE_KEY_OLD])} entry. Can't determine the desired archive."
             )
     if os.path.isfile(server_rgc_path) and not os.access(server_rgc_path, os.W_OK):
         raise OSError(
@@ -72,7 +68,7 @@ def archive(rgc, registry_paths, force, remove, cfg_path, genomes_desc):
     # original RefGenConf has been created in read-only mode,
     # make it RW compatible and point to new target path for server use or initialize a new object
     if os.path.exists(server_rgc_path):
-        _LOGGER.debug("'{}' file was found and will be updated".format(server_rgc_path))
+        _LOGGER.debug(f"'{server_rgc_path}' file was found and will be updated")
         rgc_server = RefGenConf(filepath=server_rgc_path)
         if remove:
             if not registry_paths:
@@ -89,9 +85,7 @@ def archive(rgc, registry_paths, force, remove, cfg_path, genomes_desc):
                 "You can't remove archives since the genome_archive path does not exist yet."
             )
             exit(1)
-        _LOGGER.debug(
-            "'{}' file was not found and will be created".format(server_rgc_path)
-        )
+        _LOGGER.debug(f"'{server_rgc_path}' file was not found and will be created")
         rgc_server = RefGenConf(filepath=rgc.file_path)
         rgc_server.make_writable(filepath=server_rgc_path)
         rgc_server.make_readonly()
@@ -106,21 +100,19 @@ def archive(rgc, registry_paths, force, remove, cfg_path, genomes_desc):
         _LOGGER.error("No genomes found")
         exit(1)
     else:
-        _LOGGER.debug("Genomes to be processed: {}".format(str(genomes)))
+        _LOGGER.debug(f"Genomes to be processed: {str(genomes)}")
     genomes = [rgc.get_genome_alias_digest(g) for g in genomes]
     if genomes_desc is not None:
         if os.path.exists(genomes_desc):
             import csv
 
-            _LOGGER.info(
-                "Found a genomes descriptions CSV file: {}".format(genomes_desc)
-            )
+            _LOGGER.info(f"Found a genomes descriptions CSV file: {genomes_desc}")
             with open(genomes_desc, mode="r") as infile:
                 reader = csv.reader(infile)
                 descs = {rows[0]: rows[1] for rows in reader}
         else:
             _LOGGER.error(
-                "Genomes descriptions CSV file does not exist: {}".format(genomes_desc)
+                f"Genomes descriptions CSV file does not exist: {genomes_desc}"
             )
             sys.exit(1)
     counter = 0
@@ -146,14 +138,14 @@ def archive(rgc, registry_paths, force, remove, cfg_path, genomes_desc):
         with rgc_server as r:
             r[CFG_GENOMES_KEY].setdefault(genome, PXAM())
             r[CFG_GENOMES_KEY][genome].update(genome_attrs)
-        _LOGGER.debug("Updating '{}' genome attributes...".format(genome))
+        _LOGGER.debug(f"Updating '{genome}' genome attributes...")
         asset = asset_list[counter] if asset_list is not None else None
         assets = asset or rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY].keys()
         if not assets:
             _LOGGER.error("No assets found")
             continue
         else:
-            _LOGGER.debug("Assets to be processed: {}".format(str(assets)))
+            _LOGGER.debug(f"Assets to be processed: {str(assets)}")
         for asset_name in assets if isinstance(assets, list) else [assets]:
             asset_desc = rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][
                 asset_name
@@ -165,9 +157,7 @@ def archive(rgc, registry_paths, force, remove, cfg_path, genomes_desc):
                 CFG_ASSET_DESC_KEY: asset_desc,
                 CFG_ASSET_DEFAULT_TAG_KEY: default_tag,
             }
-            _LOGGER.debug(
-                "Updating '{}/{}' asset attributes...".format(genome, asset_name)
-            )
+            _LOGGER.debug(f"Updating '{genome}/{asset_name}' asset attributes...")
             with rgc_server as r:
                 r.update_assets(genome, asset_name, asset_attrs)
 
@@ -181,17 +171,16 @@ def archive(rgc, registry_paths, force, remove, cfg_path, genomes_desc):
             for tag_name in tags if isinstance(tags, list) else [tags]:
                 if not rgc.is_asset_complete(genome, asset_name, tag_name):
                     raise MissingConfigDataError(
-                        "Asset '{}/{}:{}' is incomplete. This probably means an"
-                        " attempt to archive a partially pulled parent. "
-                        "refgenieserver archive requires all assets to be built"
-                        " prior to archiving.".format(genome, asset_name, tag_name)
+                        f"Asset '{genome}/{asset_name}:{tag_name}' is incomplete. This probably means an"
+                        f" attempt to archive a partially pulled parent. "
+                        f"refgenieserver archive requires all assets to be built"
+                        f" prior to archiving."
                     )
                 file_name = rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][asset_name][
                     CFG_ASSET_TAGS_KEY
                 ][tag_name][CFG_ASSET_PATH_KEY]
-                target_file = os.path.join(
-                    target_dir, "{}__{}".format(asset_name, tag_name) + ".tgz"
-                )
+                target_file_core = os.path.join(target_dir, f"{asset_name}__{tag_name}")
+                target_file = f"{target_file_core}.tgz"
                 input_file = os.path.join(genome_dir, file_name, tag_name)
                 # these attributes have to be read from the original RefGenConf in case the archiver just increments
                 # an existing server RefGenConf
@@ -209,11 +198,10 @@ def archive(rgc, registry_paths, force, remove, cfg_path, genomes_desc):
                 ][tag_name].setdefault(CFG_ASSET_CHECKSUM_KEY, None)
                 if not os.path.exists(target_file) or force:
                     _LOGGER.info(
-                        "Creating archive '{}' from '{}' asset".format(
-                            target_file, input_file
-                        )
+                        f"Creating archive '{target_file}' from '{input_file}' asset"
                     )
                     try:
+                        _copy_asset_dir(input_file, target_file_core)
                         _check_tgz(input_file, target_file)
                         _copy_recipe(input_file, target_dir, asset_name, tag_name)
                         _copy_log(input_file, target_dir, asset_name, tag_name)
@@ -232,9 +220,7 @@ def archive(rgc, registry_paths, force, remove, cfg_path, genomes_desc):
                         continue
                     else:
                         _LOGGER.info(
-                            "Updating '{}/{}:{}' tag attributes...".format(
-                                genome, asset_name, tag_name
-                            )
+                            f"Updating '{genome}/{asset_name}:{tag_name}' tag attributes..."
                         )
                         tag_attrs = {
                             CFG_ASSET_PATH_KEY: file_name,
@@ -260,15 +246,14 @@ def archive(rgc, registry_paths, force, remove, cfg_path, genomes_desc):
                         tag_attrs.update(
                             {CFG_LEGACY_ARCHIVE_CHECKSUM_KEY: legacy_digest}
                         )
-                        _LOGGER.debug("attr dict: {}".format(tag_attrs))
+                        _LOGGER.debug(f"attr dict: {tag_attrs}")
                         with rgc_server as r:
                             for parent in parents:
-                                # here we update any pre-existing parents' children attr with the newly added asset
+                                # here we update any pre-existing parents' children
+                                # attr with the newly added asset
                                 _LOGGER.debug(
-                                    "Updating {} children list with {}".format(
-                                        parent,
-                                        "{}/{}:{}".format(genome, asset_name, tag_name),
-                                    )
+                                    f"Updating {parent} children list with "
+                                    f"{genome}/{asset_name}:{tag_name}"
                                 )
                                 rp = parse_registry_path(parent)
                                 parent_genome = rp["namespace"]
@@ -283,22 +268,20 @@ def archive(rgc, registry_paths, force, remove, cfg_path, genomes_desc):
                                     )
                                 except RefgenconfError:
                                     _LOGGER.warning(
-                                        "'{}/{}:{}'s parent '{}' does not exist, "
-                                        "skipping relationship updates".format(
-                                            genome, asset_name, tag_name, parent
-                                        )
+                                        f"'{genome}/{asset_name}:{tag_name}'s parent "
+                                        f"'{parent}' does not exist, skipping relationship updates"
                                     )
                                     continue
                                 r.update_relatives_assets(
                                     parent_genome,
                                     parent_asset,
                                     parent_tag,
-                                    ["{}/{}:{}".format(genome, asset_name, tag_name)],
+                                    [f"{genome}/{asset_name}:{tag_name}"],
                                     children=True,
                                 )
                             r.update_tags(genome, asset_name, tag_name, tag_attrs)
                 else:
-                    exists_msg = "'{}' exists.".format(target_file)
+                    exists_msg = f"'{target_file}' exists."
                     try:
                         rgc_server[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][asset_name][
                             CFG_ASSET_TAGS_KEY
@@ -311,9 +294,7 @@ def archive(rgc, registry_paths, force, remove, cfg_path, genomes_desc):
                             r.update_tags(genome, asset_name, tag_name, tag_attrs)
 
         counter += 1
-    _LOGGER.info(
-        "Builder finished; server config file saved to {}".format(rgc_server.file_path)
-    )
+    _LOGGER.info(f"Builder finished; server config file saved: {rgc_server.file_path}")
 
 
 def _check_tgz(path, output):
@@ -335,10 +316,10 @@ def _check_tgz(path, output):
             else "-cvzf {o} {tn}"
         )
         command = cmd.format(p=pth, o=output, tn=tag_name)
-        _LOGGER.info("command: {}".format(command))
+        _LOGGER.info(f"command: {command}")
         run(command, shell=True)
     else:
-        raise OSError("Entity '{}' does not exist".format(path))
+        raise OSError(f"Entity '{path}' does not exist")
 
 
 def _check_tgz_legacy(path, output, asset_name, genome_name, alias):
@@ -374,10 +355,10 @@ def _check_tgz_legacy(path, output, asset_name, genome_name, alias):
             # remove the new dir
             cmd += "rm -r {p}/{an}"
             command = cmd.format(p=path, oa=aliased_output, an=asset_name)
-            _LOGGER.debug("command: {}".format(command))
+            _LOGGER.debug(f"command: {command}")
             run(command, shell=True)
         else:
-            raise OSError("Entity '{}' does not exist".format(path))
+            raise OSError(f"Entity '{path}' does not exist")
 
 
 def _copy_log(input_dir, target_dir, asset_name, tag_name):
@@ -387,7 +368,7 @@ def _copy_log(input_dir, target_dir, asset_name, tag_name):
     :param str input_dir: path to the directory to copy the recipe from
     :param str target_dir: path to the directory to copy the recipe to
     """
-    log_path = "{}/{}/{}".format(input_dir, BUILD_STATS_DIR, ORI_LOG_NAME)
+    log_path = f"{input_dir}/{BUILD_STATS_DIR}/{ORI_LOG_NAME}"
     if log_path and os.path.exists(log_path):
         run(
             "cp "
@@ -396,9 +377,26 @@ def _copy_log(input_dir, target_dir, asset_name, tag_name):
             + os.path.join(target_dir, TEMPLATE_LOG.format(asset_name, tag_name)),
             shell=True,
         )
-        _LOGGER.debug("Log copied to: {}".format(target_dir))
+        _LOGGER.debug(f"Log copied to: {target_dir}")
     else:
-        _LOGGER.warning("Log not found: {}".format(log_path))
+        _LOGGER.warning(f"Log not found: {log_path}")
+
+
+def _copy_asset_dir(input_dir, target_dir):
+    """
+    Copy the asset directory
+
+    :param str input_dir: path to the directory to copy the asset dir from
+    :param str target_dir: path to the directory to copy the asset dir to
+    """
+    if input_dir and os.path.exists(input_dir):
+        run(
+            f"rsync -rvL --exclude '_refgenie_build' {input_dir}/ {target_dir}/",
+            shell=True,
+        )
+        _LOGGER.info(f"Asset directory copied to: {target_dir}")
+    else:
+        _LOGGER.warning(f"Asset directory not found: {input_dir}")
 
 
 def _copy_recipe(input_dir, target_dir, asset_name, tag_name):
@@ -410,14 +408,13 @@ def _copy_recipe(input_dir, target_dir, asset_name, tag_name):
     :param str asset_name: asset name
     :param str tag_name: tag name
     """
-    recipe_path = "{}/{}/{}".format(
-        input_dir, BUILD_STATS_DIR, TEMPLATE_RECIPE_JSON.format(asset_name, tag_name)
-    )
+    recipe_path = \
+        f"{input_dir}/{BUILD_STATS_DIR}/{TEMPLATE_RECIPE_JSON.format(asset_name, tag_name)}"
     if recipe_path and os.path.exists(recipe_path):
         run("cp " + recipe_path + " " + target_dir, shell=True)
-        _LOGGER.debug("Recipe copied to: {}".format(target_dir))
+        _LOGGER.debug(f"Recipe copied to: {target_dir}")
     else:
-        _LOGGER.warning("Recipe not found: {}".format(recipe_path))
+        _LOGGER.warning(f"Recipe not found: {recipe_path}")
 
 
 def _remove_archive(rgc, registry_paths, cfg_archive_folder_key=CFG_ARCHIVE_KEY):
@@ -426,7 +423,8 @@ def _remove_archive(rgc, registry_paths, cfg_archive_folder_key=CFG_ARCHIVE_KEY)
 
     :param refgenconf.RefGenConf rgc: object to remove the entries from
     :param list[dict] registry_paths: entries to remove
-    :param str cfg_archive_folder_key: configuration archive folder key in the genome configuration file
+    :param str cfg_archive_folder_key: configuration archive folder key in the genome
+        configuration file
     :return list[str]: removed file paths
     """
     ret = []
@@ -445,20 +443,18 @@ def _remove_archive(rgc, registry_paths, cfg_archive_folder_key=CFG_ARCHIVE_KEY)
             else:
                 rgc.cfg_remove_assets(genome, asset, tag)
             _LOGGER.info(
-                "{}/{}{} removed".format(genome, asset, ":" + tag if tag else "")
+                f"{genome}/{asset}{':' + tag if tag else ''} removed"
             )
         except KeyError:
             _LOGGER.warning(
-                "{}/{}{} not found and not removed.".format(
-                    genome, asset, ":" + tag if tag else ""
-                )
+                f"{genome}/{asset}{':' + tag if tag else ''} not found and not removed"
             )
             continue
         ret.append(
             os.path.join(
                 rgc[cfg_archive_folder_key],
                 genome,
-                "{}__{}".format(asset or "*", tag or "*") + ".tgz",
+                f"{asset or '*'}__{tag or '*'}.tgz",
             )
         )
         for p in ret:
@@ -467,10 +463,10 @@ def _remove_archive(rgc, registry_paths, cfg_archive_folder_key=CFG_ARCHIVE_KEY)
                 try:
                     os.remove(path)
                 except FileNotFoundError:
-                    _LOGGER.warning("File does not exist: {}".format(path))
+                    _LOGGER.warning(f"File does not exist: {path}")
         try:
             os.removedirs(os.path.join(rgc[cfg_archive_folder_key], genome))
-            _LOGGER.info("Removed empty genome directory: {}".format(genome))
+            _LOGGER.info(f"Removed empty genome directory: {genome}")
         except OSError:
             pass
     return ret
