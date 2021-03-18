@@ -1,14 +1,14 @@
-from starlette.responses import FileResponse, RedirectResponse
-from starlette.requests import Request
-from fastapi import HTTPException, APIRouter
 from copy import copy
 
+from fastapi import APIRouter, HTTPException
 from refgenconf.helpers import replace_str_in_obj
+from starlette.requests import Request
+from starlette.responses import FileResponse, RedirectResponse
 
 from ..const import *
-from ..helpers import preprocess_attrs
-from ..main import rgc, templates, _LOGGER, app
-from ..helpers import get_openapi_version, get_datapath_for_genome
+from ..helpers import (get_datapath_for_genome, get_openapi_version,
+                       preprocess_attrs)
+from ..main import _LOGGER, app, rgc, templates
 
 router = APIRouter()
 

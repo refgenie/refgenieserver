@@ -1,19 +1,15 @@
-import sys
 import logging
-
+import sys
 from glob import glob
 from subprocess import run
 
-from refgenconf import RefGenConf
-from refgenconf.exceptions import (
-    RefgenconfError,
-    ConfigNotCompliantError,
-    GenomeConfigFormatError,
-    MissingConfigDataError,
-)
-from refgenconf.helpers import swap_names_in_tree, replace_str_in_obj
 from attmap import PathExAttMap as PXAM
-from ubiquerg import checksum, size, is_command_callable, parse_registry_path
+from refgenconf import RefGenConf
+from refgenconf.exceptions import (ConfigNotCompliantError,
+                                   GenomeConfigFormatError,
+                                   MissingConfigDataError, RefgenconfError)
+from refgenconf.helpers import replace_str_in_obj, swap_names_in_tree
+from ubiquerg import checksum, is_command_callable, parse_registry_path, size
 
 from .const import *
 
@@ -408,8 +404,7 @@ def _copy_recipe(input_dir, target_dir, asset_name, tag_name):
     :param str asset_name: asset name
     :param str tag_name: tag name
     """
-    recipe_path = \
-        f"{input_dir}/{BUILD_STATS_DIR}/{TEMPLATE_RECIPE_JSON.format(asset_name, tag_name)}"
+    recipe_path = f"{input_dir}/{BUILD_STATS_DIR}/{TEMPLATE_RECIPE_JSON.format(asset_name, tag_name)}"
     if recipe_path and os.path.exists(recipe_path):
         run("cp " + recipe_path + " " + target_dir, shell=True)
         _LOGGER.debug(f"Recipe copied to: {target_dir}")
@@ -442,9 +437,7 @@ def _remove_archive(rgc, registry_paths, cfg_archive_folder_key=CFG_ARCHIVE_KEY)
                 ]
             else:
                 rgc.cfg_remove_assets(genome, asset, tag)
-            _LOGGER.info(
-                f"{genome}/{asset}{':' + tag if tag else ''} removed"
-            )
+            _LOGGER.info(f"{genome}/{asset}{':' + tag if tag else ''} removed")
         except KeyError:
             _LOGGER.warning(
                 f"{genome}/{asset}{':' + tag if tag else ''} not found and not removed"

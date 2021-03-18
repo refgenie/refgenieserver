@@ -1,9 +1,11 @@
 """ Package constants """
 import os
-from refgenconf.const import *
-from refgenconf._version import __version__ as rgc_v
-from ._version import __version__ as server_v
 from platform import python_version
+
+from refgenconf._version import __version__ as rgc_v
+from refgenconf.const import *
+
+from ._version import __version__ as server_v
 
 ALL_VERSIONS = {
     "server_version": server_v,

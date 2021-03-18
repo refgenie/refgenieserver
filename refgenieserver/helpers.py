@@ -1,10 +1,13 @@
 import logging
-from .const import *
-from ._version import __version__ as v
-from yacman import get_first_env_var
-from ubiquerg import VersionInHelpParser
-
 from string import Formatter
+
+from fastapi import HTTPException
+from refgenconf.exceptions import RefgenconfError
+from ubiquerg import VersionInHelpParser
+from yacman import get_first_env_var
+
+from ._version import __version__ as v
+from .const import *
 
 global _LOGGER
 _LOGGER = logging.getLogger(PKG_NAME)
@@ -203,3 +206,34 @@ def safely_get_example(rgc, entity, rgc_method, default, **kwargs):
             f"Failed to create {entity} example! Using '{default}', which might not exist"
         )
         return default
+
+
+def create_asset_file_path(rgc, genome, asset, tag, seek_key):
+    """
+    Construct a path to an unarchived asset file
+
+    :param str genome:
+    :param str asset:
+    :param str tag:
+    """
+    tag = tag or rgc.get_default_tag(
+        genome, asset
+    )  # returns 'default' for nonexistent genome/asset; no need to catch
+    try:
+        rgc._assert_gat_exists(gname=genome, aname=asset, tname=tag)
+    except RefgenconfError:
+        msg = MSG_404.format(f"asset ({genome}/{asset}:{tag})")
+        _LOGGER.warning(msg)
+        raise HTTPException(status_code=404, detail=msg)
+    tag_dict = rgc.genomes[genome][CFG_ASSETS_KEY][asset][CFG_ASSET_TAGS_KEY][tag]
+    if seek_key not in tag_dict[CFG_SEEK_KEYS_KEY]:
+        msg = MSG_404.format(f"seek_key ({genome}/{asset}.{seek_key}:{tag})")
+        _LOGGER.warning(msg)
+        raise HTTPException(status_code=404, detail=msg)
+    seek_key_target = tag_dict[CFG_SEEK_KEYS_KEY][seek_key]
+    file_name = f"{asset}__{tag}/{seek_key_target}"
+    path, remote = get_datapath_for_genome(
+        rgc, dict(genome=genome, file_name=file_name)
+    )
+    _LOGGER.info(f"serving asset file path: {path}")
+    return path

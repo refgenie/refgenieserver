@@ -1,14 +1,16 @@
+import sys
+
+import logmuse
+import uvicorn
+from fastapi import FastAPI
+from refgenconf import RefGenConf, select_genome_config
+from starlette.staticfiles import StaticFiles
+from starlette.templating import Jinja2Templates
+from ubiquerg import parse_registry_path
+
 from .const import *
 from .helpers import build_parser, purge_nonservable
 from .server_builder import archive
-from refgenconf import RefGenConf, select_genome_config
-from fastapi import FastAPI
-from starlette.staticfiles import StaticFiles
-from starlette.templating import Jinja2Templates
-import logmuse
-import sys
-import uvicorn
-from ubiquerg import parse_registry_path
 
 app = FastAPI(
     title=PKG_NAME,
@@ -54,7 +56,7 @@ def main():
         # the router imports need to be after the RefGenConf object is declared
         with rgc as r:
             purge_nonservable(r)
-        from .routers import version1, version2, version3, private
+        from .routers import private, version1, version2, version3
 
         app.include_router(version3.router)
         app.include_router(version1.router, prefix="/v1")

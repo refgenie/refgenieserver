@@ -1,18 +1,19 @@
-from starlette.responses import FileResponse, JSONResponse, RedirectResponse
-from starlette.requests import Request
-from fastapi import HTTPException, APIRouter, Path, Query
-from typing import Optional
 from copy import copy
+from typing import Optional
 
-
-from ubiquerg import parse_registry_path
+from fastapi import APIRouter, HTTPException, Path, Query
+from refgenconf.exceptions import RefgenconfError
 from refgenconf.refgenconf import map_paths_by_id
-from yacman import UndefinedAliasError, IK
+from starlette.requests import Request
+from starlette.responses import FileResponse, JSONResponse, RedirectResponse
+from ubiquerg import parse_registry_path
+from yacman import IK, UndefinedAliasError
 
 from ..const import *
-from ..main import rgc, templates, _LOGGER, app
-from ..helpers import get_openapi_version, get_datapath_for_genome, safely_get_example
-from ..data_models import Tag, Genome, Dict, List
+from ..data_models import Dict, Genome, List, Tag
+from ..helpers import (create_asset_file_path, get_datapath_for_genome,
+                       get_openapi_version, safely_get_example)
+from ..main import _LOGGER, app, rgc, templates
 
 ex_alias = safely_get_example(
     rgc,
@@ -235,34 +236,41 @@ async def download_asset_file(
     genome: str = g, asset: str = a, seek_key: str = s, tag: Optional[str] = tq
 ):
     """
-    Returns an archive. Requires the genome name and the asset name as an input.
+    Returns the unarchived asset file.
+    Requires a genome name, an asset name and a seek_key name as an input.
 
-    Optionally, 'tag' query parameter can be specified to get a tagged asset archive.
+    Optionally, 'tag' query parameter can be specified to get a tagged asset file.
     Default tag is returned otherwise.
     """
-    tag = tag or rgc.get_default_tag(
-        genome, asset
-    )  # returns 'default' for nonexistent genome/asset; no need to catch
-    seek_key_target = rgc.genomes[genome][CFG_ASSETS_KEY][asset][CFG_ASSET_TAGS_KEY][
-        tag
-    ][CFG_SEEK_KEYS_KEY][seek_key]
-    file_name = f"{asset}__{tag}/{seek_key_target}"
-    path, remote = get_datapath_for_genome(
-        rgc, dict(genome=genome, file_name=file_name)
-    )
-    _LOGGER.info(f"file source: {path}")
-    if remote:
-        _LOGGER.info(f"redirecting to URL: '{path}'")
-        return RedirectResponse(path)
-    _LOGGER.info(f"serving asset file: '{path}'")
+    path = create_asset_file_path(rgc, genome, asset, tag, seek_key)
+    remote = False
+    if CFG_REMOTE_URL_BASE_KEY in rgc and rgc[CFG_REMOTE_URL_BASE_KEY] is not None:
+        remote = True
     if os.path.isfile(path):
-        return FileResponse(
-            path, filename=file_name, media_type="application/octet-stream"
-        )
+        return FileResponse(path, media_type="application/octet-stream")
     else:
         msg = MSG_404.format(f"asset ({asset})")
         _LOGGER.warning(msg)
         raise HTTPException(status_code=404, detail=msg)
+
+
+@router.get(
+    "/assets/asset_file_path/{genome}/{asset}/{seek_key}",
+    operation_id=API_VERSION + "customAssetFilePath",
+    tags=api_version_tags,
+    response_model=str,
+)
+async def get_asset_file_path(
+    genome: str = g, asset: str = a, seek_key: str = s, tag: Optional[str] = tq
+):
+    """
+    Returns a path to the unarchived asset file.
+    Requires a genome name, an asset name and a seek_key name as an input.
+
+    Optionally, 'tag' query parameter can be specified to get a tagged asset file path.
+    Default tag is returned otherwise.
+    """
+    return create_asset_file_path(rgc, genome, asset, tag, seek_key)
 
 
 @router.get(

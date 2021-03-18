@@ -1,7 +1,8 @@
-from ..const import *
-from ..main import rgc, templates, _LOGGER, app
-from ..data_models import Genome, Dict
 from fastapi import APIRouter
+
+from ..const import *
+from ..data_models import Dict, Genome
+from ..main import _LOGGER, app, rgc, templates
 
 router = APIRouter()
 

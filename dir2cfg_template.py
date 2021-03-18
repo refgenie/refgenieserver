@@ -1,16 +1,12 @@
 V = 0.1
 SERVER_CFG_NAME = "refgenieserver_config.yaml"
+import argparse
 import os
 import sys
+
 import yaml
-import argparse
-from refgenconf import (
-    CFG_GENOMES_KEY,
-    CFG_SERVER_KEY,
-    CFG_FOLDER_KEY,
-    CFG_ARCHIVE_KEY,
-    CFG_ASSET_PATH_KEY,
-)
+from refgenconf import (CFG_ARCHIVE_KEY, CFG_ASSET_PATH_KEY, CFG_FOLDER_KEY,
+                        CFG_GENOMES_KEY, CFG_SERVER_KEY)
 
 
 class _VersionInHelpParser(argparse.ArgumentParser):
