@@ -5,9 +5,12 @@ from subprocess import run
 
 from attmap import PathExAttMap as PXAM
 from refgenconf import RefGenConf
-from refgenconf.exceptions import (ConfigNotCompliantError,
-                                   GenomeConfigFormatError,
-                                   MissingConfigDataError, RefgenconfError)
+from refgenconf.exceptions import (
+    ConfigNotCompliantError,
+    GenomeConfigFormatError,
+    MissingConfigDataError,
+    RefgenconfError,
+)
 from refgenconf.helpers import replace_str_in_obj, swap_names_in_tree
 from ubiquerg import checksum, is_command_callable, parse_registry_path, size
 

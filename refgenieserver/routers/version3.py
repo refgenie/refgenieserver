@@ -11,8 +11,12 @@ from yacman import IK, UndefinedAliasError
 
 from ..const import *
 from ..data_models import Dict, Genome, List, Tag
-from ..helpers import (create_asset_file_path, get_datapath_for_genome,
-                       get_openapi_version, safely_get_example)
+from ..helpers import (
+    create_asset_file_path,
+    get_datapath_for_genome,
+    get_openapi_version,
+    safely_get_example,
+)
 from ..main import _LOGGER, app, rgc, templates
 
 ex_alias = safely_get_example(
@@ -243,15 +247,21 @@ async def download_asset_file(
     Default tag is returned otherwise.
     """
     path = create_asset_file_path(rgc, genome, asset, tag, seek_key)
-    remote = False
-    if CFG_REMOTE_URL_BASE_KEY in rgc and rgc[CFG_REMOTE_URL_BASE_KEY] is not None:
-        remote = True
-    if os.path.isfile(path):
-        return FileResponse(path, media_type="application/octet-stream")
+    remote = (
+        True
+        if CFG_REMOTE_URL_BASE_KEY in rgc and rgc[CFG_REMOTE_URL_BASE_KEY] is not None
+        else False
+    )
+    if not remote:
+        if os.path.isfile(path):
+            return FileResponse(path, media_type="application/octet-stream")
+        else:
+            msg = f"The target of the selected seek_key ({seek_key}) is not a file"
+            _LOGGER.warning(msg)
+            raise HTTPException(status_code=404, detail=msg)
     else:
-        msg = MSG_404.format(f"asset ({asset})")
-        _LOGGER.warning(msg)
-        raise HTTPException(status_code=404, detail=msg)
+        _LOGGER.info(f"redirecting to URL: '{path}'")
+        return RedirectResponse(path)
 
 
 @router.get(

@@ -5,8 +5,13 @@ import os
 import sys
 
 import yaml
-from refgenconf import (CFG_ARCHIVE_KEY, CFG_ASSET_PATH_KEY, CFG_FOLDER_KEY,
-                        CFG_GENOMES_KEY, CFG_SERVER_KEY)
+from refgenconf import (
+    CFG_ARCHIVE_KEY,
+    CFG_ASSET_PATH_KEY,
+    CFG_FOLDER_KEY,
+    CFG_GENOMES_KEY,
+    CFG_SERVER_KEY,
+)
 
 
 class _VersionInHelpParser(argparse.ArgumentParser):

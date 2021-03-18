@@ -6,8 +6,7 @@ from starlette.requests import Request
 from starlette.responses import FileResponse, RedirectResponse
 
 from ..const import *
-from ..helpers import (get_datapath_for_genome, get_openapi_version,
-                       preprocess_attrs)
+from ..helpers import get_datapath_for_genome, get_openapi_version, preprocess_attrs
 from ..main import _LOGGER, app, rgc, templates
 
 router = APIRouter()
