@@ -13,7 +13,7 @@ ALL_VERSIONS = {
 PKG_NAME = "refgenieserver"
 DEFAULT_PORT = 80
 BASE_DIR = "/genomes"
-# if running outside of the Docker container 'BASE_DIR' can be replaced with rgc[CFG_ARCHIVE_KEY] in 'main.py'
+# if running outside of the Docker container 'BASE_DIR' can be replaced with rgc[CFG_ARCHIVE_KEY]
 TEMPLATES_DIRNAME = "templates"
 TEMPLATES_PATH = os.path.join(
     os.path.dirname(os.path.abspath(__file__)), TEMPLATES_DIRNAME

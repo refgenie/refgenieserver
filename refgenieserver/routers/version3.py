@@ -50,6 +50,12 @@ a = Path(
     regex=r"^\S+$",
     example=ex_asset,
 )
+s = Path(
+    ...,
+    description="Seek key name",
+    regex=r"^\S+$",
+    example=ex_asset,
+)
 t = Path(
     ...,
     description="Tag name",
@@ -202,6 +208,45 @@ async def download_asset(genome: str = g, asset: str = a, tag: Optional[str] = t
         genome, asset
     )  # returns 'default' for nonexistent genome/asset; no need to catch
     file_name = f"{asset}__{tag}.tgz"
+    path, remote = get_datapath_for_genome(
+        rgc, dict(genome=genome, file_name=file_name)
+    )
+    _LOGGER.info(f"file source: {path}")
+    if remote:
+        _LOGGER.info(f"redirecting to URL: '{path}'")
+        return RedirectResponse(path)
+    _LOGGER.info(f"serving asset file: '{path}'")
+    if os.path.isfile(path):
+        return FileResponse(
+            path, filename=file_name, media_type="application/octet-stream"
+        )
+    else:
+        msg = MSG_404.format(f"asset ({asset})")
+        _LOGGER.warning(msg)
+        raise HTTPException(status_code=404, detail=msg)
+
+
+@router.get(
+    "/assets/asset_file/{genome}/{asset}/{seek_key}",
+    operation_id=API_VERSION + "customAssetFile",
+    tags=api_version_tags,
+)
+async def download_asset_file(
+    genome: str = g, asset: str = a, seek_key: str = s, tag: Optional[str] = tq
+):
+    """
+    Returns an archive. Requires the genome name and the asset name as an input.
+
+    Optionally, 'tag' query parameter can be specified to get a tagged asset archive.
+    Default tag is returned otherwise.
+    """
+    tag = tag or rgc.get_default_tag(
+        genome, asset
+    )  # returns 'default' for nonexistent genome/asset; no need to catch
+    seek_key_target = rgc.genomes[genome][CFG_ASSETS_KEY][asset][CFG_ASSET_TAGS_KEY][
+        tag
+    ][CFG_SEEK_KEYS_KEY][seek_key]
+    file_name = f"{asset}__{tag}/{seek_key_target}"
     path, remote = get_datapath_for_genome(
         rgc, dict(genome=genome, file_name=file_name)
     )

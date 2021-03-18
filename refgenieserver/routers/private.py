@@ -10,7 +10,6 @@ router = APIRouter()
     "/genomes/dict",
     operation_id=PRIVATE_API + API_ID_GENOMES_DICT,
     response_model=Dict[str, Genome],
-    include_in_schema=False,
 )
 async def get_genomes_dict():
     """
