@@ -2,6 +2,8 @@
 
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) and [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) format. 
 
+## [0.7.0] -- unreleased
+
 ## [0.6.0] -- 2021-03-11
 ### Added
 - API v3, which is a complete redesign and extension of the previous version
