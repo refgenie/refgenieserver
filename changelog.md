@@ -4,7 +4,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [0.6.1] -- 2021-03-18
 ### Added
-- private endpoint serving genomes dict to openAPI schema; [#105](https://github.com/refgenie/refgenieserver/issues/73) 
+- private endpoint serving genomes dict to openAPI schema; [#105](https://github.com/refgenie/refgenieserver/issues/105) 
 
 
 ## [0.6.0] -- 2021-03-11
