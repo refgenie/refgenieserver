@@ -2,8 +2,10 @@
 
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) and [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) format. 
 
-## [0.6.1] -- unreleased
-### Fixed
+## [0.6.1] -- 2021-03-18
+### Added
+- private endpoint serving genomes dict to openAPI schema; [#105](https://github.com/refgenie/refgenieserver/issues/73) 
+
 
 ## [0.6.0] -- 2021-03-11
 ### Added
@@ -49,11 +51,11 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [0.4.2] -- 2020-01-08
 ### Fixed
-- undefined variable referencing issue; [#73](https://github.com/databio/refgenieserver/issues/73)
+- undefined variable referencing issue; [#73](https://github.com/refgenie/refgenieserver/issues/73)
 
 ## [0.4.1] -- 2019-12-13
 ### Fixed
-- relationship info not being updated during specific asset archivization; [#70](https://github.com/databio/refgenieserver/issues/70) 
+- relationship info not being updated during specific asset archivization; [#70](https://github.com/refgenie/refgenieserver/issues/70) 
 
 ### Changed
 - order of the assets adn tags in the table in the index page: sorted alphabetically instead of oldest to newest 
@@ -79,15 +81,15 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [0.3.3] -- 2019-10-24
 ### Fixed
-- PyPi installation problem; [#59](https://github.com/databio/refgenieserver/issues/59)
+- PyPi installation problem; [#59](https://github.com/refgenie/refgenieserver/issues/59)
 
 ## [0.3.2] -- 2019-10-23
 ### Added
 - dynamic website URL rendering in the page banner
 
 ### Fixed
-- `TypeError` in `refgenieserver archive`; [#55](https://github.com/databio/refgenieserver/issues/55)
-- `AttributeError` which was raised when no subcommand was specified; [#54](https://github.com/databio/refgenieserver/issues/54)
+- `TypeError` in `refgenieserver archive`; [#55](https://github.com/refgenie/refgenieserver/issues/55)
+- `AttributeError` which was raised when no subcommand was specified; [#54](https://github.com/refgenie/refgenieserver/issues/54)
 
 ## [0.3.1] -- 2019-10-21
 
@@ -119,7 +121,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - `-g` and `-a` flags to asset registry path
 
 ### Fixed
-- `AttributeError` in `refgenieserver archive`; [#35](https://github.com/databio/refgenieserver/issues/35)
+- `AttributeError` in `refgenieserver archive`; [#35](https://github.com/refgenie/refgenieserver/issues/35)
 - issue with asset attributes serving in API v1 after config format change
 
 
