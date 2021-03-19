@@ -16,6 +16,7 @@ from ..helpers import (
     get_datapath_for_genome,
     get_openapi_version,
     safely_get_example,
+    is_data_remote,
 )
 from ..main import _LOGGER, app, rgc, templates
 
@@ -247,12 +248,7 @@ async def download_asset_file(
     Default tag is returned otherwise.
     """
     path = create_asset_file_path(rgc, genome, asset, tag, seek_key)
-    remote = (
-        True
-        if CFG_REMOTE_URL_BASE_KEY in rgc and rgc[CFG_REMOTE_URL_BASE_KEY] is not None
-        else False
-    )
-    if not remote:
+    if not is_data_remote(rgc):
         if os.path.isfile(path):
             return FileResponse(path, media_type="application/octet-stream")
         else:

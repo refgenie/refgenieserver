@@ -155,13 +155,26 @@ def get_datapath_for_genome(rgc, fill_dict, pth_templ="{base}/{genome}/{file_nam
     assert all(
         [k in req_keys for k in list(fill_dict.keys())]
     ), "Only the these keys are allowed in the fill_dict: {}".format(req_keys)
-    remote = False
     fill_dict.update({"base": BASE_DIR})
     # fill_dict.update({"base": rgc["genome_archive_folder"]})
-    if CFG_REMOTE_URL_BASE_KEY in rgc and rgc[CFG_REMOTE_URL_BASE_KEY] is not None:
+    remote = is_data_remote(rgc)
+    if remote:
         fill_dict["base"] = rgc[CFG_REMOTE_URL_BASE_KEY].rstrip("/")
-        remote = True
     return pth_templ.format(**fill_dict), remote
+
+
+def is_data_remote(rgc):
+    """
+    Determine if server genome config defines a remote_url_base key
+
+    :param refgenconf.RefGenConf rgc: server genome config object
+    :return bool: whether remote data source is configured
+    """
+    return (
+        True
+        if CFG_REMOTE_URL_BASE_KEY in rgc and rgc[CFG_REMOTE_URL_BASE_KEY] is not None
+        else False
+    )
 
 
 def purge_nonservable(rgc):
