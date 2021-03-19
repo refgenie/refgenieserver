@@ -36,6 +36,8 @@ CFG_LEGACY_ARCHIVE_CHECKSUM_KEY = "legacy_archive_digest"
 API1_ID = "APIv1"
 API2_ID = "APIv2"
 API3_ID = "APIv3"
+PRIV_API_ID = "PRIVATE_API"
+
 
 TAGS_METADATA = [
     {
@@ -52,5 +54,10 @@ TAGS_METADATA = [
         "name": API1_ID,
         "description": "These are deprecated endpoints that may be removed in the future. "
         "They are prepended with `v1`.",
+    },
+    {
+        "name": PRIV_API_ID,
+        "description": "These are private endpoints that may change anytime. "
+        "They are prepended with `_private_api`.",
     },
 ]
