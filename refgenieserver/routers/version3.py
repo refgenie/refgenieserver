@@ -234,7 +234,7 @@ async def download_asset(genome: str = g, asset: str = a, tag: Optional[str] = t
 
 @router.get(
     "/assets/asset_file/{genome}/{asset}/{seek_key}",
-    operation_id=API_VERSION + "customAssetFile",
+    operation_id=API_VERSION + API_ID_ASSET_FILE,
     tags=api_version_tags,
 )
 async def download_asset_file(
@@ -248,21 +248,26 @@ async def download_asset_file(
     Default tag is returned otherwise.
     """
     path = create_asset_file_path(rgc, genome, asset, tag, seek_key)
-    if not is_data_remote(rgc):
+
+    if is_data_remote(rgc):
+        _LOGGER.info(f"redirecting to URL: {path}")
+        return RedirectResponse(path)
+    else:
         if os.path.isfile(path):
-            return FileResponse(path, media_type="application/octet-stream")
+            return FileResponse(
+                path,
+                filename=os.path.basename(path),
+                media_type="application/octet-stream",
+            )
         else:
             msg = f"The target of the selected seek_key ({seek_key}) is not a file"
             _LOGGER.warning(msg)
             raise HTTPException(status_code=404, detail=msg)
-    else:
-        _LOGGER.info(f"redirecting to URL: '{path}'")
-        return RedirectResponse(path)
 
 
 @router.get(
     "/assets/asset_file_path/{genome}/{asset}/{seek_key}",
-    operation_id=API_VERSION + "customAssetFilePath",
+    operation_id=API_VERSION + API_ID_ASSET_PATH,
     tags=api_version_tags,
     response_model=str,
 )
