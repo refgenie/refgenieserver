@@ -201,10 +201,11 @@ def archive(rgc, registry_paths, force, remove, cfg_path, genomes_desc):
                     )
                     try:
                         _copy_asset_dir(input_file, target_file_core)
+                        _create_asset_dir_tree(target_file_core, asset_name, tag_name)
                         _check_tgz(input_file, target_file)
                         _copy_recipe(input_file, target_dir, asset_name, tag_name)
                         _copy_log(input_file, target_dir, asset_name, tag_name)
-                        # TODO: remove the rest of the try block in the future
+                        # TODO: remove the rest of this try block in the future
                         _check_tgz_legacy(
                             input_file,
                             target_file,
@@ -396,6 +397,21 @@ def _copy_asset_dir(input_dir, target_dir):
         _LOGGER.info(f"Asset directory copied to: {target_dir}")
     else:
         _LOGGER.warning(f"Asset directory not found: {input_dir}")
+
+
+def _create_asset_dir_tree(asset_dir, asset_name, tag_name):
+    """
+    Create a file tree with contents of the unarchived asset directory
+
+    :param str asset_dir: path to the asset directory to get the contents of
+    :param str asset_name: name of the asset
+    :param str tag_name: name of the tag
+    """
+    asset_dir_tree_file_path = os.path.join(
+        os.path.dirname(asset_dir), TEMPLATE_ASSET_DIR_TREE.format(asset_name, tag_name)
+    )
+    run(f"tree {asset_dir} | tail -n +2 > {asset_dir_tree_file_path}", shell=True)
+    _LOGGER.info(f"Asset directory tree created: {asset_dir_tree_file_path}")
 
 
 def _copy_recipe(input_dir, target_dir, asset_name, tag_name):

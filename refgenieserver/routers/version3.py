@@ -251,7 +251,7 @@ async def download_asset_file(
 
     if is_data_remote(rgc):
         _LOGGER.info(f"redirecting to URL: {path}")
-        return RedirectResponse(path)
+        return RedirectResponse(url=path, headers={'tontent-type': "application/octet-stream"})
     else:
         if os.path.isfile(path):
             return FileResponse(
@@ -405,6 +405,43 @@ async def download_asset_build_recipe(
         with open(path, "r") as f:
             recipe = json.load(f)
         return JSONResponse(recipe)
+    else:
+        msg = MSG_404.format(f"asset ({asset})")
+        _LOGGER.warning(msg)
+        raise HTTPException(status_code=404, detail=msg)
+
+
+@router.get(
+    "/assets/dir_tree/{genome}/{asset}",
+    operation_id=API_VERSION + API_ID_TREE,
+    tags=api_version_tags,
+)
+async def download_asset_directory_tree(
+    genome: str = g, asset: str = a, tag: Optional[str] = tq
+):
+    """
+    Returns a asset directory tree file.
+    Requires the genome name and the asset name as an input.
+
+    Optionally, 'tag' query parameter can be specified to get a tagged asset archive.
+    Default tag is returned otherwise.
+    """
+    # TODO: DRY
+    tag = tag or rgc.get_default_tag(
+        genome, asset
+    )  # returns 'default' for nonexistent genome/asset; no need to catch
+    file_name = TEMPLATE_ASSET_DIR_TREE.format(asset, tag)
+    path, remote = get_datapath_for_genome(
+        rgc, dict(genome=genome, file_name=file_name)
+    )
+    if remote:
+        _LOGGER.info(f"redirecting to URL: '{path}'")
+        return RedirectResponse(path)
+    _LOGGER.info(f"serving asset dir tree file: '{path}'")
+    if os.path.isfile(path):
+        return FileResponse(
+            path, filename=file_name, media_type="application/octet-stream"
+        )
     else:
         msg = MSG_404.format(f"asset ({asset})")
         _LOGGER.warning(msg)

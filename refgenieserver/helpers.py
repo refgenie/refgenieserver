@@ -155,8 +155,8 @@ def get_datapath_for_genome(rgc, fill_dict, pth_templ="{base}/{genome}/{file_nam
     assert all(
         [k in req_keys for k in list(fill_dict.keys())]
     ), "Only the these keys are allowed in the fill_dict: {}".format(req_keys)
-    fill_dict.update({"base": BASE_DIR})
-    # fill_dict.update({"base": rgc["genome_archive_folder"]})
+    # fill_dict.update({"base": BASE_DIR})
+    fill_dict.update({"base": rgc["genome_archive_folder"]})
     remote = is_data_remote(rgc)
     if remote:
         fill_dict["base"] = rgc[CFG_REMOTE_URL_BASE_KEY].rstrip("/")
