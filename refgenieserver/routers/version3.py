@@ -9,6 +9,7 @@ from starlette.responses import FileResponse, JSONResponse, RedirectResponse
 from ubiquerg import parse_registry_path
 from yacman import IK, UndefinedAliasError
 
+from datetime import date
 from ..const import *
 from ..data_models import Dict, Genome, List, Tag
 from ..helpers import (
@@ -77,6 +78,7 @@ tq = Query(
 )
 
 api_version_tags = [API3_ID]
+current_year = date.today().year
 
 
 @router.get("/", tags=api_version_tags)
@@ -93,6 +95,7 @@ async def index(request: Request):
         "rgc": rgc,
         "openapi_version": get_openapi_version(app),
         "columns": ["aliases", "digest", "description", "fasta asset", "# assets"],
+        "current_year": current_year,
     }
     return templates.TemplateResponse("v3/index.html", dict(templ_vars, **ALL_VERSIONS))
 
@@ -107,6 +110,7 @@ async def genome_splash_page(request: Request, genome: str = g):
         "genome": genome,
         "genome_dict": rgc[CFG_GENOMES_KEY][genome],
         "request": request,
+        "current_year": current_year,
         "columns": [
             "download",
             "asset name:tag",
@@ -144,6 +148,7 @@ async def asset_splash_page(
         "rgc": rgc,
         "prp": parse_registry_path,
         "links_dict": links_dict,
+        "current_year": current_year,
         "openapi_version": get_openapi_version(app),
     }
     _LOGGER.debug(f"merged vars: {dict(templ_vars, **ALL_VERSIONS)}")
