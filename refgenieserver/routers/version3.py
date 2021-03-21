@@ -413,10 +413,10 @@ async def download_asset_build_recipe(
 
 @router.get(
     "/assets/dir_tree/{genome}/{asset}",
-    operation_id=API_VERSION + API_ID_TREE,
+    operation_id=API_VERSION + API_ID_CONTENTS,
     tags=api_version_tags,
 )
-async def download_asset_directory_tree(
+async def download_asset_directory_contents(
     genome: str = g, asset: str = a, tag: Optional[str] = tq
 ):
     """
@@ -430,7 +430,7 @@ async def download_asset_directory_tree(
     tag = tag or rgc.get_default_tag(
         genome, asset
     )  # returns 'default' for nonexistent genome/asset; no need to catch
-    file_name = TEMPLATE_ASSET_DIR_TREE.format(asset, tag)
+    file_name = TEMPLATE_ASSET_DIR_CONTENTS.format(asset, tag)
     path, remote = get_datapath_for_genome(
         rgc, dict(genome=genome, file_name=file_name)
     )
