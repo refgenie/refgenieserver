@@ -414,7 +414,7 @@ async def download_asset_build_recipe(
 
 
 @router.get(
-    "/assets/dir_tree/{genome}/{asset}",
+    "/assets/dir_contents/{genome}/{asset}",
     operation_id=API_VERSION + API_ID_CONTENTS,
     tags=api_version_tags,
 )
