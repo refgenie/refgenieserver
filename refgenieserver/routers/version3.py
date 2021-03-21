@@ -251,7 +251,9 @@ async def download_asset_file(
 
     if is_data_remote(rgc):
         _LOGGER.info(f"redirecting to URL: {path}")
-        return RedirectResponse(url=path, headers={'tontent-type': "application/octet-stream"})
+        return RedirectResponse(
+            url=path, headers={"tontent-type": "application/octet-stream"}
+        )
     else:
         if os.path.isfile(path):
             return FileResponse(

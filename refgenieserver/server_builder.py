@@ -348,12 +348,12 @@ def _check_tgz_legacy(path, output, asset_name, genome_name, alias):
             swap_names_in_tree(os.path.join(path, asset_name), a, genome_name)
             # tar gzip the new dir
             cmd = (
-                "cd {p}; tar -cvf - {an} | pigz > {oa}; "
+                "cd {p}; " + "tar -cvf - {an} | pigz > {oa}; "
                 if is_command_callable("pigz")
                 else "tar -cvzf {oa} {an}; "
             )
             # remove the new dir
-            cmd += "rm -r {p}/{an}"
+            cmd += "rm -r {p}/{an}; "
             command = cmd.format(p=path, oa=aliased_output, an=asset_name)
             _LOGGER.debug(f"command: {command}")
             run(command, shell=True)
@@ -408,10 +408,13 @@ def _get_asset_dir_contents(asset_dir, asset_name, tag_name):
     :param str tag_name: name of the tag
     """
     asset_dir_contents_file_path = os.path.join(
-        os.path.dirname(asset_dir), TEMPLATE_ASSET_DIR_CONTENTS.format(asset_name, tag_name)
+        os.path.dirname(asset_dir),
+        TEMPLATE_ASSET_DIR_CONTENTS.format(asset_name, tag_name),
     )
     run(f"cd {asset_dir}; find . -type f > {asset_dir_contents_file_path}", shell=True)
-    _LOGGER.info(f"Asset directory contents file created: {asset_dir_contents_file_path}")
+    _LOGGER.info(
+        f"Asset directory contents file created: {asset_dir_contents_file_path}"
+    )
 
 
 def _copy_recipe(input_dir, target_dir, asset_name, tag_name):
