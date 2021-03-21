@@ -347,8 +347,8 @@ def _check_tgz_legacy(path, output, asset_name, genome_name, alias):
             run(command, shell=True)
             swap_names_in_tree(os.path.join(path, asset_name), a, genome_name)
             # tar gzip the new dir
-            cmd = (
-                "cd {p}; " + "tar -cvf - {an} | pigz > {oa}; "
+            cmd = "cd {p}; " + (
+                "tar -cvf - {an} | pigz > {oa}; "
                 if is_command_callable("pigz")
                 else "tar -cvzf {oa} {an}; "
             )
