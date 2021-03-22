@@ -100,6 +100,7 @@ async def download_asset(genome: str, asset: str, tag: str = None):
             genome=rgc.get_genome_alias(digest=genome, fallback=True),
             file_name=file_name,
         ),
+        remote_key="http",
     )
     _LOGGER.info("file source: {}".format(path))
     if remote:
@@ -189,6 +190,7 @@ async def download_asset_build_log(genome: str, asset: str, tag: str = None):
             genome=rgc.get_genome_alias(digest=genome, fallback=True),
             file_name=file_name,
         ),
+        remote_key="http",
     )
     if remote:
         _LOGGER.info("redirecting to URL: '{}'".format(path))
@@ -223,6 +225,7 @@ async def download_asset_build_recipe(genome: str, asset: str, tag: str = None):
             genome=rgc.get_genome_alias(digest=genome, fallback=True),
             file_name=file_name,
         ),
+        remote_key="http",
     )
     if remote:
         _LOGGER.info("redirecting to URL: '{}'".format(path))

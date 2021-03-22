@@ -1,4 +1,6 @@
 from copy import copy
+from datetime import date
+from enum import Enum
 from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Path, Query
@@ -9,17 +11,18 @@ from starlette.responses import FileResponse, JSONResponse, RedirectResponse
 from ubiquerg import parse_registry_path
 from yacman import IK, UndefinedAliasError
 
-from datetime import date
 from ..const import *
 from ..data_models import Dict, Genome, List, Tag
 from ..helpers import (
     create_asset_file_path,
     get_datapath_for_genome,
     get_openapi_version,
-    safely_get_example,
     is_data_remote,
+    safely_get_example,
 )
 from ..main import _LOGGER, app, rgc, templates
+
+RemoteClassEnum = Enum("RemoteClassEnum", {r: r for r in rgc["remotes"]})
 
 ex_alias = safely_get_example(
     rgc,
@@ -98,6 +101,16 @@ async def index(request: Request):
         "current_year": current_year,
     }
     return templates.TemplateResponse("v3/index.html", dict(templ_vars, **ALL_VERSIONS))
+
+
+@router.get(
+    "/remotes/dict", tags=api_version_tags, response_model=Dict[str, Dict[str, str]]
+)
+async def genome_splash_page():
+    """
+    Returns the remotes section of the server configuration file
+    """
+    return rgc["remotes"] if "remotes" in rgc else None
 
 
 @router.get("/genomes/splash/{genome}", tags=api_version_tags)
@@ -220,7 +233,7 @@ async def download_asset(genome: str = g, asset: str = a, tag: Optional[str] = t
     )  # returns 'default' for nonexistent genome/asset; no need to catch
     file_name = f"{asset}__{tag}.tgz"
     path, remote = get_datapath_for_genome(
-        rgc, dict(genome=genome, file_name=file_name)
+        rgc, dict(genome=genome, file_name=file_name), remote_key="http"
     )
     _LOGGER.info(f"file source: {path}")
     if remote:
@@ -238,48 +251,19 @@ async def download_asset(genome: str = g, asset: str = a, tag: Optional[str] = t
 
 
 @router.get(
-    "/assets/asset_file/{genome}/{asset}/{seek_key}",
-    operation_id=API_VERSION + API_ID_ASSET_FILE,
-    tags=api_version_tags,
-)
-async def download_asset_file(
-    genome: str = g, asset: str = a, seek_key: str = s, tag: Optional[str] = tq
-):
-    """
-    Returns the unarchived asset file.
-    Requires a genome name, an asset name and a seek_key name as an input.
-
-    Optionally, 'tag' query parameter can be specified to get a tagged asset file.
-    Default tag is returned otherwise.
-    """
-    path = create_asset_file_path(rgc, genome, asset, tag, seek_key)
-
-    if is_data_remote(rgc):
-        _LOGGER.info(f"redirecting to URL: {path}")
-        return RedirectResponse(
-            url=path, headers={"tontent-type": "application/octet-stream"}
-        )
-    else:
-        if os.path.isfile(path):
-            return FileResponse(
-                path,
-                filename=os.path.basename(path),
-                media_type="application/octet-stream",
-            )
-        else:
-            msg = f"The target of the selected seek_key ({seek_key}) is not a file"
-            _LOGGER.warning(msg)
-            raise HTTPException(status_code=404, detail=msg)
-
-
-@router.get(
-    "/assets/asset_file_path/{genome}/{asset}/{seek_key}",
+    "/assets/file_path/{genome}/{asset}/{seek_key}",
     operation_id=API_VERSION + API_ID_ASSET_PATH,
     tags=api_version_tags,
     response_model=str,
 )
 async def get_asset_file_path(
-    genome: str = g, asset: str = a, seek_key: str = s, tag: Optional[str] = tq
+    genome: str = g,
+    asset: str = a,
+    seek_key: str = s,
+    tag: Optional[str] = tq,
+    remoteClass: RemoteClassEnum = Query(
+        "html", description="Remote data provider class"
+    ),
 ):
     """
     Returns a path to the unarchived asset file.
@@ -288,7 +272,9 @@ async def get_asset_file_path(
     Optionally, 'tag' query parameter can be specified to get a tagged asset file path.
     Default tag is returned otherwise.
     """
-    return create_asset_file_path(rgc, genome, asset, tag, seek_key)
+    return create_asset_file_path(
+        rgc, genome, asset, tag, seek_key, remote_key=remoteClass
+    )
 
 
 @router.get(
@@ -365,7 +351,7 @@ async def download_asset_build_log(
     )  # returns 'default' for nonexistent genome/asset; no need to catch
     file_name = TEMPLATE_LOG.format(asset, tag)
     path, remote = get_datapath_for_genome(
-        rgc, dict(genome=genome, file_name=file_name)
+        rgc, dict(genome=genome, file_name=file_name), remote_key="http"
     )
     if remote:
         _LOGGER.info(f"redirecting to URL: '{path}'")
@@ -400,7 +386,7 @@ async def download_asset_build_recipe(
     )  # returns 'default' for nonexistent genome/asset; no need to catch
     file_name = TEMPLATE_RECIPE_JSON.format(asset, tag)
     path, remote = get_datapath_for_genome(
-        rgc, dict(genome=genome, file_name=file_name)
+        rgc, dict(genome=genome, file_name=file_name), remote_key="http"
     )
     if remote:
         _LOGGER.info(f"redirecting to URL: '{path}'")
@@ -439,7 +425,7 @@ async def download_asset_directory_contents(
     )  # returns 'default' for nonexistent genome/asset; no need to catch
     file_name = TEMPLATE_ASSET_DIR_CONTENTS.format(asset, tag)
     path, remote = get_datapath_for_genome(
-        rgc, dict(genome=genome, file_name=file_name)
+        rgc, dict(genome=genome, file_name=file_name), remote_key="http"
     )
     if remote:
         _LOGGER.info(f"redirecting to URL: '{path}'")

@@ -137,7 +137,9 @@ def get_openapi_version(app):
         return "3.0.2"
 
 
-def get_datapath_for_genome(rgc, fill_dict, pth_templ="{base}/{genome}/{file_name}"):
+def get_datapath_for_genome(
+    rgc, fill_dict, pth_templ="{base}/{genome}/{file_name}", remote_key=None
+):
     """
     Get the path to the data file to serve.
 
@@ -154,25 +156,46 @@ def get_datapath_for_genome(rgc, fill_dict, pth_templ="{base}/{genome}/{file_nam
     req_keys = [i[1] for i in Formatter().parse(pth_templ) if i[1] is not None]
     assert all(
         [k in req_keys for k in list(fill_dict.keys())]
-    ), "Only the these keys are allowed in the fill_dict: {}".format(req_keys)
-    # fill_dict.update({"base": BASE_DIR})
-    fill_dict.update({"base": rgc["genome_archive_folder"]})
+    ), f"Only the these keys are allowed in the fill_dict: {req_keys}"
+    fill_dict.update({"base": BASE_DIR})
+    # fill_dict.update({"base": rgc["genome_archive_folder"]})
     remote = is_data_remote(rgc)
     if remote:
-        fill_dict["base"] = rgc[CFG_REMOTE_URL_BASE_KEY].rstrip("/")
+        if remote_key is None:
+            raise ValueError(
+                f"'remotes' key found in config; the 'remote_key' argument must "
+                f"be one of: {list(rgc['remotes'].keys())} "
+            )
+        if remote_key not in rgc["remotes"]:
+            raise KeyError(
+                f"In remotes mapping the '{remote_key}' not found. "
+                f"Can't determine a data path prefix identified by this key."
+            )
+        # at this point we know that the 'remotes' mapping has the 'remote_key' key
+        # and the value is a dict with 'prefix' key defined.
+        fill_dict["base"] = rgc["remotes"][remote_key]["prefix"].rstrip("/")
     return pth_templ.format(**fill_dict), remote
 
 
 def is_data_remote(rgc):
     """
-    Determine if server genome config defines a remote_url_base key
+    Determine if server genome config defines a 'remotes' key, 'http is one of them and
+     additionally assert the correct structure -- 'prefix' key defined.
 
     :param refgenconf.RefGenConf rgc: server genome config object
     :return bool: whether remote data source is configured
     """
     return (
         True
-        if CFG_REMOTE_URL_BASE_KEY in rgc and rgc[CFG_REMOTE_URL_BASE_KEY] is not None
+        if "remotes" in rgc
+        and isinstance(rgc["remotes"], dict)
+        and "http" in rgc["remotes"]
+        and all(
+            [
+                "prefix" in r and isinstance(r["prefix"], str)
+                for r in rgc["remotes"].values()
+            ]
+        )
         else False
     )
 
@@ -221,7 +244,7 @@ def safely_get_example(rgc, entity, rgc_method, default, **kwargs):
         return default
 
 
-def create_asset_file_path(rgc, genome, asset, tag, seek_key):
+def create_asset_file_path(rgc, genome, asset, tag, seek_key, remote_key="http"):
     """
     Construct a path to an unarchived asset file
 
@@ -246,7 +269,7 @@ def create_asset_file_path(rgc, genome, asset, tag, seek_key):
     seek_key_target = tag_dict[CFG_SEEK_KEYS_KEY][seek_key]
     file_name = f"{asset}__{tag}/{seek_key_target}"
     path, remote = get_datapath_for_genome(
-        rgc, dict(genome=genome, file_name=file_name)
+        rgc, dict(genome=genome, file_name=file_name), remote_key=remote_key
     )
     _LOGGER.info(f"serving asset file path: {path}")
     return path
