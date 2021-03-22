@@ -269,8 +269,10 @@ async def get_asset_file_path(
     Returns a path to the unarchived asset file.
     Requires a genome name, an asset name and a seek_key name as an input.
 
-    Optionally, 'tag' query parameter can be specified to get a tagged asset file path.
-    Default tag is returned otherwise.
+    Optionally, query parameters can be specified:
+
+    - **tag**: to get a tagged asset file path. Default tag is returned if not specified.
+    - **remoteClass**: to set a remote data provider class. 'http' is used if not specified.
     """
     return create_asset_file_path(
         rgc, genome, asset, tag, seek_key, remote_key=remoteClass.value
