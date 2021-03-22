@@ -273,7 +273,7 @@ async def get_asset_file_path(
     Default tag is returned otherwise.
     """
     return create_asset_file_path(
-        rgc, genome, asset, tag, seek_key, remote_key=remoteClass
+        rgc, genome, asset, tag, seek_key, remote_key=remoteClass.value
     )
 
 
