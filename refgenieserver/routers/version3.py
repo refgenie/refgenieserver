@@ -262,7 +262,7 @@ async def get_asset_file_path(
     seek_key: str = s,
     tag: Optional[str] = tq,
     remoteClass: RemoteClassEnum = Query(
-        "http", description="Remote data provider class"
+        RemoteClassEnum.http, description="Remote data provider class"
     ),
 ):
     """
