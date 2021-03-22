@@ -106,7 +106,7 @@ async def index(request: Request):
 @router.get(
     "/remotes/dict", tags=api_version_tags, response_model=Dict[str, Dict[str, str]]
 )
-async def genome_splash_page():
+async def get_remotes_dict():
     """
     Returns the remotes section of the server configuration file
     """
