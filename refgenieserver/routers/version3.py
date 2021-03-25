@@ -1,6 +1,7 @@
 from copy import copy
 from datetime import date
 from enum import Enum
+from json import load
 from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Path, Query, Response
@@ -19,6 +20,7 @@ from ..helpers import (
     get_openapi_version,
     is_data_remote,
     safely_get_example,
+    serve_file_for_asset,
 )
 from ..main import _LOGGER, app, rgc, templates
 
@@ -352,41 +354,6 @@ async def get_archive_digest(genome: str = g, asset: str = a, tag: Optional[str]
 
 
 @router.get(
-    "/assets/log/{genome}/{asset}",
-    operation_id=API_VERSION + API_ID_LOG,
-    tags=api_version_tags,
-)
-async def download_asset_build_log(
-    genome: str = g, asset: str = a, tag: Optional[str] = tq
-):
-    """
-    Returns a build log. Requires the genome name and the asset name as an input.
-
-    Optionally, 'tag' query parameter can be specified to get a tagged asset archive.
-    Default tag is returned otherwise.
-    """
-    tag = tag or rgc.get_default_tag(
-        genome, asset
-    )  # returns 'default' for nonexistent genome/asset; no need to catch
-    file_name = TEMPLATE_LOG.format(asset, tag)
-    path, remote = get_datapath_for_genome(
-        rgc, dict(genome=genome, file_name=file_name), remote_key="http"
-    )
-    if remote:
-        _LOGGER.info(f"redirecting to URL: '{path}'")
-        return RedirectResponse(path)
-    _LOGGER.info(f"serving build log file: '{path}'")
-    if os.path.isfile(path):
-        return FileResponse(
-            path, filename=file_name, media_type="application/octet-stream"
-        )
-    else:
-        msg = MSG_404.format(f"asset ({asset})")
-        _LOGGER.warning(msg)
-        raise HTTPException(status_code=404, detail=msg)
-
-
-@router.get(
     "/assets/recipe/{genome}/{asset}",
     operation_id=API_VERSION + API_ID_RECIPE,
     tags=api_version_tags,
@@ -412,15 +379,36 @@ async def download_asset_build_recipe(
         return RedirectResponse(path)
     _LOGGER.info(f"serving build log file: '{path}'")
     if os.path.isfile(path):
-        import json
-
         with open(path, "r") as f:
-            recipe = json.load(f)
+            recipe = load(f)
         return JSONResponse(recipe)
     else:
         msg = MSG_404.format(f"asset ({asset})")
         _LOGGER.warning(msg)
         raise HTTPException(status_code=404, detail=msg)
+
+
+@router.get(
+    "/assets/log/{genome}/{asset}",
+    operation_id=API_VERSION + API_ID_LOG,
+    tags=api_version_tags,
+)
+async def download_asset_build_log(
+    genome: str = g, asset: str = a, tag: Optional[str] = tq
+):
+    """
+    Returns a build log. Requires the genome name and the asset name as an input.
+
+    Optionally, 'tag' query parameter can be specified to get a tagged asset archive.
+    Default tag is returned otherwise.
+    """
+    return serve_file_for_asset(
+        rgc=rgc,
+        genome=genome,
+        asset=asset,
+        tag=tag,
+        template=TEMPLATE_LOG,
+    )
 
 
 @router.get(
@@ -438,26 +426,13 @@ async def download_asset_directory_contents(
     Optionally, 'tag' query parameter can be specified to get a tagged asset archive.
     Default tag is returned otherwise.
     """
-    # TODO: DRY
-    tag = tag or rgc.get_default_tag(
-        genome, asset
-    )  # returns 'default' for nonexistent genome/asset; no need to catch
-    file_name = TEMPLATE_ASSET_DIR_CONTENTS.format(asset, tag)
-    path, remote = get_datapath_for_genome(
-        rgc, dict(genome=genome, file_name=file_name), remote_key="http"
+    return serve_file_for_asset(
+        rgc=rgc,
+        genome=genome,
+        asset=asset,
+        tag=tag,
+        template=TEMPLATE_ASSET_DIR_CONTENTS,
     )
-    if remote:
-        _LOGGER.info(f"redirecting to URL: '{path}'")
-        return RedirectResponse(path)
-    _LOGGER.info(f"serving asset dir tree file: '{path}'")
-    if os.path.isfile(path):
-        return FileResponse(
-            path, filename=file_name, media_type="application/octet-stream"
-        )
-    else:
-        msg = MSG_404.format(f"asset ({asset})")
-        _LOGGER.warning(msg)
-        raise HTTPException(status_code=404, detail=msg)
 
 
 @router.get(

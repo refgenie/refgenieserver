@@ -2,6 +2,7 @@ import logging
 from string import Formatter
 
 from fastapi import HTTPException
+from fastapi.responses import FileResponse, RedirectResponse
 from refgenconf.exceptions import RefgenconfError
 from ubiquerg import VersionInHelpParser
 from yacman import get_first_env_var
@@ -273,3 +274,34 @@ def create_asset_file_path(rgc, genome, asset, tag, seek_key, remote_key="http")
     )
     _LOGGER.info(f"serving asset file path: {path}")
     return path
+
+
+def serve_file_for_asset(rgc, genome, asset, tag, template):
+    """
+    Serve a file, like log or asset dir contents for an asset
+
+    :param str genome: genome name
+    :param str asset: asset name
+    :param str tag: tag name
+    :param ste template: file name template with place for asset and tag names,
+        e.g. 'build_log_{}__{}.md'
+    """
+    tag = tag or rgc.get_default_tag(
+        genome, asset
+    )  # returns 'default' for nonexistent genome/asset; no need to catch
+    file_name = template.format(asset, tag)
+    path, remote = get_datapath_for_genome(
+        rgc, dict(genome=genome, file_name=file_name), remote_key="http"
+    )
+    if remote:
+        _LOGGER.info(f"redirecting to URL: '{path}'")
+        return RedirectResponse(path)
+    _LOGGER.info(f"serving file: '{path}'")
+    if os.path.isfile(path):
+        return FileResponse(
+            path, filename=file_name, media_type="application/octet-stream"
+        )
+    else:
+        msg = MSG_404.format(f"asset ({genome}/{asset}:{tag})")
+        _LOGGER.warning(msg)
+        raise HTTPException(status_code=404, detail=msg)
