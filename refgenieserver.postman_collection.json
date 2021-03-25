@@ -93,11 +93,12 @@
 							"pm.test(\"Status code is 200\", function () {",
 							"    pm.response.to.have.status(200);",
 							"});",
-							"var jsonData = pm.response.json();",
+							"var textData = pm.response.text();",
 							"pm.test(\"Test data type of the response\", () => {",
-							"  pm.expect(jsonData).to.be.a(\"string\");",
+							"  pm.expect(textData).to.be.a(\"string\");",
 							"});",
-							"pm.variables.set(\"genomeDigest\", jsonData)"
+							"pm.variables.set(\"genomeDigest\", textData)",
+							""
 						],
 						"type": "text/javascript"
 					}
@@ -308,11 +309,11 @@
 							"pm.test(\"Status code is 200\", function () {",
 							"    pm.response.to.have.status(200);",
 							"});",
-							"var jsonData = pm.response.json();",
+							"var textData = pm.response.text();",
 							"pm.test(\"Test data type of the response\", () => {",
-							"  pm.expect(jsonData).to.be.a(\"string\");",
+							"  pm.expect(textData).to.be.a(\"string\");",
 							"});",
-							"pm.variables.set(\"defaultTag\", jsonData)"
+							"pm.variables.set(\"defaultTag\", textData)"
 						],
 						"type": "text/javascript"
 					}
@@ -347,11 +348,11 @@
 							"pm.test(\"Status code is 200\", function () {",
 							"    pm.response.to.have.status(200);",
 							"});",
-							"var jsonData = pm.response.json();",
+							"var textData = pm.response.text();",
 							"pm.test(\"Test data type of the response\", () => {",
-							"  pm.expect(jsonData).to.be.a(\"string\");",
+							"  pm.expect(textData).to.be.a(\"string\");",
 							"});",
-							"pm.variables.set(\"assetDigest\", jsonData)"
+							"pm.variables.set(\"assetDigest\", textData)"
 						],
 						"type": "text/javascript"
 					}
@@ -392,11 +393,11 @@
 							"pm.test(\"Status code is 200\", function () {",
 							"    pm.response.to.have.status(200);",
 							"});",
-							"var jsonData = pm.response.json();",
+							"var textData = pm.response.text();",
 							"pm.test(\"Test data type of the response\", () => {",
-							"  pm.expect(jsonData).to.be.a(\"string\");",
+							"  pm.expect(textData).to.be.a(\"string\");",
 							"});",
-							"pm.variables.set(\"archiveDigest\", jsonData)"
+							"pm.variables.set(\"archiveDigest\", textData)"
 						],
 						"type": "text/javascript"
 					}
@@ -437,11 +438,11 @@
 							"pm.test(\"Status code is 200\", function () {",
 							"    pm.response.to.have.status(200);",
 							"});",
-							"var jsonData = pm.response.json();",
+							"var textData = pm.response.text();",
 							"pm.test(\"Test data type of the response\", () => {",
-							"  pm.expect(jsonData).to.be.a(\"string\");",
+							"  pm.expect(textData).to.be.a(\"string\");",
 							"});",
-							"pm.variables.set(\"assetDigest\", jsonData)"
+							"pm.variables.set(\"assetDigest\", textData)"
 						],
 						"type": "text/javascript"
 					}
