@@ -133,7 +133,11 @@ def archive(rgc, registry_paths, force, remove, cfg_path, genomes_desc):
             if genomes_desc is None or genome not in descs
             else descs[genome]
         )
-        genome_attrs = {CFG_GENOME_DESC_KEY: genome_desc}
+        genome_aliases = rgc[CFG_GENOMES_KEY][genome].setdefault(CFG_ALIASES_KEY, [])
+        genome_attrs = {
+            CFG_GENOME_DESC_KEY: genome_desc,
+            CFG_ALIASES_KEY: genome_aliases,
+        }
         with rgc_server as r:
             r[CFG_GENOMES_KEY].setdefault(genome, PXAM())
             r[CFG_GENOMES_KEY][genome].update(genome_attrs)
