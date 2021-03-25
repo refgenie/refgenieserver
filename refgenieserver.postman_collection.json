@@ -674,7 +674,7 @@
 							"  pm.expect(jsonData).to.be.a(\"object\");",
 							"});",
 							"",
-							"pm.test(\"Test data includes genomeDigest\", () => {",
+							"pm.test(\"Test data includes: \" + genomeDigest, () => {",
 							"  pm.expect(jsonData).haveOwnProperty(genomeDigest);",
 							"});",
 							"",
@@ -699,6 +699,106 @@
 					"path": [
 						"genomes",
 						"alias_dict"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get_remotes_dict",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"var jsonData = pm.response.json();",
+							"pm.test(\"Test data type of the response\", () => {",
+							"  pm.expect(jsonData).to.be.a(\"object\");",
+							"});",
+							"",
+							"var remoteClasses = Object.keys(jsonData);",
+							"",
+							"pm.variables.set(\"retemoteClasses\", remoteClasses);",
+							"pm.variables.set(\"firstRetemoteClass\", remoteClasses[1]);",
+							"",
+							"console.log(\"Determined remote classes: \", remoteClasses);",
+							"",
+							"for (const remoteClass of remoteClasses){",
+							"    pm.test(\"Test data value content of: \" + remoteClass, () => {",
+							"        pm.expect(jsonData[remoteClass]).haveOwnProperty(\"prefix\");",
+							"        pm.expect(jsonData[remoteClass][\"prefix\"]).to.be.a(\"string\");",
+							"    });",
+							"}",
+							"",
+							"",
+							"",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://{{urlBase}}/remotes/dict",
+					"protocol": "http",
+					"host": [
+						"{{urlBase}}"
+					],
+					"path": [
+						"remotes",
+						"dict"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get_asset_file_path",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"var textData = pm.response.text();",
+							"pm.test(\"Test data type of the response\", () => {",
+							"  pm.expect(textData).to.be.a(\"string\");",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://{{urlBase}}/assets/file_path/{{genomeDigest}}/{{asset}}/{{asset}}?remoteClass={{firstRetemoteClass}}",
+					"protocol": "http",
+					"host": [
+						"{{urlBase}}"
+					],
+					"path": [
+						"assets",
+						"file_path",
+						"{{genomeDigest}}",
+						"{{asset}}",
+						"{{asset}}"
+					],
+					"query": [
+						{
+							"key": "remoteClass",
+							"value": "{{firstRetemoteClass}}"
+						}
 					]
 				}
 			},
