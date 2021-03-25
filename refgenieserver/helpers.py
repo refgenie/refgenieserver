@@ -110,8 +110,8 @@ def preprocess_attrs(attrs):
     """
     Based on the CHANGED_KEYS mapping (new_key:old_key), rename the keys in the provided one
 
-    :param yacman.yacman.YacAttMap attrs: mapping to process
-    :return yacman.yacman.YacAttMap: mapping with renamed key names
+    :param yacman.YacAttMap attrs: mapping to process
+    :return yacman.YacAttMap: mapping with renamed key names
     """
     from copy import deepcopy
 

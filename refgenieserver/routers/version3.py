@@ -22,7 +22,10 @@ from ..helpers import (
 )
 from ..main import _LOGGER, app, rgc, templates
 
-RemoteClassEnum = Enum("RemoteClassEnum", {r: r for r in rgc["remotes"]})
+RemoteClassEnum = Enum(
+    "RemoteClassEnum",
+    {r: r for r in rgc["remotes"]} if is_data_remote(rgc) else {"http": "http"},
+)
 
 ex_alias = safely_get_example(
     rgc,
@@ -262,7 +265,7 @@ async def get_asset_file_path(
     seek_key: str = s,
     tag: Optional[str] = tq,
     remoteClass: RemoteClassEnum = Query(
-        RemoteClassEnum.http, description="Remote data provider class"
+        "http", description="Remote data provider class"
     ),
 ):
     """
@@ -274,6 +277,11 @@ async def get_asset_file_path(
     - **tag**: to get a tagged asset file path. Default tag is returned if not specified.
     - **remoteClass**: to set a remote data provider class. 'http' is used if not specified.
     """
+    if not is_data_remote(rgc):
+        _LOGGER.info(
+            "No 'remotes' defined in the server genome configuration file. "
+            "Serving a local asset file path."
+        )
     return create_asset_file_path(
         rgc, genome, asset, tag, seek_key, remote_key=remoteClass.value
     )
