@@ -3,7 +3,7 @@ from datetime import date
 from enum import Enum
 from typing import Optional
 
-from fastapi import APIRouter, HTTPException, Path, Query
+from fastapi import APIRouter, HTTPException, Path, Query, Response
 from refgenconf.exceptions import RefgenconfError
 from refgenconf.refgenconf import map_paths_by_id
 from starlette.requests import Request
@@ -282,8 +282,11 @@ async def get_asset_file_path(
             "No 'remotes' defined in the server genome configuration file. "
             "Serving a local asset file path."
         )
-    return create_asset_file_path(
-        rgc, genome, asset, tag, seek_key, remote_key=remoteClass.value
+    return Response(
+        content=create_asset_file_path(
+            rgc, genome, asset, tag, seek_key, remote_key=remoteClass.value
+        ),
+        media_type="text/plain",
     )
 
 
@@ -297,7 +300,7 @@ async def get_asset_default_tag(genome: str = g, asset: str = a):
     """
     Returns the default tag name. Requires genome name and asset name as an input.
     """
-    return rgc.get_default_tag(genome, asset)
+    return Response(content=rgc.get_default_tag(genome, asset), media_type="text/plain")
 
 
 @router.get(
@@ -312,9 +315,12 @@ async def get_asset_digest(genome: str = g, asset: str = a, tag: Optional[str] =
     """
     tag = tag or DEFAULT_TAG
     try:
-        return rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][asset][CFG_ASSET_TAGS_KEY][
-            tag
-        ][CFG_ASSET_CHECKSUM_KEY]
+        return Response(
+            content=rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][asset][
+                CFG_ASSET_TAGS_KEY
+            ][tag][CFG_ASSET_CHECKSUM_KEY],
+            media_type="text/plain",
+        )
     except KeyError:
         msg = MSG_404.format(f"genome/asset:tag combination ({genome}/{asset}:{tag})")
         _LOGGER.warning(msg)
@@ -333,9 +339,12 @@ async def get_archive_digest(genome: str = g, asset: str = a, tag: Optional[str]
     """
     tag = tag or DEFAULT_TAG
     try:
-        return rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][asset][CFG_ASSET_TAGS_KEY][
-            tag
-        ][CFG_ARCHIVE_CHECKSUM_KEY]
+        return Response(
+            content=rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][asset][
+                CFG_ASSET_TAGS_KEY
+            ][tag][CFG_ARCHIVE_CHECKSUM_KEY],
+            media_type="text/plain",
+        )
     except KeyError:
         msg = MSG_404.format(f"genome/asset:tag combination ({genome}/{asset}:{tag})")
         _LOGGER.warning(msg)
@@ -535,7 +544,7 @@ async def get_genome_alias_digest(alias: str = al):
     try:
         digest = rgc.get_genome_alias_digest(alias=alias)
         _LOGGER.info(f"digest returned for '{alias}': {digest}")
-        return digest
+        return Response(content=digest, media_type="text/plain")
     except (KeyError, UndefinedAliasError):
         msg = MSG_404.format(f"alias ({alias})")
         _LOGGER.warning(msg)
