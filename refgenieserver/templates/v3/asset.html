@@ -31,7 +31,7 @@
                     <li>{{ attr_name }}:</li>
                     <ul>
                     {% for seek_key, path  in value.items() %}
-                        <li>{{ seek_key }}: <code>{{ path }}</code></li>
+                        <li>{{ seek_key }}: <code><a href="/v3/assets/file_path/{{ genome }}/{{ asset }}/{{ seek_key }}?tag={{ tag }}&remoteClass=http">{{ path }}</a></code></li>
                     {% endfor %}
                     </ul>
                 {% elif value is iterable and value is not string %}

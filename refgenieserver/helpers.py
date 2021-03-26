@@ -190,7 +190,6 @@ def is_data_remote(rgc):
         True
         if "remotes" in rgc
         and isinstance(rgc["remotes"], dict)
-        and "http" in rgc["remotes"]
         and all(
             [
                 "prefix" in r and isinstance(r["prefix"], str)
