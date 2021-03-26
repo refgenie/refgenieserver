@@ -31,7 +31,14 @@
                     <li>{{ attr_name }}:</li>
                     <ul>
                     {% for seek_key, path  in value.items() %}
-                        <li>{{ seek_key }}: <code><a href="/v3/assets/file_path/{{ genome }}/{{ asset }}/{{ seek_key }}?tag={{ tag }}&remoteClass=http">{{ path }}</a></code></li>
+                        <li>
+                            {{ seek_key }}: <code>{{ path }}</code>
+                            {% if "remotes" in rgc %}
+                                {% for remote_key, remote_dict in rgc["remotes"].items() %}
+                                    <a href="/v3/assets/file_path/{{ genome }}/{{ asset }}/{{ seek_key }}?tag={{ tag }}&remoteClass={{ remote_key }}" class="badge badge-light" data-toggle="tooltip" title="{{ remote_dict["description"] }}">{{ remote_key }} path</a>
+                                {% endfor %}
+                            {% endif %}
+                        </li>
                     {% endfor %}
                     </ul>
                 {% elif value is iterable and value is not string %}
