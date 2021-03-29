@@ -267,8 +267,12 @@ def create_asset_file_path(rgc, genome, asset, tag, seek_key, remote_key="http")
         _LOGGER.warning(msg)
         raise HTTPException(status_code=404, detail=msg)
     seek_key_target = tag_dict[CFG_SEEK_KEYS_KEY][seek_key]
-    file_name = f"{asset}__{tag}/{seek_key_target}"
-    path, remote = get_datapath_for_genome(
+    # append the seek_key value to the path only if it isn't the "dir" seek_key.
+    # Otherwise the result would be a path ending with "\."
+    file_name = (
+        f"{asset}__{tag}/{seek_key_target}" if seek_key != "dir" else f"{asset}__{tag}/"
+    )
+    path, _ = get_datapath_for_genome(
         rgc, dict(genome=genome, file_name=file_name), remote_key=remote_key
     )
     _LOGGER.info(f"serving asset file path: {path}")
