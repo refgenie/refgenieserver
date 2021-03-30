@@ -323,11 +323,13 @@ def get_asset_dir_contents(rgc, genome, asset, tag):
         rgc, dict(genome=genome, file_name=file_name), remote_key="http"
     )
     if is_url(path):
-        _LOGGER.debug(f"asset dir contents filepath is a url: {path}.")
+        _LOGGER.debug(f"Asset dir contents path is a URL: {path}")
         lines = send_data_request(url=path).split()
-    else:
-        _LOGGER.debug(f"asset dir contents filepath: {path}")
+    elif os.path.exists(path):
+        _LOGGER.debug(f"Asset dir contents path is a file: {path}")
         with open(path) as f:
             lines = f.readlines()
-    _LOGGER.debug(f"asset dir contents: {lines}")
+    else:
+        raise TypeError(f"Path is neither a valid URL nor an existing file: {path}")
+    _LOGGER.debug(f"Asset dir contents: {lines}")
     return [l.strip() for l in lines]
