@@ -4,7 +4,8 @@ from string import Formatter
 from fastapi import HTTPException
 from fastapi.responses import FileResponse, RedirectResponse
 from refgenconf.exceptions import RefgenconfError
-from ubiquerg import VersionInHelpParser
+from refgenconf.helpers import send_data_request
+from ubiquerg import VersionInHelpParser, is_url
 from yacman import get_first_env_var
 
 from ._version import __version__ as v
@@ -308,3 +309,25 @@ def serve_file_for_asset(rgc, genome, asset, tag, template):
         msg = MSG_404.format(f"asset ({genome}/{asset}:{tag})")
         _LOGGER.warning(msg)
         raise HTTPException(status_code=404, detail=msg)
+
+
+def get_asset_dir_contents(rgc, genome, asset, tag):
+    """
+    Get the asset directory contents into a list
+    """
+    tag = tag or rgc.get_default_tag(
+        genome, asset
+    )  # returns 'default' for nonexistent genome/asset; no need to catch
+    file_name = TEMPLATE_ASSET_DIR_CONTENTS.format(asset, tag)
+    path, remote = get_datapath_for_genome(
+        rgc, dict(genome=genome, file_name=file_name), remote_key="http"
+    )
+    if is_url(path):
+        _LOGGER.debug(f"asset dir contents filepath is a url: {path}.")
+        lines = send_data_request(url=path).split()
+    else:
+        _LOGGER.debug(f"asset dir contents filepath: {path}")
+        with open(path) as f:
+            lines = f.readlines()
+    _LOGGER.debug(f"asset dir contents: {lines}")
+    return [l.strip() for l in lines]

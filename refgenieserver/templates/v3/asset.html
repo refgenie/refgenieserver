@@ -78,5 +78,17 @@
             </ul>
         </div>
     </div>
+    {% if asset_dir_contents is not none %}
+        <div class="row">
+            <div class="col-8">
+                <h3>Asset directory contents</h3>
+                <ul>
+                {% for file in asset_dir_contents %}
+                    <li><code>{{ file }}</code></li>
+                {% endfor %}
+                </ul>
+            </div>
+        </div>
+    {% endif %}
 </div>
 {% endblock %}

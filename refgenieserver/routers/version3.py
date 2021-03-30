@@ -16,6 +16,7 @@ from ..const import *
 from ..data_models import Dict, Genome, List, Tag
 from ..helpers import (
     create_asset_file_path,
+    get_asset_dir_contents,
     get_datapath_for_genome,
     get_openapi_version,
     is_data_remote,
@@ -158,6 +159,15 @@ async def asset_splash_page(
         for oid, path in map_paths_by_id(app.openapi()).items()
         if oid in OPERATION_IDS["v3_asset"].keys()
     }
+    try:
+        asset_dir_contents = get_asset_dir_contents(
+            rgc=rgc, genome=genome, asset=asset, tag=tag
+        )
+    except Exception as e:
+        _LOGGER.warning(
+            f"Could not determine asset directory contents. Caught error: {str(e)}"
+        )
+        asset_dir_contents = None
     templ_vars = {
         "request": request,
         "genome": genome,
@@ -168,6 +178,7 @@ async def asset_splash_page(
         "links_dict": links_dict,
         "current_year": current_year,
         "openapi_version": get_openapi_version(app),
+        "asset_dir_contents": asset_dir_contents,
     }
     _LOGGER.debug(f"merged vars: {dict(templ_vars, **ALL_VERSIONS)}")
     return templates.TemplateResponse("v3/asset.html", dict(templ_vars, **ALL_VERSIONS))
