@@ -23,7 +23,7 @@
         </div>
     </div>
     <div class="row">
-        <div class="col-8">
+        <div class="col-9">
             <h3>Attributes</h3>
             <ul>
             {% for attr_name, value in tag_data.items() %}
@@ -32,7 +32,7 @@
                     <ul>
                     {% for seek_key, path  in value.items() %}
                         <li>
-                            {% if "remotes" in rgc %}
+                            {% if is_data_remote %}
                                 {% for remote_key, remote_dict in rgc["remotes"].items() %}
                                     <a href="/v3/assets/file_path/{{ genome }}/{{ asset }}/{{ seek_key }}?tag={{ tag }}&remoteClass={{ remote_key }}" data-toggle="tooltip" title="{{ remote_dict["description"] }}">{{ remote_key|upper }}</a> {{ "|" if not loop.last }}
                                 {% endfor %}
@@ -69,7 +69,7 @@
             {% endfor %}
             </ul>
         </div>
-        <div class="col-4">
+        <div class="col-3">
             <h3>API endpoints</h3>
             <ul>
             {% for id, path in links_dict.items() %}
@@ -80,13 +80,16 @@
     </div>
     {% if asset_dir_contents is not none %}
         <div class="row">
-            <div class="col-8">
+            <div class="col-12">
                 <h3>Asset directory contents</h3>
                 <ul>
                 {% for file in asset_dir_contents %}
                     <li>
                         {% if is_data_remote %}
-                            <a href="{{ [asset_dir_path, file]|os_path_join }}" data-toggle="tooltip" title="File from asset directory"><code>{{ file }}</code></a>
+                            {% for remote_key, asset_dir_path in asset_dir_paths.items() %}
+                                <a href="{{ [asset_dir_path, file]|os_path_join }}">{{ remote_key|upper }}</a>{{ ":" if loop.last else " |" }}
+                            {% endfor %}
+                            <code>{{ file }}</code>
                         {% else %}
                             <code>{{ file }}</code>
                         {% endif %}

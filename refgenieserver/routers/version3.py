@@ -169,15 +169,20 @@ async def asset_splash_page(
         )
         asset_dir_contents = None
 
-    try:
-        asset_dir_path = create_asset_file_path(
-            rgc, genome, asset, tag, "dir", remote_key="http"
-        )
-    except Exception as e:
-        _LOGGER.warning(
-            f"Could not determine asset directory path. Caught error: {str(e)}"
-        )
-        asset_dir_path = None
+    asset_dir_paths = {}
+    if is_data_remote(rgc):
+        for remote_key in rgc["remotes"].keys():
+            try:
+                asset_dir_path = create_asset_file_path(
+                    rgc, genome, asset, tag, "dir", remote_key=remote_key
+                )
+            except Exception as e:
+                _LOGGER.warning(
+                    f"Could not determine asset directory path. Caught error: {str(e)}"
+                )
+                asset_dir_path = None
+            asset_dir_paths[remote_key] = asset_dir_path
+
     templ_vars = {
         "request": request,
         "genome": genome,
@@ -189,7 +194,7 @@ async def asset_splash_page(
         "current_year": current_year,
         "openapi_version": get_openapi_version(app),
         "asset_dir_contents": asset_dir_contents,
-        "asset_dir_path": asset_dir_path,
+        "asset_dir_paths": asset_dir_paths,
         "is_data_remote": is_data_remote(rgc),
     }
     _LOGGER.debug(f"merged vars: {dict(templ_vars, **ALL_VERSIONS)}")
