@@ -168,6 +168,16 @@ async def asset_splash_page(
             f"Could not determine asset directory contents. Caught error: {str(e)}"
         )
         asset_dir_contents = None
+
+    try:
+        asset_dir_path = create_asset_file_path(
+            rgc, genome, asset, tag, "dir", remote_key="http"
+        )
+    except Exception as e:
+        _LOGGER.warning(
+            f"Could not determine asset directory path. Caught error: {str(e)}"
+        )
+        asset_dir_path = None
     templ_vars = {
         "request": request,
         "genome": genome,
@@ -179,6 +189,8 @@ async def asset_splash_page(
         "current_year": current_year,
         "openapi_version": get_openapi_version(app),
         "asset_dir_contents": asset_dir_contents,
+        "asset_dir_path": asset_dir_path,
+        "is_data_remote": is_data_remote(rgc),
     }
     _LOGGER.debug(f"merged vars: {dict(templ_vars, **ALL_VERSIONS)}")
     return templates.TemplateResponse("v3/asset.html", dict(templ_vars, **ALL_VERSIONS))

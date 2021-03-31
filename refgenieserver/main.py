@@ -21,6 +21,7 @@ app = FastAPI(
 
 app.mount("/" + STATIC_DIRNAME, StaticFiles(directory=STATIC_PATH), name=STATIC_DIRNAME)
 templates = Jinja2Templates(directory=TEMPLATES_PATH)
+templates.env.filters["os_path_join"] = lambda paths: os.path.join(*paths)
 
 
 def main():

@@ -84,7 +84,13 @@
                 <h3>Asset directory contents</h3>
                 <ul>
                 {% for file in asset_dir_contents %}
-                    <li><code>{{ file }}</code></li>
+                    <li>
+                        {% if is_data_remote %}
+                            <a href="{{ [asset_dir_path, file]|os_path_join }}" data-toggle="tooltip" title="File from asset directory"><code>{{ file }}</code></a>
+                        {% else %}
+                            <code>{{ file }}</code>
+                        {% endif %}
+                    </li>
                 {% endfor %}
                 </ul>
             </div>

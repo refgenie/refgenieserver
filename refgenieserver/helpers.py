@@ -314,6 +314,12 @@ def serve_file_for_asset(rgc, genome, asset, tag, template):
 def get_asset_dir_contents(rgc, genome, asset, tag):
     """
     Get the asset directory contents into a list
+
+    :param refgenconf.RefGenConf rgc: config
+    :param str genome: genome name
+    :param str asset: asset name
+    :param str tag: tag name
+    :return list[str]: list of files in the asset directory
     """
     tag = tag or rgc.get_default_tag(
         genome, asset
@@ -332,4 +338,5 @@ def get_asset_dir_contents(rgc, genome, asset, tag):
     else:
         raise TypeError(f"Path is neither a valid URL nor an existing file: {path}")
     _LOGGER.debug(f"Asset dir contents: {lines}")
-    return [l.strip() for l in lines]
+    # need to strip ./ from the left of each line and a newline char from the right
+    return [line.strip().lstrip("./") for line in lines]
