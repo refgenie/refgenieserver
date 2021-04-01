@@ -83,7 +83,7 @@
             <div class="col-12">
                 <h3>Asset directory contents</h3>
                 <ul>
-                {% for file in asset_dir_contents %}
+                {% for file in asset_dir_contents|sort %}
                     <li>
                         {% if is_data_remote %}
                             {% for remote_key, asset_dir_path in asset_dir_paths.items() %}
