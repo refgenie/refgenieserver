@@ -1,8 +1,9 @@
 import logging
+from json import load
 from string import Formatter
 
 from fastapi import HTTPException
-from fastapi.responses import FileResponse, RedirectResponse
+from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from refgenconf.exceptions import RefgenconfError
 from refgenconf.helpers import send_data_request
 from ubiquerg import VersionInHelpParser, is_url
@@ -311,6 +312,28 @@ def serve_file_for_asset(rgc, genome, asset, tag, template):
         raise HTTPException(status_code=404, detail=msg)
 
 
+def serve_json_for_asset(rgc, genome, asset, tag, template):
+    tag = tag or rgc.get_default_tag(
+        genome, asset
+    )  # returns 'default' for nonexistent genome/asset; no need to catch
+    file_name = template.format(asset, tag)
+    path, remote = get_datapath_for_genome(
+        rgc, dict(genome=genome, file_name=file_name), remote_key="http"
+    )
+    if remote:
+        _LOGGER.info(f"redirecting to URL: '{path}'")
+        return RedirectResponse(path)
+    _LOGGER.info(f"serving recipe: '{path}'")
+    if os.path.isfile(path):
+        with open(path, "r") as f:
+            recipe = load(f)
+        return JSONResponse(recipe)
+    else:
+        msg = MSG_404.format(f"asset ({asset})")
+        _LOGGER.warning(msg)
+        raise HTTPException(status_code=404, detail=msg)
+
+
 def get_asset_dir_contents(rgc, genome, asset, tag):
     """
     Get the asset directory contents into a list
@@ -330,13 +353,12 @@ def get_asset_dir_contents(rgc, genome, asset, tag):
     )
     if is_url(path):
         _LOGGER.debug(f"Asset dir contents path is a URL: {path}")
-        lines = send_data_request(url=path).split()
+        dir_contents = send_data_request(url=path)
     elif os.path.exists(path):
         _LOGGER.debug(f"Asset dir contents path is a file: {path}")
         with open(path) as f:
-            lines = f.readlines()
+            dir_contents = load(f)
     else:
         raise TypeError(f"Path is neither a valid URL nor an existing file: {path}")
-    _LOGGER.debug(f"Asset dir contents: {lines}")
-    # need to strip ./ from the left of each line and a newline char from the right
-    return [line.strip().lstrip("./") for line in lines]
+    _LOGGER.debug(f"Asset dir contents: {dir_contents}")
+    return dir_contents

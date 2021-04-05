@@ -22,6 +22,7 @@ from ..helpers import (
     is_data_remote,
     safely_get_example,
     serve_file_for_asset,
+    serve_json_for_asset,
 )
 from ..main import _LOGGER, app, rgc, templates
 
@@ -159,6 +160,7 @@ async def asset_splash_page(
         for oid, path in map_paths_by_id(app.openapi()).items()
         if oid in OPERATION_IDS["v3_asset"].keys()
     }
+
     try:
         asset_dir_contents = get_asset_dir_contents(
             rgc=rgc, genome=genome, asset=asset, tag=tag
@@ -395,25 +397,13 @@ async def download_asset_build_recipe(
     Optionally, 'tag' query parameter can be specified to get a tagged asset archive.
     Default tag is returned otherwise.
     """
-    tag = tag or rgc.get_default_tag(
-        genome, asset
-    )  # returns 'default' for nonexistent genome/asset; no need to catch
-    file_name = TEMPLATE_RECIPE_JSON.format(asset, tag)
-    path, remote = get_datapath_for_genome(
-        rgc, dict(genome=genome, file_name=file_name), remote_key="http"
+    return serve_json_for_asset(
+        rgc=rgc,
+        genome=genome,
+        asset=asset,
+        tag=tag,
+        template=TEMPLATE_RECIPE_JSON,
     )
-    if remote:
-        _LOGGER.info(f"redirecting to URL: '{path}'")
-        return RedirectResponse(path)
-    _LOGGER.info(f"serving build log file: '{path}'")
-    if os.path.isfile(path):
-        with open(path, "r") as f:
-            recipe = load(f)
-        return JSONResponse(recipe)
-    else:
-        msg = MSG_404.format(f"asset ({asset})")
-        _LOGGER.warning(msg)
-        raise HTTPException(status_code=404, detail=msg)
 
 
 @router.get(
@@ -454,7 +444,7 @@ async def download_asset_directory_contents(
     Optionally, 'tag' query parameter can be specified to get a tagged asset archive.
     Default tag is returned otherwise.
     """
-    return serve_file_for_asset(
+    return serve_json_for_asset(
         rgc=rgc,
         genome=genome,
         asset=asset,

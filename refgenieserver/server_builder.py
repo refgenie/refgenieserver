@@ -1,6 +1,7 @@
 import logging
 import sys
 from glob import glob
+from json import dump
 from subprocess import run
 
 from attmap import PathExAttMap as PXAM
@@ -415,7 +416,10 @@ def _get_asset_dir_contents(asset_dir, asset_name, tag_name):
         os.path.dirname(asset_dir),
         TEMPLATE_ASSET_DIR_CONTENTS.format(asset_name, tag_name),
     )
-    run(f"cd {asset_dir}; find . -type f > {asset_dir_contents_file_path}", shell=True)
+    files = os.listdir(asset_dir)
+    _LOGGER.debug(f"dir contents: {files}")
+    with open(asset_dir_contents_file_path, "w") as outfile:
+        dump(files, outfile)
     _LOGGER.info(
         f"Asset directory contents file created: {asset_dir_contents_file_path}"
     )
