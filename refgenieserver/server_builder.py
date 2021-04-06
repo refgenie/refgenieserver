@@ -54,7 +54,8 @@ def archive(rgc, registry_paths, force, remove, cfg_path, genomes_desc):
             )
         except KeyError:
             raise GenomeConfigFormatError(
-                f"The config '{cfg_path}' is missing a {' or '.join([CFG_ARCHIVE_KEY, CFG_ARCHIVE_KEY_OLD])} entry. Can't determine the desired archive."
+                f"The config '{cfg_path}' is missing a {' or '.join([CFG_ARCHIVE_KEY, CFG_ARCHIVE_KEY_OLD])} entry. "
+                f"Can't determine the desired archive."
             )
     if os.path.isfile(server_rgc_path) and not os.access(server_rgc_path, os.W_OK):
         raise OSError(
@@ -73,7 +74,8 @@ def archive(rgc, registry_paths, force, remove, cfg_path, genomes_desc):
         if remove:
             if not registry_paths:
                 _LOGGER.error(
-                    "To remove archives you have to specify them. Use 'asset_registry_path' argument."
+                    "To remove archives you have to specify them. "
+                    "Use 'asset_registry_path' argument."
                 )
                 exit(1)
             with rgc_server as r:
@@ -175,10 +177,10 @@ def archive(rgc, registry_paths, force, remove, cfg_path, genomes_desc):
             for tag_name in tags if isinstance(tags, list) else [tags]:
                 if not rgc.is_asset_complete(genome, asset_name, tag_name):
                     raise MissingConfigDataError(
-                        f"Asset '{genome}/{asset_name}:{tag_name}' is incomplete. This probably means an"
-                        f" attempt to archive a partially pulled parent. "
-                        f"refgenieserver archive requires all assets to be built"
-                        f" prior to archiving."
+                        f"Asset '{genome}/{asset_name}:{tag_name}' is incomplete. "
+                        f"This probably means an attempt to archive a partially "
+                        f"pulled parent. refgenieserver archive requires all assets to "
+                        f"be built prior to archiving."
                     )
                 file_name = rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][asset_name][
                     CFG_ASSET_TAGS_KEY
@@ -225,7 +227,7 @@ def archive(rgc, registry_paths, force, remove, cfg_path, genomes_desc):
                         continue
                     else:
                         _LOGGER.info(
-                            f"Updating '{genome}/{asset_name}:{tag_name}' tag attributes..."
+                            f"Updating '{genome}/{asset_name}:{tag_name}' tag attributes"
                         )
                         tag_attrs = {
                             CFG_ASSET_PATH_KEY: file_name,
@@ -434,7 +436,10 @@ def _copy_recipe(input_dir, target_dir, asset_name, tag_name):
     :param str asset_name: asset name
     :param str tag_name: tag name
     """
-    recipe_path = f"{input_dir}/{BUILD_STATS_DIR}/{TEMPLATE_RECIPE_JSON.format(asset_name, tag_name)}"
+    recipe_path = (
+        f"{input_dir}/{BUILD_STATS_DIR}/"
+        f"{TEMPLATE_RECIPE_JSON.format(asset_name, tag_name)}"
+    )
     if recipe_path and os.path.exists(recipe_path):
         run("cp " + recipe_path + " " + target_dir, shell=True)
         _LOGGER.debug(f"Recipe copied to: {target_dir}")

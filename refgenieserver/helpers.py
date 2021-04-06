@@ -57,11 +57,11 @@ def build_parser():
             "--config",
             required=False,
             dest="config",
-            help="A path to the refgenie config file (YAML). If not provided, the first available environment variable "
-            "among: '{}' will be used if set. Currently: {}".format(
-                ", ".join(CFG_ENV_VARS), env_var_val
-            ),
-        )
+            help=f"A path to the refgenie config file (YAML). If not provided, the "
+            f"first available environment variable among: "
+            f"'{', '.join(CFG_ENV_VARS)}' will be used if set. "
+            f"Currently: {env_var_val}",
+        ),
         sps[cmd].add_argument(
             "-d",
             "--dbg",
@@ -83,7 +83,8 @@ def build_parser():
         dest="genomes_desc",
         type=str,
         default=None,
-        help="Path to a CSV file with genomes descriptions. Format: genome_name, genome description",
+        help="Path to a CSV file with genomes descriptions. "
+        "Format: genome_name, genome description",
     )
     sps["archive"].add_argument(
         "-f",
@@ -204,7 +205,8 @@ def is_data_remote(rgc):
 
 def purge_nonservable(rgc):
     """
-    Remove entries in RefGenConf object that were not processed by the archiver and should not be served
+    Remove entries in RefGenConf object that were not processed by the archiver
+    and should not be served
 
     :param refgenconf.RefGenConf rgc: object to check
     :return refgenconf.RefGenConf: object with just the servable entries
@@ -283,7 +285,7 @@ def create_asset_file_path(rgc, genome, asset, tag, seek_key, remote_key="http")
 
 def serve_file_for_asset(rgc, genome, asset, tag, template):
     """
-    Serve a file, like log or asset dir contents for an asset
+    Serve a file, like log file
 
     :param str genome: genome name
     :param str asset: asset name
@@ -291,9 +293,8 @@ def serve_file_for_asset(rgc, genome, asset, tag, template):
     :param ste template: file name template with place for asset and tag names,
         e.g. 'build_log_{}__{}.md'
     """
-    tag = tag or rgc.get_default_tag(
-        genome, asset
-    )  # returns 'default' for nonexistent genome/asset; no need to catch
+    # returns 'default' for nonexistent genome/asset; no need to catch
+    tag = tag or rgc.get_default_tag(genome, asset)
     file_name = template.format(asset, tag)
     path, remote = get_datapath_for_genome(
         rgc, dict(genome=genome, file_name=file_name), remote_key="http"
@@ -313,9 +314,17 @@ def serve_file_for_asset(rgc, genome, asset, tag, template):
 
 
 def serve_json_for_asset(rgc, genome, asset, tag, template):
-    tag = tag or rgc.get_default_tag(
-        genome, asset
-    )  # returns 'default' for nonexistent genome/asset; no need to catch
+    """
+    Serve a JSON object, like recipe or asset dir contents for an asset
+
+    :param str genome: genome name
+    :param str asset: asset name
+    :param str tag: tag name
+    :param ste template: file name template with place for asset and tag names,
+        e.g. 'build_recipe_{}__{}.json'
+    """
+    # returns 'default' for nonexistent genome/asset; no need to catch
+    tag = tag or rgc.get_default_tag(genome, asset)
     file_name = template.format(asset, tag)
     path, remote = get_datapath_for_genome(
         rgc, dict(genome=genome, file_name=file_name), remote_key="http"
@@ -323,7 +332,7 @@ def serve_json_for_asset(rgc, genome, asset, tag, template):
     if remote:
         _LOGGER.info(f"redirecting to URL: '{path}'")
         return RedirectResponse(path)
-    _LOGGER.info(f"serving recipe: '{path}'")
+    _LOGGER.info(f"serving JSON: '{path}'")
     if os.path.isfile(path):
         with open(path, "r") as f:
             recipe = load(f)
@@ -344,9 +353,8 @@ def get_asset_dir_contents(rgc, genome, asset, tag):
     :param str tag: tag name
     :return list[str]: list of files in the asset directory
     """
-    tag = tag or rgc.get_default_tag(
-        genome, asset
-    )  # returns 'default' for nonexistent genome/asset; no need to catch
+    # returns 'default' for nonexistent genome/asset; no need to catch
+    tag = tag or rgc.get_default_tag(genome, asset)
     file_name = TEMPLATE_ASSET_DIR_CONTENTS.format(asset, tag)
     path, remote = get_datapath_for_genome(
         rgc, dict(genome=genome, file_name=file_name), remote_key="http"

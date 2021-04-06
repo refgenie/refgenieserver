@@ -1,19 +1,17 @@
 from copy import copy
 from datetime import date
 from enum import Enum
-from json import load
 from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Path, Query, Response
-from refgenconf.exceptions import RefgenconfError
 from refgenconf.refgenconf import map_paths_by_id
 from starlette.requests import Request
-from starlette.responses import FileResponse, JSONResponse, RedirectResponse
+from starlette.responses import FileResponse, RedirectResponse
 from ubiquerg import parse_registry_path
 from yacman import IK, UndefinedAliasError
 
 from ..const import *
-from ..data_models import Dict, Genome, List, Tag
+from ..data_models import Dict, List, Tag
 from ..helpers import (
     create_asset_file_path,
     get_asset_dir_contents,
