@@ -657,6 +657,55 @@
 			"response": []
 		},
 		{
+			"name": "get_dir_contents",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"pm.test(\"Content-Type is present\", function () {",
+							"    pm.response.to.have.header(\"Content-Type\");",
+							"});",
+							"pm.test(\"JSON is an array of strings\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData).to.be.an(\"array\");",
+							"    jsonData.forEach(item => pm.expect(item).to.be.a(\"string\"));",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://{{urlBase}}/assets/dir_contents/{{genomeDigest}}/{{asset}}?tag={{defaultTag}}",
+					"protocol": "http",
+					"host": [
+						"{{urlBase}}"
+					],
+					"path": [
+						"assets",
+						"dir_contents",
+						"{{genomeDigest}}",
+						"{{asset}}"
+					],
+					"query": [
+						{
+							"key": "tag",
+							"value": "{{defaultTag}}"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
 			"name": "get_alias_dict",
 			"event": [
 				{
