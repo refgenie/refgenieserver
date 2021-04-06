@@ -1,13 +1,22 @@
 # Changelog
 
-This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) and [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) format. 
-
+This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) and [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) format.
 
 ## [0.7.0] -- unreleased
+### Added
+- `remotes` section in the refgenieserver config, which supersedes `remote_url_base`. It can be used to define multiple remote data providers.
+- new endpoints:
+  - `/remotes/dict` to get `remotes` dictionary
+  - `/assets/dir_contents/{genome}/{asset}` to get a JSON object (array of strings) listing all files in the asset directory
+  - `/assets/file_path/{genome}/{asset}/{seek_key}` to get a *remote* path to the specified file
+- direct *unarchived* asset file downloads from asset splash page, both for seek_keys and other asset files
+
+### Changed
+- endpoints that return digests return plain text instead of JSON objects for easier parsing; [#67](https://github.com/refgenie/refgenieserver/issues/67)
 
 ## [0.6.1] -- 2021-03-18
 ### Added
-- private endpoint serving genomes dict to openAPI schema; [#105](https://github.com/refgenie/refgenieserver/issues/105) 
+- private endpoint serving genomes dict to openAPI schema; [#105](https://github.com/refgenie/refgenieserver/issues/105)
 
 ## [0.6.0] -- 2021-03-11
 ### Added
@@ -34,7 +43,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ### Changed
 - path specified in `genome_archive_config` is considered relative to the refgenie genome config file, unless absolute.
 - non-servable assets purging is now performed prior to serving rather than after each archive job completion
-- dropped Python 2 support 
+- dropped Python 2 support
 ### Removed
 - support for old `genome_archive` key; use `genome_archive_folder` and `genome_archive_config` from now on.
 
@@ -46,7 +55,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ## [0.4.3] -- 2020-01-16
 ### Added
 - a possibility to decouple genome archive directory and genome archive config file. `refgenieserver archive` uses new key (`genome_archive_config`) from `refgenconf`
-- a genome archive config file writability check 
+- a genome archive config file writability check
 
 ### Changed
 - key `genome_archive` to `genome_archive_folder`. Backwards compatiblity is preserved (both are currently supported)
@@ -57,10 +66,10 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [0.4.1] -- 2019-12-13
 ### Fixed
-- relationship info not being updated during specific asset archivization; [#70](https://github.com/refgenie/refgenieserver/issues/70) 
+- relationship info not being updated during specific asset archivization; [#70](https://github.com/refgenie/refgenieserver/issues/70)
 
 ### Changed
-- order of the assets adn tags in the table in the index page: sorted alphabetically instead of oldest to newest 
+- order of the assets adn tags in the table in the index page: sorted alphabetically instead of oldest to newest
 
 ## [0.4.0] -- 2019-12-06
 ### Added
@@ -115,7 +124,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - config manipulation support in multi-process contexts, it's racefree, uses file locks
 - archive removal support (added `-r` option in `refgenieserver archive`)
 - asset registry path support in `refgenieserver archive`
-    
+
 ### Changed
 - command order from `refgenieserver -c CONFIG -d archive/serve` to `refgenieserver archive/serve -c CONFIG -d`
 - the genome tarballs are not produced
