@@ -418,7 +418,12 @@ def _get_asset_dir_contents(asset_dir, asset_name, tag_name):
         os.path.dirname(asset_dir),
         TEMPLATE_ASSET_DIR_CONTENTS.format(asset_name, tag_name),
     )
-    files = os.listdir(asset_dir)
+    files = [
+        os.path.relpath(os.path.join(dp, f), asset_dir)
+        for dp, dn, fn in os.walk(asset_dir)
+        for f in fn
+        if BUILD_STATS_DIR not in dp
+    ]
     _LOGGER.debug(f"dir contents: {files}")
     with open(asset_dir_contents_file_path, "w") as outfile:
         dump(files, outfile)
