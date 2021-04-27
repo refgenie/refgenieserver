@@ -1,5 +1,6 @@
+from typing import Dict, List
+
 from pydantic import BaseModel
-from typing import List, Dict
 
 
 class Tag(BaseModel):

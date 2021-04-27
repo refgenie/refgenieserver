@@ -1,7 +1,8 @@
 #! /usr/bin/env python
 
-from setuptools import setup
 import sys
+
+from setuptools import setup
 
 PACKAGE = "refgenieserver"
 

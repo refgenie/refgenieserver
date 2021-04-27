@@ -1,9 +1,11 @@
 """ Package constants """
 import os
-from refgenconf.const import *
-from refgenconf._version import __version__ as rgc_v
-from ._version import __version__ as server_v
 from platform import python_version
+
+from refgenconf._version import __version__ as rgc_v
+from refgenconf.const import *
+
+from ._version import __version__ as server_v
 
 ALL_VERSIONS = {
     "server_version": server_v,
@@ -13,7 +15,7 @@ ALL_VERSIONS = {
 PKG_NAME = "refgenieserver"
 DEFAULT_PORT = 80
 BASE_DIR = "/genomes"
-# if running outside of the Docker container 'BASE_DIR' can be replaced with rgc[CFG_ARCHIVE_KEY] in 'main.py'
+# if running outside of the Docker container 'BASE_DIR' can be replaced with rgc[CFG_ARCHIVE_KEY]
 TEMPLATES_DIRNAME = "templates"
 TEMPLATES_PATH = os.path.join(
     os.path.dirname(os.path.abspath(__file__)), TEMPLATES_DIRNAME
