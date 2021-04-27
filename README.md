@@ -1,8 +1,11 @@
-[![Build Status](https://travis-ci.org/databio/refgenieserver.svg?branch=master)](https://travis-ci.org/databio/refgenieserver)
+[![Deploy to Dockerhub on release](https://github.com/refgenie/refgenieserver/actions/workflows/deploy_release_software.yml/badge.svg)](https://github.com/refgenie/refgenieserver/actions/workflows/deploy_release_software.yml)
+[![Deploy to Amazon ECS - software-staging](https://github.com/refgenie/refgenieserver/actions/workflows/deploy_staging_software.yml/badge.svg)](https://github.com/refgenie/refgenieserver/actions/workflows/deploy_staging_software.yml)
+
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
 # refgenieserver
 
-This folder contains code for an API to provide reference genomes. `refgenieserver` can do 2 things: `archive` an existing refgenie folder, and then `serve` it. 
+This folder contains code for an API to provide reference genomes. `refgenieserver` can do 2 things: `archive` an existing refgenie folder, and then `serve` it.
 
 ## How to `serve`
 
@@ -27,7 +30,7 @@ Better, though, is to use the container. Mount a directory of files to serve at 
 ```
 docker run --rm -p 80:80 --name refgenieservercon \
   -v $(pwd)/files:/genomes \
-  refgenieserverim refgenieserver serve -c refgenie.yaml 
+  refgenieserverim refgenieserver serve -c refgenie.yaml
 ```
 
 ### Running container for production:
@@ -37,7 +40,7 @@ Run the container from the image you just built:
 docker run --rm -d -p 80:80 \
   -v /path/to/genomes_archive:/genomes \
   --name refgenieservercon \
-  refgenieserverim refgenieserver serve -c /genomes/genome_config.yaml 
+  refgenieserverim refgenieserver serve -c /genomes/genome_config.yaml
 ```
 
 Make sure the `genome_config.yaml` filename matches what you've named your configuration file! We use `-d` to detach so it's in background. You shouldn't need to mount the app (`-v /path/to/refgenieserver:/app`) because in this case we're running it directly. Terminate container when finished:
@@ -88,7 +91,7 @@ First, make sure the config has a `genome_archive_folder` key that points to the
 
 Secondly, if you wish to store the refgenieserver configuration file separately from the `genome_archive_folder`, specify a `genome_archive_config` key. The path that this key points to will be considered relative to the refgenie configuration file, unless it's absolute.
 
-Then run: 
+Then run:
 ```
 refgenieserver archive -c CONFIG
 ````
@@ -96,7 +99,7 @@ It just requires a `-c` argument or `$REFGENIE` environment variable.
 
 This command will:
 - create the `genome_archive` directory and structure that can be used to serve the assets
-- create a server config file in that directory, which includes a couple of extra asset attributes, like `archive_digest` and `archive_size`. 
+- create a server config file in that directory, which includes a couple of extra asset attributes, like `archive_digest` and `archive_size`.
 
 In case you already have some of the assets archived and just want to add a new one, use:
 

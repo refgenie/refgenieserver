@@ -23,7 +23,7 @@
         </div>
     </div>
     <div class="row">
-        <div class="col-8">
+        <div class="col-9">
             <h3>Attributes</h3>
             <ul>
             {% for attr_name, value in tag_data.items() %}
@@ -31,7 +31,14 @@
                     <li>{{ attr_name }}:</li>
                     <ul>
                     {% for seek_key, path  in value.items() %}
-                        <li>{{ seek_key }}: <code>{{ path }}</code></li>
+                        <li>
+                            {% if is_data_remote %}
+                                {% for remote_key, remote_dict in rgc["remotes"].items() %}
+                                    <a href="/v3/assets/file_path/{{ genome }}/{{ asset }}/{{ seek_key }}?tag={{ tag }}&remoteClass={{ remote_key }}" data-toggle="tooltip" title="{{ remote_dict["description"] }}">{{ remote_key }}</a> {{ "|" if not loop.last }}
+                                {% endfor %}
+                            {% endif %}
+                            {{ seek_key }}: <code>{{ path }}</code>
+                        </li>
                     {% endfor %}
                     </ul>
                 {% elif value is iterable and value is not string %}
@@ -51,7 +58,7 @@
                                 {% set parent_genome = parsed["namespace"] %}
                                 {% set parent_alias = rgc.get_genome_alias(digest=parsed["namespace"]) %}
                             {% endif %}
-                            <li><code><a href="/v3/assets/splash/{{ parent_genome }}/{{ parsed['item'] }}?tag={{ parsed['tag'] }}" data-toggle="tooltip" title="Asset splash page">{{ parent_alias }}/{{ parsed['item'] }}:{{ parsed['tag'] }}</a></code>{{ "," if not loop.last }}</li>
+                            <li><code><a href="/v3/assets/splash/{{ parent_genome }}/{{ parsed['item'] }}?tag={{ parsed['tag'] }}" data-toggle="tooltip" title="Asset splash page">{{ parent_alias }}/{{ parsed['item'] }}:{{ parsed['tag'] }}</a></code></li>
                         {% endfor %}
                         </ul>
                         </li>
@@ -62,7 +69,7 @@
             {% endfor %}
             </ul>
         </div>
-        <div class="col-4">
+        <div class="col-3">
             <h3>API endpoints</h3>
             <ul>
             {% for id, path in links_dict.items() %}
@@ -71,5 +78,26 @@
             </ul>
         </div>
     </div>
+    {% if asset_dir_contents is not none %}
+        <div class="row">
+            <div class="col-12">
+                <h3>Asset directory contents</h3>
+                <ul>
+                {% for file in asset_dir_contents|sort %}
+                    <li>
+                        {% if is_data_remote %}
+                            {% for remote_key, asset_dir_path in asset_dir_paths.items() %}
+                                <a href="{{ [asset_dir_path, file]|os_path_join }}">{{ remote_key }}</a>{{ ":" if loop.last else " |" }}
+                            {% endfor %}
+                            <code>{{ file }}</code>
+                        {% else %}
+                            <code>{{ file }}</code>
+                        {% endif %}
+                    </li>
+                {% endfor %}
+                </ul>
+            </div>
+        </div>
+    {% endif %}
 </div>
 {% endblock %}

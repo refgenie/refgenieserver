@@ -1,15 +1,15 @@
-from starlette.responses import FileResponse, JSONResponse, RedirectResponse
-from starlette.requests import Request
-from fastapi import HTTPException, APIRouter
 from copy import copy
 
-from ubiquerg import parse_registry_path
-from refgenconf.refgenconf import map_paths_by_id
+from fastapi import APIRouter, HTTPException
 from refgenconf.helpers import replace_str_in_obj
+from refgenconf.refgenconf import map_paths_by_id
+from starlette.requests import Request
+from starlette.responses import FileResponse, JSONResponse, RedirectResponse
+from ubiquerg import parse_registry_path
 
 from ..const import *
-from ..main import rgc, templates, _LOGGER, app
-from ..helpers import get_openapi_version, get_datapath_for_genome
+from ..helpers import get_datapath_for_genome, get_openapi_version
+from ..main import _LOGGER, app, rgc, templates
 
 router = APIRouter()
 
@@ -100,6 +100,7 @@ async def download_asset(genome: str, asset: str, tag: str = None):
             genome=rgc.get_genome_alias(digest=genome, fallback=True),
             file_name=file_name,
         ),
+        remote_key="http",
     )
     _LOGGER.info("file source: {}".format(path))
     if remote:
@@ -189,6 +190,7 @@ async def download_asset_build_log(genome: str, asset: str, tag: str = None):
             genome=rgc.get_genome_alias(digest=genome, fallback=True),
             file_name=file_name,
         ),
+        remote_key="http",
     )
     if remote:
         _LOGGER.info("redirecting to URL: '{}'".format(path))
@@ -223,6 +225,7 @@ async def download_asset_build_recipe(genome: str, asset: str, tag: str = None):
             genome=rgc.get_genome_alias(digest=genome, fallback=True),
             file_name=file_name,
         ),
+        remote_key="http",
     )
     if remote:
         _LOGGER.info("redirecting to URL: '{}'".format(path))

@@ -1,18 +1,33 @@
-from starlette.responses import FileResponse, JSONResponse, RedirectResponse
-from starlette.requests import Request
-from fastapi import HTTPException, APIRouter, Path, Query
-from typing import Optional
 from copy import copy
+from datetime import date
+from enum import Enum
+from typing import Optional
 
-
-from ubiquerg import parse_registry_path
+from fastapi import APIRouter, HTTPException, Path, Query, Response
 from refgenconf.refgenconf import map_paths_by_id
-from yacman import UndefinedAliasError, IK
+from starlette.requests import Request
+from starlette.responses import FileResponse, RedirectResponse
+from ubiquerg import parse_registry_path
+from yacman import IK, UndefinedAliasError
 
 from ..const import *
-from ..main import rgc, templates, _LOGGER, app
-from ..helpers import get_openapi_version, get_datapath_for_genome, safely_get_example
-from ..data_models import Tag, Genome, Dict, List
+from ..data_models import Dict, List, Tag
+from ..helpers import (
+    create_asset_file_path,
+    get_asset_dir_contents,
+    get_datapath_for_genome,
+    get_openapi_version,
+    is_data_remote,
+    safely_get_example,
+    serve_file_for_asset,
+    serve_json_for_asset,
+)
+from ..main import _LOGGER, app, rgc, templates
+
+RemoteClassEnum = Enum(
+    "RemoteClassEnum",
+    {r: r for r in rgc["remotes"]} if is_data_remote(rgc) else {"http": "http"},
+)
 
 ex_alias = safely_get_example(
     rgc,
@@ -50,6 +65,12 @@ a = Path(
     regex=r"^\S+$",
     example=ex_asset,
 )
+s = Path(
+    ...,
+    description="Seek key name",
+    regex=r"^\S+$",
+    example=ex_asset,
+)
 t = Path(
     ...,
     description="Tag name",
@@ -65,6 +86,7 @@ tq = Query(
 )
 
 api_version_tags = [API3_ID]
+current_year = date.today().year
 
 
 @router.get("/", tags=api_version_tags)
@@ -81,8 +103,19 @@ async def index(request: Request):
         "rgc": rgc,
         "openapi_version": get_openapi_version(app),
         "columns": ["aliases", "digest", "description", "fasta asset", "# assets"],
+        "current_year": current_year,
     }
     return templates.TemplateResponse("v3/index.html", dict(templ_vars, **ALL_VERSIONS))
+
+
+@router.get(
+    "/remotes/dict", tags=api_version_tags, response_model=Dict[str, Dict[str, str]]
+)
+async def get_remotes_dict():
+    """
+    Returns the remotes section of the server configuration file
+    """
+    return rgc["remotes"] if "remotes" in rgc else None
 
 
 @router.get("/genomes/splash/{genome}", tags=api_version_tags)
@@ -95,6 +128,7 @@ async def genome_splash_page(request: Request, genome: str = g):
         "genome": genome,
         "genome_dict": rgc[CFG_GENOMES_KEY][genome],
         "request": request,
+        "current_year": current_year,
         "columns": [
             "download",
             "asset name:tag",
@@ -124,6 +158,31 @@ async def asset_splash_page(
         for oid, path in map_paths_by_id(app.openapi()).items()
         if oid in OPERATION_IDS["v3_asset"].keys()
     }
+
+    try:
+        asset_dir_contents = get_asset_dir_contents(
+            rgc=rgc, genome=genome, asset=asset, tag=tag
+        )
+    except Exception as e:
+        _LOGGER.warning(
+            f"Could not determine asset directory contents. Caught error: {str(e)}"
+        )
+        asset_dir_contents = None
+
+    asset_dir_paths = {}
+    if is_data_remote(rgc):
+        for remote_key in rgc["remotes"].keys():
+            try:
+                asset_dir_path = create_asset_file_path(
+                    rgc, genome, asset, tag, "dir", remote_key=remote_key
+                )
+            except Exception as e:
+                _LOGGER.warning(
+                    f"Could not determine asset directory path. Caught error: {str(e)}"
+                )
+                asset_dir_path = None
+            asset_dir_paths[remote_key] = asset_dir_path
+
     templ_vars = {
         "request": request,
         "genome": genome,
@@ -132,7 +191,11 @@ async def asset_splash_page(
         "rgc": rgc,
         "prp": parse_registry_path,
         "links_dict": links_dict,
+        "current_year": current_year,
         "openapi_version": get_openapi_version(app),
+        "asset_dir_contents": asset_dir_contents,
+        "asset_dir_paths": asset_dir_paths,
+        "is_data_remote": is_data_remote(rgc),
     }
     _LOGGER.debug(f"merged vars: {dict(templ_vars, **ALL_VERSIONS)}")
     return templates.TemplateResponse("v3/asset.html", dict(templ_vars, **ALL_VERSIONS))
@@ -203,7 +266,7 @@ async def download_asset(genome: str = g, asset: str = a, tag: Optional[str] = t
     )  # returns 'default' for nonexistent genome/asset; no need to catch
     file_name = f"{asset}__{tag}.tgz"
     path, remote = get_datapath_for_genome(
-        rgc, dict(genome=genome, file_name=file_name)
+        rgc, dict(genome=genome, file_name=file_name), remote_key="http"
     )
     _LOGGER.info(f"file source: {path}")
     if remote:
@@ -221,6 +284,43 @@ async def download_asset(genome: str = g, asset: str = a, tag: Optional[str] = t
 
 
 @router.get(
+    "/assets/file_path/{genome}/{asset}/{seek_key}",
+    operation_id=API_VERSION + API_ID_ASSET_PATH,
+    tags=api_version_tags,
+    response_model=str,
+)
+async def get_asset_file_path(
+    genome: str = g,
+    asset: str = a,
+    seek_key: str = s,
+    tag: Optional[str] = tq,
+    remoteClass: RemoteClassEnum = Query(
+        "http", description="Remote data provider class"
+    ),
+):
+    """
+    Returns a path to the unarchived asset file.
+    Requires a genome name, an asset name and a seek_key name as an input.
+
+    Optionally, query parameters can be specified:
+
+    - **tag**: to get a tagged asset file path. Default tag is returned if not specified.
+    - **remoteClass**: to set a remote data provider class. 'http' is used if not specified.
+    """
+    if not is_data_remote(rgc):
+        _LOGGER.info(
+            "No 'remotes' defined in the server genome configuration file. "
+            "Serving a local asset file path."
+        )
+    return Response(
+        content=create_asset_file_path(
+            rgc, genome, asset, tag, seek_key, remote_key=remoteClass.value
+        ),
+        media_type="text/plain",
+    )
+
+
+@router.get(
     "/assets/default_tag/{genome}/{asset}",
     operation_id=API_VERSION + API_ID_DEFAULT_TAG,
     response_model=str,
@@ -230,7 +330,7 @@ async def get_asset_default_tag(genome: str = g, asset: str = a):
     """
     Returns the default tag name. Requires genome name and asset name as an input.
     """
-    return rgc.get_default_tag(genome, asset)
+    return Response(content=rgc.get_default_tag(genome, asset), media_type="text/plain")
 
 
 @router.get(
@@ -245,9 +345,12 @@ async def get_asset_digest(genome: str = g, asset: str = a, tag: Optional[str] =
     """
     tag = tag or DEFAULT_TAG
     try:
-        return rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][asset][CFG_ASSET_TAGS_KEY][
-            tag
-        ][CFG_ASSET_CHECKSUM_KEY]
+        return Response(
+            content=rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][asset][
+                CFG_ASSET_TAGS_KEY
+            ][tag][CFG_ASSET_CHECKSUM_KEY],
+            media_type="text/plain",
+        )
     except KeyError:
         msg = MSG_404.format(f"genome/asset:tag combination ({genome}/{asset}:{tag})")
         _LOGGER.warning(msg)
@@ -266,46 +369,14 @@ async def get_archive_digest(genome: str = g, asset: str = a, tag: Optional[str]
     """
     tag = tag or DEFAULT_TAG
     try:
-        return rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][asset][CFG_ASSET_TAGS_KEY][
-            tag
-        ][CFG_ARCHIVE_CHECKSUM_KEY]
+        return Response(
+            content=rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][asset][
+                CFG_ASSET_TAGS_KEY
+            ][tag][CFG_ARCHIVE_CHECKSUM_KEY],
+            media_type="text/plain",
+        )
     except KeyError:
         msg = MSG_404.format(f"genome/asset:tag combination ({genome}/{asset}:{tag})")
-        _LOGGER.warning(msg)
-        raise HTTPException(status_code=404, detail=msg)
-
-
-@router.get(
-    "/assets/log/{genome}/{asset}",
-    operation_id=API_VERSION + API_ID_LOG,
-    tags=api_version_tags,
-)
-async def download_asset_build_log(
-    genome: str = g, asset: str = a, tag: Optional[str] = tq
-):
-    """
-    Returns a build log. Requires the genome name and the asset name as an input.
-
-    Optionally, 'tag' query parameter can be specified to get a tagged asset archive.
-    Default tag is returned otherwise.
-    """
-    tag = tag or rgc.get_default_tag(
-        genome, asset
-    )  # returns 'default' for nonexistent genome/asset; no need to catch
-    file_name = TEMPLATE_LOG.format(asset, tag)
-    path, remote = get_datapath_for_genome(
-        rgc, dict(genome=genome, file_name=file_name)
-    )
-    if remote:
-        _LOGGER.info(f"redirecting to URL: '{path}'")
-        return RedirectResponse(path)
-    _LOGGER.info(f"serving build log file: '{path}'")
-    if os.path.isfile(path):
-        return FileResponse(
-            path, filename=file_name, media_type="application/octet-stream"
-        )
-    else:
-        msg = MSG_404.format(f"asset ({asset})")
         _LOGGER.warning(msg)
         raise HTTPException(status_code=404, detail=msg)
 
@@ -324,27 +395,60 @@ async def download_asset_build_recipe(
     Optionally, 'tag' query parameter can be specified to get a tagged asset archive.
     Default tag is returned otherwise.
     """
-    tag = tag or rgc.get_default_tag(
-        genome, asset
-    )  # returns 'default' for nonexistent genome/asset; no need to catch
-    file_name = TEMPLATE_RECIPE_JSON.format(asset, tag)
-    path, remote = get_datapath_for_genome(
-        rgc, dict(genome=genome, file_name=file_name)
+    return serve_json_for_asset(
+        rgc=rgc,
+        genome=genome,
+        asset=asset,
+        tag=tag,
+        template=TEMPLATE_RECIPE_JSON,
     )
-    if remote:
-        _LOGGER.info(f"redirecting to URL: '{path}'")
-        return RedirectResponse(path)
-    _LOGGER.info(f"serving build log file: '{path}'")
-    if os.path.isfile(path):
-        import json
 
-        with open(path, "r") as f:
-            recipe = json.load(f)
-        return JSONResponse(recipe)
-    else:
-        msg = MSG_404.format(f"asset ({asset})")
-        _LOGGER.warning(msg)
-        raise HTTPException(status_code=404, detail=msg)
+
+@router.get(
+    "/assets/log/{genome}/{asset}",
+    operation_id=API_VERSION + API_ID_LOG,
+    tags=api_version_tags,
+)
+async def download_asset_build_log(
+    genome: str = g, asset: str = a, tag: Optional[str] = tq
+):
+    """
+    Returns a build log. Requires the genome name and the asset name as an input.
+
+    Optionally, 'tag' query parameter can be specified to get a tagged asset archive.
+    Default tag is returned otherwise.
+    """
+    return serve_file_for_asset(
+        rgc=rgc,
+        genome=genome,
+        asset=asset,
+        tag=tag,
+        template=TEMPLATE_LOG,
+    )
+
+
+@router.get(
+    "/assets/dir_contents/{genome}/{asset}",
+    operation_id=API_VERSION + API_ID_CONTENTS,
+    tags=api_version_tags,
+)
+async def download_asset_directory_contents(
+    genome: str = g, asset: str = a, tag: Optional[str] = tq
+):
+    """
+    Returns a asset directory tree file.
+    Requires the genome name and the asset name as an input.
+
+    Optionally, 'tag' query parameter can be specified to get a tagged asset archive.
+    Default tag is returned otherwise.
+    """
+    return serve_json_for_asset(
+        rgc=rgc,
+        genome=genome,
+        asset=asset,
+        tag=tag,
+        template=TEMPLATE_ASSET_DIR_CONTENTS,
+    )
 
 
 @router.get(
@@ -431,7 +535,7 @@ async def get_genome_alias_digest(alias: str = al):
     try:
         digest = rgc.get_genome_alias_digest(alias=alias)
         _LOGGER.info(f"digest returned for '{alias}': {digest}")
-        return digest
+        return Response(content=digest, media_type="text/plain")
     except (KeyError, UndefinedAliasError):
         msg = MSG_404.format(f"alias ({alias})")
         _LOGGER.warning(msg)
