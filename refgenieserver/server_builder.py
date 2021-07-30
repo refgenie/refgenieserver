@@ -211,6 +211,9 @@ def archive(rgc, registry_paths, force, remove, cfg_path, genomes_desc):
                         _get_asset_dir_contents(target_file_core, asset_name, tag_name)
                         _check_tgz(input_file, target_file)
                         _copy_recipe(input_file, target_dir, asset_name, tag_name)
+                        _copy_recipe_inputs(
+                            input_file, target_dir, asset_name, tag_name
+                        )
                         _copy_log(input_file, target_dir, asset_name, tag_name)
                         # TODO: remove the rest of this try block in the future
                         _check_tgz_legacy(
@@ -301,6 +304,19 @@ def archive(rgc, registry_paths, force, remove, cfg_path, genomes_desc):
                             r.update_tags(genome, asset_name, tag_name, tag_attrs)
 
         counter += 1
+    with rgc_server as r:
+        r[CFG_RECIPE_FOLDER_KEY] = os.path.join(r[CFG_ARCHIVE_KEY], "recipes")
+        r[CFG_ASSET_CLASS_FOLDER_KEY] = os.path.join(
+            r[CFG_ARCHIVE_KEY], "asset_classes"
+        )
+    for asset_class_name in rgc.list_asset_classes():
+        _LOGGER.info(f"Processing '{asset_class_name}' asset class")
+        rgc_server.add_asset_class(
+            asset_class_path=rgc.get_asset_class_file(asset_class_name), force=True
+        )
+    for recipe_name in rgc.list_recipes():
+        _LOGGER.info(f"Processing '{recipe_name}' recipe")
+        rgc_server.add_recipe(recipe_path=rgc.get_recipe_file(recipe_name), force=True)
     _LOGGER.info(f"Builder finished; server config file saved: {rgc_server.file_path}")
 
 
@@ -370,18 +386,28 @@ def _check_tgz_legacy(path, output, asset_name, genome_name, alias):
 
 def _copy_log(input_dir, target_dir, asset_name, tag_name):
     """
-    Copy the log file
+    Copy the log file to the target directory
 
     :param str input_dir: path to the directory to copy the recipe from
     :param str target_dir: path to the directory to copy the recipe to
+    :param str asset_name: name of the asset
+    :param str tag_name: name of the tag
+    :raise RefgenconfError: if there are more than one log files matched
     """
-    log_path = f"{input_dir}/{BUILD_STATS_DIR}/{ORI_LOG_NAME}"
+    log_path_regex = f"{input_dir}/{BUILD_STATS_DIR}/{ORI_LOG_NAME_REGEX}"
+    # match log files
+    matched_logs = glob(log_path_regex)
+    if len(matched_logs) > 1:
+        raise RefgenconfError(
+            f"More than one log file matched with '{log_path_regex}': {matched_logs}"
+        )
+    if len(matched_logs) == 0:
+        _LOGGER.warning(f"No log file matched with '{log_path_regex}'")
+        return
+    log_path = matched_logs[0]
     if log_path and os.path.exists(log_path):
         run(
-            "cp "
-            + log_path
-            + " "
-            + os.path.join(target_dir, TEMPLATE_LOG.format(asset_name, tag_name)),
+            f"cp {log_path} {os.path.join(target_dir, TEMPLATE_LOG.format(asset_name, tag_name))}",
             shell=True,
         )
         _LOGGER.debug(f"Log copied to: {target_dir}")
@@ -420,7 +446,7 @@ def _get_asset_dir_contents(asset_dir, asset_name, tag_name):
     )
     files = [
         os.path.relpath(os.path.join(dp, f), asset_dir)
-        for dp, dn, fn in os.walk(asset_dir)
+        for dp, _, fn in os.walk(asset_dir)
         for f in fn
         if BUILD_STATS_DIR not in dp
     ]
@@ -445,11 +471,31 @@ def _copy_recipe(input_dir, target_dir, asset_name, tag_name):
         f"{input_dir}/{BUILD_STATS_DIR}/"
         f"{TEMPLATE_RECIPE_JSON.format(asset_name, tag_name)}"
     )
-    if recipe_path and os.path.exists(recipe_path):
-        run("cp " + recipe_path + " " + target_dir, shell=True)
+    if os.path.exists(recipe_path):
+        run(f"cp {recipe_path} {target_dir}", shell=True)
         _LOGGER.debug(f"Recipe copied to: {target_dir}")
     else:
         _LOGGER.warning(f"Recipe not found: {recipe_path}")
+
+
+def _copy_recipe_inputs(input_dir, target_dir, asset_name, tag_name):
+    """
+    Copy the recipe inputs
+
+    :param str input_dir: path to the directory to copy the recipe inputs from
+    :param str target_dir: path to the directory to copy the recipe inputs to
+    :param str asset_name: asset name
+    :param str tag_name: tag name
+    """
+    recipe_inputs_path = (
+        f"{input_dir}/{BUILD_STATS_DIR}/"
+        f"{TEMPLATE_RECIPE_INPUTS_JSON.format(asset_name, tag_name)}"
+    )
+    if os.path.exists(recipe_inputs_path):
+        run(f"cp {recipe_inputs_path} {target_dir}", shell=True)
+        _LOGGER.debug(f"Recipe inputs copied to: {target_dir}")
+    else:
+        _LOGGER.warning(f"Recipe inputs not found: {recipe_inputs_path}")
 
 
 def _remove_archive(rgc, registry_paths, cfg_archive_folder_key=CFG_ARCHIVE_KEY):
