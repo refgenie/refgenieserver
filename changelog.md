@@ -2,6 +2,11 @@
 
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) and [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) format.
 
+## [0.8.0] -- unreleased
+### Added
+- asset class and recipe-related endpoints
+- asset class and recipe-related files to be archived
+
 ## [0.7.0] -- 2021-04-27
 ### Added
 - `remotes` section in the refgenieserver config, which supersedes `remote_url_base`. It can be used to define multiple remote data providers.

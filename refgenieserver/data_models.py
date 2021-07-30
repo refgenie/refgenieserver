@@ -1,4 +1,5 @@
-from typing import Dict, List
+from platform import version
+from typing import Dict, List, Optional
 
 from pydantic import BaseModel
 
@@ -36,3 +37,30 @@ class Genome(BaseModel):
     genome_description: str
     assets: Dict[str, Asset]
     aliases: List[str]
+
+
+class AssetClass(BaseModel):
+    """
+    Asset class data model
+    """
+
+    version: str
+    name: str
+    description: str
+    seek_keys: Dict[str, str]
+    parents: List[str]
+
+
+class Recipe(BaseModel):
+    """
+    Recipe data model
+    """
+
+    version: str
+    name: str
+    description: str
+    inputs: Dict[str, Optional[Dict[str, Optional[Dict[str, str]]]]]
+    container: str
+    command_template_list: List[str]
+    custom_properties: Dict[str, str]
+    default_tag: str

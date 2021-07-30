@@ -6,12 +6,12 @@ from typing import Optional
 from fastapi import APIRouter, HTTPException, Path, Query, Response
 from refgenconf.refgenconf import map_paths_by_id
 from starlette.requests import Request
-from starlette.responses import FileResponse, RedirectResponse
+from starlette.responses import FileResponse, RedirectResponse, JSONResponse
 from ubiquerg import parse_registry_path
 from yacman import IK, UndefinedAliasError
 
 from ..const import *
-from ..data_models import Dict, List, Tag
+from ..data_models import Recipe, Tag, AssetClass, Dict, List
 from ..helpers import (
     create_asset_file_path,
     get_asset_dir_contents,
@@ -41,6 +41,8 @@ ex_digest = safely_get_example(
 ex_asset = safely_get_example(
     rgc, "asset", "list_assets_by_genome", "fasta", genome=ex_alias
 )
+ex_recipe = safely_get_example(rgc, "recipe", "list_recipes", "fasta")
+ex_asset_class = safely_get_example(rgc, "asset_class", "list_asset_classes", "fasta")
 
 router = APIRouter()
 
@@ -76,6 +78,18 @@ t = Path(
     description="Tag name",
     regex=r"^\S+$",
     example=DEFAULT_TAG,
+)
+r = Path(
+    ...,
+    description="Recipe",
+    regex=r"^\S+$",
+    example=ex_recipe,
+)
+ac = Path(
+    ...,
+    description="Asset class",
+    regex=r"^\S+$",
+    example=ex_asset_class,
 )
 
 # API query parameter definitions
@@ -558,5 +572,94 @@ async def get_genome_alias(genome_digest: str = g):
         return alias
     except (KeyError, UndefinedAliasError):
         msg = MSG_404.format(f"genome ({genome_digest})")
+        _LOGGER.warning(msg)
+        raise HTTPException(status_code=404, detail=msg)
+
+
+@router.get("/recipes/list", response_model=List[str], tags=api_version_tags)
+async def list_available_recipes():
+    """
+    Returns a list of **recipes** available on the server
+    """
+    _LOGGER.info("serving recipes list")
+    return rgc.list_recipes()
+
+
+@router.get("/asset_classes/list", response_model=List[str], tags=api_version_tags)
+async def list_available_asset_classes():
+    """
+    Returns a list of **asset classes** available on the server
+    """
+    _LOGGER.info("serving asset classes list")
+    return rgc.list_asset_classes()
+
+
+@router.get(
+    "/recipes/attrs/{recipe}", response_model=Dict[str, str], tags=api_version_tags
+)
+async def list_recipe_attrs(recipe: str = r):
+    """
+    Returns a dictionary of selected recipe attributes
+    """
+    _LOGGER.info("serving recipes attributes list")
+    try:
+        return rgc.recipes[recipe]
+    except KeyError:
+        msg = MSG_404.format(f"recipe ({recipe})")
+        _LOGGER.warning(msg)
+        raise HTTPException(status_code=404, detail=msg)
+
+
+@router.get(
+    "/asset_classes/attrs/{asset_class}",
+    response_model=Dict[str, str],
+    tags=api_version_tags,
+)
+async def list_recipe_attrs(asset_class: str = ac):
+    """
+    Returns a dictionary of selected asset class attributes
+    """
+    _LOGGER.info("serving recipes attributes list")
+    try:
+        return rgc.asset_classes[asset_class]
+    except KeyError:
+        msg = MSG_404.format(f"asset class ({asset_class})")
+        _LOGGER.warning(msg)
+        raise HTTPException(status_code=404, detail=msg)
+
+
+@router.get(
+    "/recipes/contents/{recipe}",
+    response_model=Recipe,
+    tags=api_version_tags,
+    operation_id=API_VERSION + API_ID_RECIPE_CONTENTS,
+)
+async def get_recipe_contents(recipe: str = r):
+    """
+    Returns a dictionary of selected recipe contents
+    """
+    try:
+        return JSONResponse(rgc.get_recipe(recipe_name=recipe).to_dict())
+    except Exception as e:
+        msg = MSG_404.format(f"recipe ({recipe})")
+        _LOGGER.warning(msg)
+        raise HTTPException(status_code=404, detail=msg)
+
+
+@router.get(
+    "/asset_classes/contents/{asset_class}",
+    response_model=AssetClass,
+    tags=api_version_tags,
+    operation_id=API_VERSION + API_ID_ASSET_CLASS_CONTENTS,
+)
+async def get_asset_class_contents(asset_class: str = r):
+    """
+    Returns a dictionary of selected asset class contents
+    """
+    _LOGGER.info("serving asset class contents")
+    try:
+        return JSONResponse(rgc.get_asset_class(asset_class_name=asset_class).to_dict())
+    except Exception as e:
+        msg = MSG_404.format(f"asset class ({asset_class})")
         _LOGGER.warning(msg)
         raise HTTPException(status_code=404, detail=msg)

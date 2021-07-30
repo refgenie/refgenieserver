@@ -2,7 +2,7 @@ from fastapi import APIRouter
 
 from ..const import *
 from ..data_models import Dict, Genome
-from ..main import _LOGGER, app, rgc, templates
+from ..main import _LOGGER, rgc
 
 router = APIRouter()
 
@@ -17,7 +17,35 @@ api_version_tags = [PRIV_API_ID]
 )
 async def get_genomes_dict():
     """
-    **Private endpoint**, which returns the entire 'genomes' part of the config
+    **Private endpoint**, which returns the entire `genomes` section of the config
     """
     _LOGGER.info(f"serving genomes dict: '{rgc[CFG_GENOMES_KEY]}'")
     return rgc[CFG_GENOMES_KEY]
+
+
+@router.get(
+    "/recipes/dict",
+    response_model=Dict[str, Dict[str, str]],
+    tags=api_version_tags,
+    operation_id=PRIVATE_API + API_ID_RECIPES_DICT,
+)
+async def list_available_recipes():
+    """
+    **Private endpoint**, which returns the entire `recipes` section of the config
+    """
+    _LOGGER.info("serving recipes dict")
+    return rgc.recipes
+
+
+@router.get(
+    "/asset_classes/dict",
+    response_model=Dict[str, Dict[str, str]],
+    tags=api_version_tags,
+    operation_id=PRIVATE_API + API_ID_ASSET_CLASSES_DICT,
+)
+async def list_available_asset_classes():
+    """
+    **Private endpoint**, which returns the entire `asset_classes` section of the config
+    """
+    _LOGGER.info("serving asset classes dict")
+    return rgc.asset_classes
