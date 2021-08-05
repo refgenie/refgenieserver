@@ -14,7 +14,7 @@
 <div class="container">
     <div class="row align-items-center">
         <div class="col-12">
-            <h2><a href="/v3/genomes/splash/{{ genome }}">{{ alias }}</a>/{{ asset }}:{{ tag }}</h2>
+            <h2><a href="/v3/genomes/splash/{{ genome|urlencode }}">{{ alias }}</a>/{{ asset }}:{{ tag }}</h2>
         </div>
     </div>
     <div class="row align-items-center">
@@ -30,14 +30,14 @@
                 {% if value is mapping %}
                     <li>{{ attr_name }}:</li>
                     <ul>
-                    {% for seek_key, path  in value.items() %}
+                    {% for k, v  in value.items() %}
                         <li>
-                            {% if is_data_remote %}
+                            {% if is_data_remote and attr_name == "seek_keys"%}
                                 {% for remote_key, remote_dict in rgc["remotes"].items() %}
-                                    <a href="/v3/assets/file_path/{{ genome }}/{{ asset }}/{{ seek_key }}?tag={{ tag }}&remoteClass={{ remote_key }}" data-toggle="tooltip" title="{{ remote_dict["description"] }}">{{ remote_key }}</a> {{ "|" if not loop.last }}
+                                    <a href="/v3/assets/file_path/{{ genome|urlencode }}/{{ asset|urlencode }}/{{ seek_key|urlencode }}?tag={{ tag|urlencode }}&remoteClass={{ remote_key }}" data-toggle="tooltip" title="{{ remote_dict['description'] }}">{{ remote_key }}</a> {{ "|" if not loop.last }}
                                 {% endfor %}
                             {% endif %}
-                            {{ seek_key }}: <code>{{ path }}</code>
+                            {{ k }}: <code>{{ v }}</code>
                         </li>
                     {% endfor %}
                     </ul>
@@ -58,7 +58,7 @@
                                 {% set parent_genome = parsed["namespace"] %}
                                 {% set parent_alias = rgc.get_genome_alias(digest=parsed["namespace"]) %}
                             {% endif %}
-                            <li><code><a href="/v3/assets/splash/{{ parent_genome }}/{{ parsed['item'] }}?tag={{ parsed['tag'] }}" data-toggle="tooltip" title="Asset splash page">{{ parent_alias }}/{{ parsed['item'] }}:{{ parsed['tag'] }}</a></code></li>
+                            <li><code><a href="/v3/assets/splash/{{ parent_genome|urlencode }}/{{ parsed['item']|urlencode }}?tag={{ parsed['tag']|urlencode }}" data-toggle="tooltip" title="Asset splash page">{{ parent_alias }}/{{ parsed['item'] }}:{{ parsed['tag'] }}</a></code></li>
                         {% endfor %}
                         </ul>
                         </li>
@@ -73,7 +73,7 @@
             <h3>API endpoints</h3>
             <ul>
             {% for id, path in links_dict.items() %}
-                <li><a href="{{ path }}?tag={{tag}}">{{ id }}</a></li>
+                <li><a href="{{ path|urlencode }}?tag={{ tag|urlencode }}">{{ id }}</a></li>
             {% endfor %}
             </ul>
         </div>
@@ -87,7 +87,7 @@
                     <li>
                         {% if is_data_remote %}
                             {% for remote_key, asset_dir_path in asset_dir_paths.items() %}
-                                <a href="{{ [asset_dir_path, file]|os_path_join }}">{{ remote_key }}</a>{{ ":" if loop.last else " |" }}
+                                <a href="{{ [asset_dir_path, file]|os_path_join|urlencode }}">{{ remote_key }}</a>{{ ":" if loop.last else " |" }}
                             {% endfor %}
                             <code>{{ file }}</code>
                         {% else %}

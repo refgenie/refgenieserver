@@ -1,0 +1,100 @@
+{% extends "v3/base.html" %} {% block title %}{{ recipe.name }}{% endblock %} {%
+block head %} {{ super() }}
+<script>
+  $(document).ready(function () {
+    $('[data-toggle="tooltip"]').tooltip();
+  });
+</script>
+{% endblock %} {% macro safe_show_attr(x) %} {% if x is none or not x|length %}
+NA {% else %} {{ x }} {% endif %} {% endmacro %} {%block content %}
+<!-- display recipe attributes -->
+<div class="container">
+  <div class="row align-items-center">
+    <div class="col-6">
+      <h2>{{ recipe.name }} (version: {{recipe.version}})</h2>
+      <h4>
+        Output asset class:
+        <a
+          href="/v3/asset_classes/splash/{{ recipe.output_class.name|urlencode }}"
+          >{{recipe.output_class.name}}</a
+        >
+      </h4>
+    </div>
+  </div>
+  <div class="row align-items-center">
+    <div class="col-12">
+      <p>
+        Description:
+        <i>{{ recipe.description }}</i>
+      </p>
+    </div>
+  </div>
+  {% if recipe.inputs["files"] is not none or recipe.inputs["assets"] is not
+  none or recipe.inputs["params"] is not none %}
+  <div class="row">
+    <div class="col-8">
+      <h3>Inputs</h3>
+      <table
+        class="table table-hover table-sm"
+        id="recipe-inputs-table"
+        data-toggle="table"
+        data-search="true"
+      >
+        <thead class="thead-light">
+          <tr>
+            <th class="text-nowrap" data-align="center" data-sortable="true">
+              Type
+            </th>
+            <th class="text-nowrap" data-align="center" data-sortable="true">
+              Name
+            </th>
+            <th class="text-nowrap" data-align="center" data-sortable="true">
+              Description
+            </th>
+            <th class="text-nowrap" data-align="center" data-sortable="true">
+              Default
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for input_type, input_dict in recipe.inputs.items() | sort %} {% if
+          input_dict is not none %} {% for input_name, input_metadata in
+          input_dict.items() | sort %}
+          <tr>
+            <td><b>{{ input_type }}</b></td>
+            {% if input_type == "assets" %}
+            <td>
+              {{ input_name }}
+              <a
+                href="/v3/asset_classes/splash/{{ input_metadata['asset_class']|urlencode }}"
+                >({{ input_metadata['asset_class'] }})</a
+              >
+            </td>
+            {% else %}
+            <td>{{ input_name }}</td>
+            {% endif %}
+            <td class="text-wrap">
+              <span style="max-width: 150px">
+                {{ input_metadata["description"] }}
+              </span>
+            </td>
+            <td><code>{{ input_metadata["default"] }}</code></td>
+          </tr>
+          {% endfor %} {% endif %} {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="col-4">
+      <h3>API endpoints</h3>
+      <ul>
+        {% for id, path in links_dict.items() %}
+        <li>
+          <a href="{{ path|urlencode }}?tag={{ tag|urlencode }}">{{ id }}</a>
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+  </div>
+  {% endblock %}
+</div>

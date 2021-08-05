@@ -4,6 +4,8 @@ from enum import Enum
 from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Path, Query, Response
+from refgenconf.const import TEMPLATE_RECIPE_INPUTS_JSON
+from refgenconf.recipe import recipe_factory
 from refgenconf.refgenconf import map_paths_by_id
 from starlette.requests import Request
 from starlette.responses import FileResponse, RedirectResponse, JSONResponse
@@ -113,10 +115,17 @@ async def index(request: Request):
     _LOGGER.debug(f"RefGenConf object:\n{rgc}")
     templ_vars = {
         "request": request,
-        "genomes": rgc[CFG_GENOMES_KEY],
         "rgc": rgc,
         "openapi_version": get_openapi_version(app),
-        "columns": ["aliases", "digest", "description", "fasta asset", "# assets"],
+        "genome_columns": [
+            "aliases",
+            "digest",
+            "description",
+            "fasta asset",
+            "# assets",
+        ],
+        "recipe_columns": ["name", "description", "version"],
+        "asset_class_columns": ["name", "description", "version"],
         "current_year": current_year,
     }
     return templates.TemplateResponse("v3/index.html", dict(templ_vars, **ALL_VERSIONS))
@@ -154,6 +163,51 @@ async def genome_splash_page(request: Request, genome: str = g):
     _LOGGER.debug(f"merged vars: {dict(templ_vars, **ALL_VERSIONS)}")
     return templates.TemplateResponse(
         "v3/genome.html", dict(templ_vars, **ALL_VERSIONS)
+    )
+
+
+@router.get("/recipes/splash/{recipe_name}", tags=api_version_tags)
+async def recipe_splash_page(request: Request, recipe_name: str = r):
+    """
+    Returns a recipe splash page
+    """
+    links_dict = {
+        OPERATION_IDS["v3_recipe"][oid]: path.format(recipe=recipe_name)
+        for oid, path in map_paths_by_id(app.openapi()).items()
+        if oid in OPERATION_IDS["v3_recipe"].keys()
+    }
+    templ_vars = {
+        "rgc": rgc,
+        "recipe": rgc.get_recipe(recipe_name),
+        "request": request,
+        "current_year": current_year,
+        "links_dict": links_dict,
+    }
+    _LOGGER.debug(f"merged vars: {dict(templ_vars, **ALL_VERSIONS)}")
+    return templates.TemplateResponse(
+        "v3/recipe.html", dict(templ_vars, **ALL_VERSIONS)
+    )
+
+
+@router.get("/asset_classes/splash/{asset_class_name}", tags=api_version_tags)
+async def asset_class_name_splash_page(request: Request, asset_class_name: str = r):
+    """
+    Returns a asset class splash page
+    """
+    links_dict = {
+        OPERATION_IDS["v3_asset_class"][oid]: path.format(asset_class=asset_class_name)
+        for oid, path in map_paths_by_id(app.openapi()).items()
+        if oid in OPERATION_IDS["v3_asset_class"].keys()
+    }
+    templ_vars = {
+        "asset_class": rgc.get_asset_class(asset_class_name),
+        "request": request,
+        "current_year": current_year,
+        "links_dict": links_dict,
+    }
+    _LOGGER.debug(f"merged vars: {dict(templ_vars, **ALL_VERSIONS)}")
+    return templates.TemplateResponse(
+        "v3/asset_class.html", dict(templ_vars, **ALL_VERSIONS)
     )
 
 
@@ -442,6 +496,30 @@ async def download_asset_build_log(
 
 
 @router.get(
+    "/assets/build_inputs/{genome}/{asset}",
+    operation_id=API_VERSION + API_ID_BUILD_INPUTS,
+    tags=api_version_tags,
+)
+async def download_asset_build_inputs(
+    genome: str = g, asset: str = a, tag: Optional[str] = tq
+):
+    """
+    Returns the build inputs.
+    Requires the genome name and the asset name as an input.
+
+    Optionally, 'tag' query parameter can be specified to get a tagged asset archive.
+    Default tag is returned otherwise.
+    """
+    return serve_json_for_asset(
+        rgc=rgc,
+        genome=genome,
+        asset=asset,
+        tag=tag,
+        template=TEMPLATE_RECIPE_INPUTS_JSON,
+    )
+
+
+@router.get(
     "/assets/dir_contents/{genome}/{asset}",
     operation_id=API_VERSION + API_ID_CONTENTS,
     tags=api_version_tags,
@@ -450,7 +528,7 @@ async def download_asset_directory_contents(
     genome: str = g, asset: str = a, tag: Optional[str] = tq
 ):
     """
-    Returns a asset directory tree file.
+    Returns an asset directory contents.
     Requires the genome name and the asset name as an input.
 
     Optionally, 'tag' query parameter can be specified to get a tagged asset archive.
@@ -595,7 +673,10 @@ async def list_available_asset_classes():
 
 
 @router.get(
-    "/recipes/attrs/{recipe}", response_model=Dict[str, str], tags=api_version_tags
+    "/recipes/attrs/{recipe}",
+    response_model=Dict[str, str],
+    tags=api_version_tags,
+    operation_id=API_VERSION + API_ID_RECIPE_ATTRS,
 )
 async def list_recipe_attrs(recipe: str = r):
     """
@@ -614,6 +695,7 @@ async def list_recipe_attrs(recipe: str = r):
     "/asset_classes/attrs/{asset_class}",
     response_model=Dict[str, str],
     tags=api_version_tags,
+    operation_id=API_VERSION + API_ID_ASSET_CLASS_ATTRS,
 )
 async def list_recipe_attrs(asset_class: str = ac):
     """

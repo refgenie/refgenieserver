@@ -161,8 +161,8 @@ def get_datapath_for_genome(
     assert all(
         [k in req_keys for k in list(fill_dict.keys())]
     ), f"Only the these keys are allowed in the fill_dict: {req_keys}"
-    fill_dict.update({"base": BASE_DIR})
-    # fill_dict.update({"base": rgc["genome_archive_folder"]})
+    # fill_dict.update({"base": BASE_DIR})
+    fill_dict.update({"base": rgc["genome_archive_folder"]})
     remote = is_data_remote(rgc)
     if remote:
         if remote_key is None:
