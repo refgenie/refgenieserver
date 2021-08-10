@@ -5,7 +5,6 @@ from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Path, Query, Response
 from refgenconf.const import TEMPLATE_RECIPE_INPUTS_JSON
-from refgenconf.recipe import recipe_factory
 from refgenconf.refgenconf import map_paths_by_id
 from starlette.requests import Request
 from starlette.responses import FileResponse, RedirectResponse, JSONResponse
@@ -256,6 +255,7 @@ async def asset_splash_page(
         "genome": genome,
         "asset": asset,
         "tag": tag,
+        "asset_class": rgc.get_assets_asset_class(genome, asset),
         "rgc": rgc,
         "prp": parse_registry_path,
         "links_dict": links_dict,

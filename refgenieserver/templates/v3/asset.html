@@ -19,7 +19,8 @@
     </div>
     <div class="row align-items-center">
         <div class="col-12">
-            <p>Description: <i>{{ rgc["genomes"][genome]["assets"][asset]["asset_description"] }}</i></p>
+            <p>Asset class: <a href="/v3/asset_classes/splash/{{ asset_class|urlencode }}">{{ asset_class }}</a>
+            </br>Description: <i>{{ rgc["genomes"][genome]["assets"][asset]["asset_description"] }}</i></p>
         </div>
     </div>
     <div class="row">
