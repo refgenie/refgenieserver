@@ -310,13 +310,21 @@ def archive(rgc, registry_paths, force, remove, cfg_path, genomes_desc):
             r[CFG_ARCHIVE_KEY], "asset_classes"
         )
     for asset_class_name in rgc.list_asset_classes():
-        _LOGGER.info(f"Adding '{asset_class_name}' asset class")
-        rgc_server.add_asset_class(
-            asset_class_path=rgc.get_asset_class_file(asset_class_name), force=True
-        )
+        _LOGGER.debug(f"Adding '{asset_class_name}' asset class")
+        try:
+            rgc_server.add_asset_class(
+                asset_class_path=rgc.get_asset_class_file(asset_class_name), force=True
+            )
+        except Exception as e:
+            _LOGGER.warning(e)
     for recipe_name in rgc.list_recipes():
-        _LOGGER.info(f"Adding '{recipe_name}' recipe")
-        rgc_server.add_recipe(recipe_path=rgc.get_recipe_file(recipe_name), force=True)
+        _LOGGER.debug(f"Adding '{recipe_name}' recipe")
+        try:
+            rgc_server.add_recipe(
+                recipe_path=rgc.get_recipe_file(recipe_name), force=True
+            )
+        except Exception as e:
+            _LOGGER.warning(e)
     _LOGGER.info(f"Builder finished; server config file saved: {rgc_server.file_path}")
 
 
