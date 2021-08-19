@@ -3,6 +3,5 @@ LABEL authors="Nathan Sheffield, Michal Stolarczyk"
 
 COPY . /app
 RUN pip install https://github.com/pepkit/ubiquerg/archive/dev.zip
-RUN pip install https://github.com/databio/yacman/archive/dev.zip
 RUN pip install https://github.com/refgenie/refgenconf/archive/dev.zip
 RUN pip install .
