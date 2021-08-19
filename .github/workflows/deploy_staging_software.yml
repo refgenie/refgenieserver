@@ -63,7 +63,7 @@ jobs:
 
 
     - name: Checkout demo repo
-      uses: actions/checkout@v2   
+      uses: actions/checkout@v2
       with:
         repository: refgenie/${{ env.data-repo }}
         refs: refs/heads/master

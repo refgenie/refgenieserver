@@ -4,15 +4,48 @@ from enum import Enum
 from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Path, Query, Response
-from refgenconf.const import TEMPLATE_RECIPE_INPUTS_JSON
+from refgenconf.const import (
+    API_ID_ALIAS_ALIAS,
+    API_ID_ALIAS_DIGEST,
+    API_ID_ALIASES_DICT,
+    API_ID_ARCHIVE,
+    API_ID_ARCHIVE_DIGEST,
+    API_ID_ASSET_ATTRS,
+    API_ID_ASSET_CLASS_ATTRS,
+    API_ID_ASSET_CLASS_CONTENTS,
+    API_ID_ASSET_PATH,
+    API_ID_ASSETS,
+    API_ID_BUILD_INPUTS,
+    API_ID_CONTENTS,
+    API_ID_DEFAULT_TAG,
+    API_ID_DIGEST,
+    API_ID_GENOME_ATTRS,
+    API_ID_LOG,
+    API_ID_RECIPE,
+    API_ID_RECIPE_ATTRS,
+    API_ID_RECIPE_CONTENTS,
+    API_VERSION,
+    CFG_ALIASES_KEY,
+    CFG_ARCHIVE_CHECKSUM_KEY,
+    CFG_ASSET_CHECKSUM_KEY,
+    CFG_ASSET_TAGS_KEY,
+    CFG_ASSETS_KEY,
+    CFG_GENOMES_KEY,
+    DEFAULT_TAG,
+    OPERATION_IDS,
+    TEMPLATE_ASSET_DIR_CONTENTS,
+    TEMPLATE_LOG,
+    TEMPLATE_RECIPE_INPUTS_JSON,
+    TEMPLATE_RECIPE_JSON,
+)
 from refgenconf.refgenconf import map_paths_by_id
 from starlette.requests import Request
-from starlette.responses import FileResponse, RedirectResponse, JSONResponse
+from starlette.responses import FileResponse, JSONResponse, RedirectResponse
 from ubiquerg import parse_registry_path
 from yacman import IK, UndefinedAliasError
 
 from ..const import *
-from ..data_models import Recipe, Tag, AssetClass, Dict, List
+from ..data_models import AssetClass, Dict, List, Recipe, Tag
 from ..helpers import (
     create_asset_file_path,
     get_asset_dir_contents,

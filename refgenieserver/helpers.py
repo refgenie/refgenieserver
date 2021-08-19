@@ -1,16 +1,27 @@
 import logging
+import os
 from json import load
 from string import Formatter
 
 from fastapi import HTTPException
 from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
+from refgenconf.const import (
+    CFG_ARCHIVE_CHECKSUM_KEY,
+    CFG_ARCHIVE_SIZE_KEY,
+    CFG_ASSET_TAGS_KEY,
+    CFG_ASSETS_KEY,
+    CFG_ENV_VARS,
+    CFG_GENOMES_KEY,
+    CFG_SEEK_KEYS_KEY,
+    TEMPLATE_ASSET_DIR_CONTENTS,
+)
 from refgenconf.exceptions import RefgenconfError
 from refgenconf.helpers import send_data_request
 from ubiquerg import VersionInHelpParser, is_url
 from yacman import get_first_env_var
 
 from ._version import __version__ as v
-from .const import *
+from .const import CHANGED_KEYS, DEFAULT_PORT, MSG_404, PKG_NAME
 
 global _LOGGER
 _LOGGER = logging.getLogger(PKG_NAME)
@@ -161,8 +172,8 @@ def get_datapath_for_genome(
     assert all(
         [k in req_keys for k in list(fill_dict.keys())]
     ), f"Only the these keys are allowed in the fill_dict: {req_keys}"
-    # fill_dict.update({"base": BASE_DIR})
-    fill_dict.update({"base": rgc["genome_archive_folder"]})
+    fill_dict.update({"base": BASE_DIR})
+    # fill_dict.update({"base": rgc["genome_archive_folder"]})
     remote = is_data_remote(rgc)
     if remote:
         if remote_key is None:

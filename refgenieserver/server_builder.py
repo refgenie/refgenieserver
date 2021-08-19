@@ -1,4 +1,5 @@
 import logging
+import os
 import sys
 from glob import glob
 from json import dump
@@ -6,6 +7,38 @@ from subprocess import run
 
 from attmap import PathExAttMap as PXAM
 from refgenconf import RefGenConf
+from refgenconf.const import (
+    BUILD_STATS_DIR,
+    CFG_ALIASES_KEY,
+    CFG_ARCHIVE_CHECKSUM_KEY,
+    CFG_ARCHIVE_CONFIG_KEY,
+    CFG_ARCHIVE_KEY,
+    CFG_ARCHIVE_KEY_OLD,
+    CFG_ARCHIVE_SIZE_KEY,
+    CFG_ASSET_CHECKSUM_KEY,
+    CFG_ASSET_CHILDREN_KEY,
+    CFG_ASSET_CLASS_FOLDER_KEY,
+    CFG_ASSET_DEFAULT_TAG_KEY,
+    CFG_ASSET_DESC_KEY,
+    CFG_ASSET_PARENTS_KEY,
+    CFG_ASSET_PATH_KEY,
+    CFG_ASSET_SIZE_KEY,
+    CFG_ASSET_TAGS_KEY,
+    CFG_ASSETS_KEY,
+    CFG_GENOME_DESC_KEY,
+    CFG_GENOMES_KEY,
+    CFG_RECIPE_FOLDER_KEY,
+    CFG_SEEK_KEYS_KEY,
+    CFG_VERSION_KEY,
+    DEFAULT_TAG,
+    ORI_LOG_NAME_REGEX,
+    REFGENIE_BY_CFG,
+    REQ_CFG_VERSION,
+    TEMPLATE_ASSET_DIR_CONTENTS,
+    TEMPLATE_LOG,
+    TEMPLATE_RECIPE_INPUTS_JSON,
+    TEMPLATE_RECIPE_JSON,
+)
 from refgenconf.exceptions import (
     ConfigNotCompliantError,
     GenomeConfigFormatError,
@@ -15,7 +48,7 @@ from refgenconf.exceptions import (
 from refgenconf.helpers import replace_str_in_obj, swap_names_in_tree
 from ubiquerg import checksum, is_command_callable, parse_registry_path, size
 
-from .const import *
+from .const import CFG_LEGACY_ARCHIVE_CHECKSUM_KEY, DESC_PLACEHOLDER, PKG_NAME
 
 global _LOGGER
 _LOGGER = logging.getLogger(PKG_NAME)
