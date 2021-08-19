@@ -21,7 +21,7 @@ from ubiquerg import VersionInHelpParser, is_url
 from yacman import get_first_env_var
 
 from ._version import __version__ as v
-from .const import CHANGED_KEYS, DEFAULT_PORT, MSG_404, PKG_NAME
+from .const import CHANGED_KEYS, DEFAULT_PORT, MSG_404, PKG_NAME, BASE_DIR
 
 global _LOGGER
 _LOGGER = logging.getLogger(PKG_NAME)
