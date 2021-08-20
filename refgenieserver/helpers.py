@@ -1,7 +1,6 @@
 import logging
 import os
 from json import load
-from yacman import load_yaml
 from string import Formatter
 
 from fastapi import HTTPException
@@ -14,17 +13,17 @@ from refgenconf.const import (
     CFG_ENV_VARS,
     CFG_GENOMES_KEY,
     CFG_SEEK_KEYS_KEY,
-    TEMPLATE_ASSET_DIR_CONTENTS,
     TEMPLATE_ASSET_CLASS_YAML,
+    TEMPLATE_ASSET_DIR_CONTENTS,
     TEMPLATE_RECIPE_YAML,
 )
 from refgenconf.exceptions import RefgenconfError
 from refgenconf.helpers import send_data_request
 from ubiquerg import VersionInHelpParser, is_url
-from yacman import get_first_env_var
+from yacman import get_first_env_var, load_yaml
 
 from ._version import __version__ as v
-from .const import CHANGED_KEYS, DEFAULT_PORT, MSG_404, PKG_NAME, BASE_DIR
+from .const import BASE_DIR, CHANGED_KEYS, DEFAULT_PORT, MSG_404, PKG_NAME
 
 global _LOGGER
 _LOGGER = logging.getLogger(PKG_NAME)
@@ -204,7 +203,7 @@ def get_yaml_contents(
     subdir = "recipes" if is_recipe else "asset_classes"
     fill_dict = dict(subdir=subdir, file_name=templ.format(name))
     path, _ = get_datapath(
-        rgc, fill_dict, pth_templ="{base}/{subdir}/{file_name}", remote_key="html"
+        rgc, fill_dict, pth_templ="{base}/{subdir}/{file_name}", remote_key="http"
     )
     _LOGGER.info(f"Determined YAML {subdir} path: {path}")
     return load_yaml(path)

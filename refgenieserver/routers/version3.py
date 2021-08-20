@@ -4,6 +4,7 @@ from enum import Enum
 from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Path, Query, Response
+from refgenconf.asset_class import AssetClass as RefGenConfAssetClass
 from refgenconf.const import (
     API_ID_ALIAS_ALIAS,
     API_ID_ALIAS_DIGEST,
@@ -39,7 +40,6 @@ from refgenconf.const import (
     TEMPLATE_RECIPE_JSON,
 )
 from refgenconf.recipe import Recipe as RefGenConfRecipe
-from refgenconf.asset_class import AssetClass as RefGenConfAssetClass
 from refgenconf.refgenconf import map_paths_by_id
 from starlette.requests import Request
 from starlette.responses import FileResponse, JSONResponse, RedirectResponse
@@ -53,11 +53,11 @@ from ..helpers import (
     get_asset_dir_contents,
     get_datapath,
     get_openapi_version,
+    get_yaml_contents,
     is_data_remote,
     safely_get_example,
     serve_file_for_asset,
     serve_json_for_asset,
-    get_yaml_contents,
 )
 from ..main import _LOGGER, app, rgc, templates
 

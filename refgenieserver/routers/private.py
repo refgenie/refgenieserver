@@ -1,3 +1,4 @@
+from fastapi import APIRouter
 from refgenconf.const import (
     API_ID_ASSET_CLASSES_DICT,
     API_ID_GENOMES_DICT,
@@ -5,9 +6,8 @@ from refgenconf.const import (
     CFG_GENOMES_KEY,
     PRIVATE_API,
 )
-from ..const import PRIV_API_ID
-from fastapi import APIRouter
 
+from ..const import PRIV_API_ID
 from ..data_models import Dict, Genome
 from ..main import _LOGGER, rgc
 
