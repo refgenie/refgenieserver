@@ -50,9 +50,11 @@ from ..const import *
 from ..data_models import Asset, AssetClass, Dict, List, Recipe, Tag
 from ..helpers import (
     create_asset_file_path,
+    get_asset_class,
     get_asset_dir_contents,
     get_datapath,
     get_openapi_version,
+    get_recipe,
     get_yaml_contents,
     is_data_remote,
     safely_get_example,
@@ -756,16 +758,9 @@ async def get_recipe_contents(recipe: str = r):
     """
     Returns a dictionary of selected recipe contents
     """
-    # TODO: instead of using get_recipe method we need to read the recipe file contents and from the server and create a Recipe instance. Same for asset classes.
-    # TODO: need to test
-    recipe_data = get_yaml_contents(rgc, recipe, True)
-    _LOGGER.info(f"{recipe_data=}")
-    asset_class_name = recipe_data.pop("output_asset_class")
-    asset_class_data = get_yaml_contents(rgc, asset_class_name, False)
-    _LOGGER.info(f"{asset_class_data=}")
-    asset_class = RefGenConfAssetClass(**asset_class_data)
-    recipe = RefGenConfRecipe(output_asset_class=asset_class, **recipe_data)
     try:
+        recipe = get_recipe(rgc=rgc, recipe_name=recipe)
+        _LOGGER.info(f"Recipe object: {recipe}")
         return JSONResponse(recipe.to_dict())
     except Exception as e:
         msg = MSG_404.format(f"recipe ({recipe})")
@@ -783,9 +778,10 @@ async def get_asset_class_contents(asset_class: str = r):
     """
     Returns a dictionary of selected asset class contents
     """
-    _LOGGER.info("serving asset class contents")
     try:
-        return JSONResponse(rgc.get_asset_class(asset_class_name=asset_class).to_dict())
+        asset_class = get_asset_class(rgc=rgc, asset_class_name=asset_class)
+        _LOGGER.info(f"AssetClass object: {asset_class}")
+        return JSONResponse(asset_class.to_dict())
     except Exception as e:
         msg = MSG_404.format(f"asset class ({asset_class})")
         _LOGGER.warning(msg)

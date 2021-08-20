@@ -5,13 +5,16 @@ from string import Formatter
 
 from fastapi import HTTPException
 from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
+from refgenconf.asset_class import AssetClass as RefGenConfAssetClass
 from refgenconf.const import (
     CFG_ARCHIVE_CHECKSUM_KEY,
     CFG_ARCHIVE_SIZE_KEY,
+    CFG_ASSET_CLASSES_KEY,
     CFG_ASSET_TAGS_KEY,
     CFG_ASSETS_KEY,
     CFG_ENV_VARS,
     CFG_GENOMES_KEY,
+    CFG_RECIPES_KEY,
     CFG_SEEK_KEYS_KEY,
     TEMPLATE_ASSET_CLASS_YAML,
     TEMPLATE_ASSET_DIR_CONTENTS,
@@ -19,6 +22,7 @@ from refgenconf.const import (
 )
 from refgenconf.exceptions import RefgenconfError
 from refgenconf.helpers import send_data_request
+from refgenconf.recipe import Recipe as RefGenConfRecipe
 from ubiquerg import VersionInHelpParser, is_url
 from yacman import get_first_env_var, load_yaml
 
@@ -199,14 +203,49 @@ def get_yaml_contents(
     name,
     is_recipe,
 ):
+    """
+    Get the contents of the YAML file regardless of whether it is remote or local.
+
+    :param refgenconf.RefGenConf rgc: configuration object to use
+    :param str name: the name of the entity. E.g. recipe or asset_class name
+    :param bool is_recipe: whether the YAML file is a recipe
+    :return dict: the YAML file contents
+    """
     templ = TEMPLATE_RECIPE_YAML if is_recipe else TEMPLATE_ASSET_CLASS_YAML
-    subdir = "recipes" if is_recipe else "asset_classes"
+    subdir = CFG_RECIPES_KEY if is_recipe else CFG_ASSET_CLASSES_KEY
     fill_dict = dict(subdir=subdir, file_name=templ.format(name))
     path, _ = get_datapath(
         rgc, fill_dict, pth_templ="{base}/{subdir}/{file_name}", remote_key="http"
     )
     _LOGGER.info(f"Determined YAML {subdir} path: {path}")
     return load_yaml(path)
+
+
+def get_recipe(rgc, recipe_name):
+    """
+    Get the Recipe object from the configuration.
+
+    :param refgenconf.RefGenConf rgc: configuration object to use
+    :param str recipe_name: the name of the recipe
+    :return refgenconf.Recipe: the recipe object
+    """
+    recipe_data = get_yaml_contents(rgc, recipe_name, True)
+    asset_class = get_asset_class(
+        asset_class_name=recipe_data.pop("output_asset_class"), rgc=rgc
+    )
+    return RefGenConfRecipe(output_asset_class=asset_class, **recipe_data)
+
+
+def get_asset_class(rgc, asset_class_name):
+    """
+    Get the AssetClass object from the configuration.
+
+    :param refgenconf.RefGenConf rgc: configuration object to use
+    :param str asset_class_name: the name of the asset class
+    :return refgenconf.AssetClass: the asset class object
+    """
+    asset_class_data = get_yaml_contents(rgc, asset_class_name, False)
+    return RefGenConfAssetClass(**asset_class_data)
 
 
 def is_data_remote(rgc):
