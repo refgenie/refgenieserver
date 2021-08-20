@@ -760,7 +760,7 @@ async def get_recipe_contents(recipe: str = r):
     # TODO: need to test
     recipe_data = get_yaml_contents(rgc, recipe, True)
     _LOGGER.info(f"{recipe_data=}")
-    asset_class_name = recipe_data["output_asset_class"]
+    asset_class_name = recipe_data.pop("output_asset_class")
     asset_class_data = get_yaml_contents(rgc, asset_class_name, False)
     _LOGGER.info(f"{asset_class_data=}")
     asset_class = RefGenConfAssetClass(**asset_class_data)
