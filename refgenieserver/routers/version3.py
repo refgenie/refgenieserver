@@ -215,7 +215,7 @@ async def recipe_splash_page(request: Request, recipe_name: str = r):
     }
     templ_vars = {
         "rgc": rgc,
-        "recipe": rgc.get_recipe(recipe_name),
+        "recipe": get_recipe(rgc, recipe_name),
         "request": request,
         "current_year": current_year,
         "links_dict": links_dict,
@@ -237,7 +237,7 @@ async def asset_class_name_splash_page(request: Request, asset_class_name: str =
         if oid in OPERATION_IDS["v3_asset_class"].keys()
     }
     templ_vars = {
-        "asset_class": rgc.get_asset_class(asset_class_name),
+        "asset_class": get_asset_class(rgc, asset_class_name),
         "request": request,
         "current_year": current_year,
         "links_dict": links_dict,
