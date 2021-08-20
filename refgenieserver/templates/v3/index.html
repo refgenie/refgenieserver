@@ -99,7 +99,7 @@ is none or not x|length %} NA {% else %} {{ x }} {% endif %} {% endmacro %}
             <td>
               <a
                 id="{{genome_dict['aliases'][0]}}"
-                href="/v3/genomes/splash/{{ genome_name|urlencode }}"
+                href="/v3/genomes/splash/{{ genome_name }}"
                 data-toggle="tooltip"
                 title="Genome splash page"
                 ><b>{{ ", ".join(genome_dict["aliases"]) }}</b></a
@@ -117,7 +117,7 @@ is none or not x|length %} NA {% else %} {{ x }} {% endif %} {% endmacro %}
               {% set default_tag = rgc.get_default_tag(genome=genome_name,
               asset="fasta") %}
               <a
-                href="/v3/assets/splash/{{ genome_name|urlencode }}/fasta?tag={{ default_tag|urlencode }}"
+                href="/v3/assets/splash/{{ genome_name }}/fasta?tag={{ default_tag|urlencode }}"
                 data-toggle="tooltip"
                 title="Asset splash page"
                 ><b>fasta</b>:{{ default_tag }}</a
@@ -157,7 +157,7 @@ is none or not x|length %} NA {% else %} {{ x }} {% endif %} {% endmacro %}
           {% for recipe_name, recipe_dict in rgc.recipes.items() | sort %}
           <tr>
             <td>
-              <a href="/v3/recipes/splash/{{ recipe_name|urlencode }}"
+              <a href="/v3/recipes/splash/{{ recipe_name }}"
                 ><b>{{ recipe_name }}</b></a
               >
             </td>
@@ -201,8 +201,7 @@ is none or not x|length %} NA {% else %} {{ x }} {% endif %} {% endmacro %}
           | sort %}
           <tr>
             <td>
-              <a
-                href="/v3/asset_classes/splash/{{ asset_class_name|urlencode }}"
+              <a href="/v3/asset_classes/splash/{{ asset_class_name }}"
                 ><b>{{ asset_class_name }}</b></a
               >
             </td>

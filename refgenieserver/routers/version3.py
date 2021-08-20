@@ -38,6 +38,8 @@ from refgenconf.const import (
     TEMPLATE_RECIPE_INPUTS_JSON,
     TEMPLATE_RECIPE_JSON,
 )
+from refgenconf.recipe import Recipe as RefGenConfRecipe
+from refgenconf.asset_class import AssetClass as RefGenConfAssetClass
 from refgenconf.refgenconf import map_paths_by_id
 from starlette.requests import Request
 from starlette.responses import FileResponse, JSONResponse, RedirectResponse
@@ -45,16 +47,17 @@ from ubiquerg import parse_registry_path
 from yacman import IK, UndefinedAliasError
 
 from ..const import *
-from ..data_models import AssetClass, Dict, List, Recipe, Tag
+from ..data_models import Asset, AssetClass, Dict, List, Recipe, Tag
 from ..helpers import (
     create_asset_file_path,
     get_asset_dir_contents,
-    get_datapath_for_genome,
+    get_datapath,
     get_openapi_version,
     is_data_remote,
     safely_get_example,
     serve_file_for_asset,
     serve_json_for_asset,
+    get_yaml_contents,
 )
 from ..main import _LOGGER, app, rgc, templates
 
@@ -366,7 +369,7 @@ async def download_asset(genome: str = g, asset: str = a, tag: Optional[str] = t
         genome, asset
     )  # returns 'default' for nonexistent genome/asset; no need to catch
     file_name = f"{asset}__{tag}.tgz"
-    path, remote = get_datapath_for_genome(
+    path, remote = get_datapath(
         rgc, dict(genome=genome, file_name=file_name), remote_key="http"
     )
     _LOGGER.info(f"file source: {path}")
@@ -753,8 +756,17 @@ async def get_recipe_contents(recipe: str = r):
     """
     Returns a dictionary of selected recipe contents
     """
+    # TODO: instead of using get_recipe method we need to read the recipe file contents and from the server and create a Recipe instance. Same for asset classes.
+    # TODO: need to test
+    recipe_data = get_yaml_contents(rgc, recipe, True)
+    _LOGGER.info(f"{recipe_data=}")
+    asset_class_name = recipe_data["output_assset_class"]
+    asset_class_data = get_yaml_contents(rgc, asset_class_name, False)
+    _LOGGER.info(f"{asset_class_data=}")
+    asset_class = RefGenConfAssetClass(**asset_class_data)
+    recipe = RefGenConfRecipe(output_asset_class=asset_class, **recipe_data)
     try:
-        return JSONResponse(rgc.get_recipe(recipe_name=recipe).to_dict())
+        return JSONResponse(recipe.to_dict())
     except Exception as e:
         msg = MSG_404.format(f"recipe ({recipe})")
         _LOGGER.warning(msg)

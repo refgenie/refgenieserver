@@ -6,7 +6,7 @@ from starlette.requests import Request
 from starlette.responses import FileResponse, RedirectResponse
 
 from ..const import *
-from ..helpers import get_datapath_for_genome, get_openapi_version, preprocess_attrs
+from ..helpers import get_datapath, get_openapi_version, preprocess_attrs
 from ..main import _LOGGER, app, rgc, templates
 
 router = APIRouter()
@@ -62,7 +62,7 @@ async def download_asset(genome: str, asset: str, tag: str = None):
         genome, asset
     )  # returns 'default' for nonexistent genome/asset; no need to catch
     file_name = "{}__{}{}".format(asset, tag, ".tgz")
-    path, remote = get_datapath_for_genome(
+    path, remote = get_datapath(
         rgc,
         dict(
             genome=rgc.get_genome_alias(digest=genome, fallback=True),
