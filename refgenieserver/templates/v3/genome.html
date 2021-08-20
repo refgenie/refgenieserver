@@ -80,7 +80,7 @@ is none or not x|length %} NA {% else %} {{ x }} {% endif %} {% endmacro %}
           <tr>
             <td>
               <a
-                href="/v3/assets/archive/{{ genome|urlencode }}/{{ asset_name|urlencode }}?tag={{ tag_name|urlencode }}"
+                href="/v3/assets/archive/{{ genome }}/{{ asset_name }}?tag={{ tag_name|urlencode }}"
                 class="btn btn-outline-dark btn-sm mr-0"
                 role="button"
                 data-toggle="tooltip"
@@ -89,7 +89,7 @@ is none or not x|length %} NA {% else %} {{ x }} {% endif %} {% endmacro %}
                 <i class="fa fa-download" aria-hidden="true"></i>
               </a>
               <a
-                href="/v3/assets/attrs/{{ genome|urlencode }}/{{ asset_name|urlencode }}?tag={{ tag_name|urlencode }}"
+                href="/v3/assets/attrs/{{ genome }}/{{ asset_name }}?tag={{ tag_name|urlencode }}"
                 class="btn btn-outline-dark btn-sm ml-0"
                 role="button"
                 data-toggle="tooltip"
@@ -98,7 +98,7 @@ is none or not x|length %} NA {% else %} {{ x }} {% endif %} {% endmacro %}
                 <i class="fa fa-tags" aria-hidden="true"></i>
               </a>
               <a
-                href="/v3/assets/recipe/{{ genome|urlencode }}/{{ asset_name|urlencode }}?tag={{ tag_name|urlencode }}"
+                href="/v3/assets/recipe/{{ genome }}/{{ asset_name }}?tag={{ tag_name|urlencode }}"
                 class="btn btn-outline-dark btn-sm ml-0"
                 role="button"
                 data-toggle="tooltip"
@@ -109,7 +109,7 @@ is none or not x|length %} NA {% else %} {{ x }} {% endif %} {% endmacro %}
             </td>
             <td>
               <a
-                href="/v3/assets/splash/{{ genome|urlencode }}/{{ asset_name|urlencode }}?tag={{ tag_name|urlencode }}"
+                href="/v3/assets/splash/{{ genome }}/{{ asset_name }}?tag={{ tag_name|urlencode }}"
                 data-toggle="tooltip"
                 title="Asset splash page"
                 ><b>{{ asset_name }}</b>:{{ tag_name }}</a

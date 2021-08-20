@@ -14,8 +14,7 @@ NA {% else %} {{ x }} {% endif %} {% endmacro %} {%block content %}
       <h2>{{ recipe.name }} (version: {{recipe.version}})</h2>
       <h4>
         Output asset class:
-        <a
-          href="/v3/asset_classes/splash/{{ recipe.output_class.name|urlencode }}"
+        <a href="/v3/asset_classes/splash/{{ recipe.output_class.name }}"
           >{{recipe.output_class.name}}</a
         >
       </h4>
@@ -66,7 +65,7 @@ NA {% else %} {{ x }} {% endif %} {% endmacro %} {%block content %}
             <td>
               {{ input_name }}
               <a
-                href="/v3/asset_classes/splash/{{ input_metadata['asset_class']|urlencode }}"
+                href="/v3/asset_classes/splash/{{ input_metadata['asset_class'] }}"
                 >({{ input_metadata['asset_class'] }})</a
               >
             </td>
@@ -89,7 +88,7 @@ NA {% else %} {{ x }} {% endif %} {% endmacro %} {%block content %}
       <ul>
         {% for id, path in links_dict.items() %}
         <li>
-          <a href="{{ path|urlencode }}?tag={{ tag|urlencode }}">{{ id }}</a>
+          <a href="{{ path }}?tag={{ tag|urlencode }}">{{ id }}</a>
         </li>
         {% endfor %}
       </ul>
