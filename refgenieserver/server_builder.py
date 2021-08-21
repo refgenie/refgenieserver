@@ -18,6 +18,7 @@ from refgenconf.const import (
     CFG_ASSET_CHECKSUM_KEY,
     CFG_ASSET_CHILDREN_KEY,
     CFG_ASSET_CLASS_FOLDER_KEY,
+    CFG_ASSET_CLASS_KEY,
     CFG_ASSET_DEFAULT_TAG_KEY,
     CFG_ASSET_DESC_KEY,
     CFG_ASSET_PARENTS_KEY,
@@ -192,9 +193,13 @@ def archive(rgc, registry_paths, force, remove, cfg_path, genomes_desc):
             default_tag = rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][
                 asset_name
             ].setdefault(CFG_ASSET_DEFAULT_TAG_KEY, DEFAULT_TAG)
+            asset_class = rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][
+                asset_name
+            ].setdefault(CFG_ASSET_CLASS_KEY, asset_name)
             asset_attrs = {
                 CFG_ASSET_DESC_KEY: asset_desc,
                 CFG_ASSET_DEFAULT_TAG_KEY: default_tag,
+                CFG_ASSET_CLASS_KEY: asset_class,
             }
             _LOGGER.debug(f"Updating '{genome}/{asset_name}' asset attributes...")
             with rgc_server as r:
