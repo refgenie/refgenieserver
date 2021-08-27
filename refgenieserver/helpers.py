@@ -118,6 +118,18 @@ def build_parser():
         help="Remove selected genome, genome/asset or genome/asset:tag",
     )
     sps["archive"].add_argument(
+        "-m",
+        "--map",
+        action="store_true",
+        dest="map",
+        help="Run the map procedure: archive assets and store the metadata in separate configs",
+    )
+    sps["archive"].add_argument(
+        "--reduce",
+        action="store_true",
+        help="Run the reduce procedure: gather the metadata produced with `refgenieserver archive --map`.",
+    )
+    sps["archive"].add_argument(
         "asset_registry_paths",
         metavar="asset-registry-paths",
         type=str,

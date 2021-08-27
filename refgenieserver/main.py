@@ -1,9 +1,11 @@
+import logging
 import sys
 
-import logmuse
 import uvicorn
 from fastapi import FastAPI
 from refgenconf import RefGenConf, select_genome_config
+from refgenconf.const import CFG_ENV_VARS, PRIVATE_API
+from rich.logging import RichHandler
 from starlette.staticfiles import StaticFiles
 from starlette.templating import Jinja2Templates
 from ubiquerg import parse_registry_path
@@ -32,12 +34,14 @@ def main():
         parser.print_help()
         print("No subcommand given")
         sys.exit(1)
-    logger_args = (
-        dict(name=PKG_NAME, fmt=LOG_FORMAT, level=5)
-        if args.debug
-        else dict(name=PKG_NAME, fmt=LOG_FORMAT)
+    logging.basicConfig(
+        level="DEBUG" if args.debug else "INFO",
+        format="%(message)s",
+        datefmt="[%X]",
+        handlers=[RichHandler(rich_tracebacks=True)],
     )
-    _LOGGER = logmuse.setup_logger(**logger_args)
+
+    _LOGGER = logging.getLogger(PKG_NAME)
     selected_cfg = select_genome_config(args.config)
     assert (
         selected_cfg is not None
@@ -52,7 +56,16 @@ def main():
             if args.asset_registry_paths is not None
             else None
         )
-        archive(rgc, arp, args.force, args.remove, selected_cfg, args.genomes_desc)
+        archive(
+            rgc,
+            arp,
+            args.force,
+            args.remove,
+            selected_cfg,
+            args.genomes_desc,
+            map=args.map,
+            reduce=args.reduce,
+        )
     elif args.command == "serve":
         # the router imports need to be after the RefGenConf object is declared
         with rgc as r:
