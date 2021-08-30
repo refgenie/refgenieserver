@@ -1,11 +1,10 @@
-import logging
 import sys
 
+import logmuse
 import uvicorn
 from fastapi import FastAPI
 from refgenconf import RefGenConf, select_genome_config
 from refgenconf.const import CFG_ENV_VARS, PRIVATE_API
-from rich.logging import RichHandler
 from starlette.staticfiles import StaticFiles
 from starlette.templating import Jinja2Templates
 from ubiquerg import parse_registry_path
@@ -34,14 +33,12 @@ def main():
         parser.print_help()
         print("No subcommand given")
         sys.exit(1)
-    logging.basicConfig(
-        level="DEBUG" if args.debug else "INFO",
-        format="%(message)s",
-        datefmt="[%X]",
-        handlers=[RichHandler(rich_tracebacks=True)],
+    logger_args = (
+        dict(name=PKG_NAME, fmt=LOG_FORMAT, level=5)
+        if args.debug
+        else dict(name=PKG_NAME, fmt=LOG_FORMAT)
     )
-
-    _LOGGER = logging.getLogger(PKG_NAME)
+    _LOGGER = logmuse.setup_logger(**logger_args)
     selected_cfg = select_genome_config(args.config)
     assert (
         selected_cfg is not None

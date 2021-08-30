@@ -356,6 +356,22 @@ async def list_available_assets(
 
 
 @router.get(
+    "/assets/asset_class/{genome}/{asset}",
+    operation_id=API_VERSION + API_ID_ASSETS_ASSET_CLASS,
+    tags=api_version_tags,
+    response_model=str,
+)
+async def get_assets_asset_class_name(genome: str = g, asset: str = a):
+    """
+    Returns an asset class name. Requires the genome name and the asset name as an input.
+    """
+    return Response(
+        content=rgc.get_assets_asset_class(genome, asset),
+        media_type="text/plain",
+    )
+
+
+@router.get(
     "/assets/archive/{genome}/{asset}",
     operation_id=API_VERSION + API_ID_ARCHIVE,
     tags=api_version_tags,

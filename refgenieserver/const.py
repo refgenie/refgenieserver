@@ -7,6 +7,9 @@ from refgenconf.const import *
 
 from ._version import __version__ as server_v
 
+DATE_FORMAT = "%H:%M:%S"
+LOGGER_FORMAT = "%(message)s"
+LOGGER_HANDLER = None
 ALL_VERSIONS = {
     "server_version": server_v,
     "rgc_version": rgc_v,
