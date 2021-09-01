@@ -76,13 +76,16 @@ is none or not x|length %} NA {% else %} {{ x }} {% endif %} {% endmacro %}
 <div class="container">
   <div class="row">
     <div class="col-12">
-      <h3>Genomes</h3>
+      <div id="toolbar_genomes">
+        <h4 style="margin-bottom: 0">Genomes</h4>
+      </div>
       <table
         class="table table-hover table-sm"
         id="genome-table"
         data-toggle="table"
         data-search="true"
         data-sortable="true"
+        data-toolbar="#toolbar_genomes"
       >
         <thead class="thead-light">
           <tr>
@@ -136,13 +139,16 @@ is none or not x|length %} NA {% else %} {{ x }} {% endif %} {% endmacro %}
 <div class="container">
   <div class="row">
     <div class="col-12">
-      <h3>Recipes</h3>
+      <div id="toolbar_recipes">
+        <h4 style="margin-bottom: 0">Recipes</h4>
+      </div>
       <table
         class="table table-hover table-sm"
         id="recipe-table"
         data-toggle="table"
         data-search="true"
         data-sortable="true"
+        data-toolbar="#toolbar_recipes"
       >
         <thead class="thead-light">
           <tr>
@@ -179,13 +185,16 @@ is none or not x|length %} NA {% else %} {{ x }} {% endif %} {% endmacro %}
 <div class="container">
   <div class="row">
     <div class="col-12">
-      <h3>Asset classes</h3>
+      <div id="toolbar_asset_classes">
+        <h4 style="margin-bottom: 0">Asset classes</h4>
+      </div>
       <table
         class="table table-hover table-sm"
         id="asset_class-table"
         data-toggle="table"
         data-search="true"
         data-sortable="true"
+        data-toolbar="#toolbar_asset_classes"
       >
         <thead class="thead-light">
           <tr>
