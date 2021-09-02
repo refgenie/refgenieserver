@@ -1,0 +1,7 @@
+aiofiles
+fastapi
+jinja2
+logmuse>=0.2
+#refgenconf>=0.13.0
+#ubiquerg>=0.6.2
+uvicorn>=0.7.1
