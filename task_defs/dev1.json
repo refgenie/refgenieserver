@@ -9,7 +9,7 @@
       "entryPoint": null,
       "portMappings": [
         {
-          "hostPort": 86,
+          "hostPort": 8102,
           "protocol": "tcp",
           "containerPort": 80
         }
