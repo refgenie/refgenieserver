@@ -52,6 +52,7 @@ from refgenconf.exceptions import (
 from refgenconf.helpers import block_iter_repr, replace_str_in_obj, swap_names_in_tree
 from rich.progress import track
 from ubiquerg import checksum, is_command_callable, parse_registry_path, size
+from yacman import UndefinedAliasError
 
 from .const import CFG_LEGACY_ARCHIVE_CHECKSUM_KEY, DESC_PLACEHOLDER, PKG_NAME
 
@@ -143,7 +144,7 @@ def archive(
         exit(1)
     else:
         _LOGGER.debug(f"Genomes to be processed: {str(genomes)}")
-    genomes = [rgc.get_genome_alias_digest(g) for g in genomes]
+    genomes = [rgc.get_genome_alias_digest(g, fallback=True) for g in genomes]
 
     if reduce:
         _LOGGER.info("Running the reduce procedure. No assets will be archived.")
@@ -378,11 +379,12 @@ def archive(
                     os.rename(locked_map_cfg_path, map_cfg_path)
                     _LOGGER.info(
                         f"Asset metadata saved in '{map_cfg_path}'. "
-                        f"To make the asset accessible globally run: refgenie archive --reduce"
+                        f"To make the asset accessible globally run: refgenieserver archive --reduce"
                     )
 
         counter += 1
-    _add_recipes_and_asset_classes(rgc, rgc_server)
+    if not map:
+        _add_recipes_and_asset_classes(rgc, rgc_server)
     _LOGGER.info(f"Builder finished; server config file saved: {rgc_server.file_path}")
 
 
@@ -705,24 +707,38 @@ def _archive_reduce(rgc_server):
             _LOGGER.error(f"{matched_tag} not in config.")
             continue
         else:
+            _LOGGER.debug(f"{matched_gat} found in config.")
             with rgc_server as r:
-                r.update_tags(
-                    genome=matched_genome,
-                    asset=matched_asset,
-                    tag=matched_tag,
-                    data=tag_dict,
-                )
+                try:
+                    r.update_tags(
+                        genome=matched_genome,
+                        asset=matched_asset,
+                        tag=matched_tag,
+                        data=tag_dict,
+                    )
+                except UndefinedAliasError as e:
+                    _LOGGER.error(f"{matched_gat} alias issue: {e}")
+                    alias = map_rgc.get_genome_alias(
+                        digest=matched_genome, fallback=True
+                    )
+                    _LOGGER.info(f"Determined genome alias: {alias}")
+                    r.set_genome_alias(
+                        genome=alias,
+                        digest=matched_genome,
+                        create_genome=True,
+                    )
             matched_gats.append(matched_gat)
             os.remove(rgc_map_filepath)
     return matched_gats
 
 
-def _add_recipes_and_asset_classes(rgc, rgc_server):
+def _add_recipes_and_asset_classes(rgc, rgc_server, force=False):
     """
     Add recipes and asset classes to the server.
 
     :param RefGenConf rgc: refgenconf object
     :param RefGenConf rgc_server: refgenconf server object
+    :param bool force: whether to force addition of recipes and asset classes
     """
     with rgc_server as r:
         r[CFG_RECIPE_FOLDER_KEY] = os.path.join(r[CFG_ARCHIVE_KEY], "recipes")
@@ -733,7 +749,7 @@ def _add_recipes_and_asset_classes(rgc, rgc_server):
         _LOGGER.debug(f"Adding '{asset_class_name}' asset class")
         try:
             rgc_server.add_asset_class(
-                asset_class_path=rgc.get_asset_class_file(asset_class_name), force=True
+                asset_class_path=rgc.get_asset_class_file(asset_class_name), force=force
             )
         except Exception as e:
             _LOGGER.warning(e)
@@ -741,7 +757,7 @@ def _add_recipes_and_asset_classes(rgc, rgc_server):
         _LOGGER.debug(f"Adding '{recipe_name}' recipe")
         try:
             rgc_server.add_recipe(
-                recipe_path=rgc.get_recipe_file(recipe_name), force=True
+                recipe_path=rgc.get_recipe_file(recipe_name), force=force
             )
         except Exception as e:
             _LOGGER.warning(e)
