@@ -369,10 +369,21 @@ def archive(
                         ][tag_name][CFG_ARCHIVE_CHECKSUM_KEY]
                         _LOGGER.debug(exists_msg + " Skipping")
                     except KeyError:
-                        _LOGGER.debug(exists_msg + " Calculating archive digest")
-                        tag_attrs = {CFG_ARCHIVE_CHECKSUM_KEY: checksum(target_file)}
+                        _LOGGER.debug(
+                            exists_msg + " Calculating archive digest and size"
+                        )
+                        tag_data = rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][
+                            asset_name
+                        ][CFG_ASSET_TAGS_KEY][tag_name]
+                        tag_data.update(
+                            {
+                                CFG_ARCHIVE_CHECKSUM_KEY: checksum(target_file),
+                                CFG_ARCHIVE_SIZE_KEY: size(target_file),
+                                CFG_ASSET_SIZE_KEY: size(input_file),
+                            }
+                        )
                         with rgc_server as r:
-                            r.update_tags(genome, asset_name, tag_name, tag_attrs)
+                            r.update_tags(genome, asset_name, tag_name, tag_data)
                 if map:
                     # move the contents of the locked map config to a map config,
                     # which is discoverable by the reduce step
