@@ -55,7 +55,6 @@ from ..helpers import (
     get_datapath,
     get_openapi_version,
     get_recipe,
-    get_yaml_contents,
     is_data_remote,
     safely_get_example,
     serve_file_for_asset,

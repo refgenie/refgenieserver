@@ -5,7 +5,7 @@ from string import Formatter
 
 from fastapi import HTTPException
 from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
-from refgenconf.asset_class import AssetClass as RefGenConfAssetClass
+from refgenconf.asset_class import asset_class_factory
 from refgenconf.const import (
     CFG_ARCHIVE_CHECKSUM_KEY,
     CFG_ARCHIVE_SIZE_KEY,
@@ -210,7 +210,7 @@ def get_datapath(
     return pth_templ.format(**fill_dict), remote
 
 
-def get_yaml_contents(
+def get_definition_path(
     rgc,
     name,
     is_recipe,
@@ -230,7 +230,23 @@ def get_yaml_contents(
         rgc, fill_dict, pth_templ="{base}/{subdir}/{file_name}", remote_key="http"
     )
     _LOGGER.info(f"Determined YAML {subdir} path: {path}")
-    return load_yaml(path)
+    return path
+
+
+def get_definition_contents(
+    rgc,
+    name,
+    is_recipe,
+):
+    """
+    Get the contents of the YAML file regardless of whether it is remote or local.
+
+    :param refgenconf.RefGenConf rgc: configuration object to use
+    :param str name: the name of the entity. E.g. recipe or asset_class name
+    :param bool is_recipe: whether the YAML file is a recipe
+    :return dict: the YAML file contents
+    """
+    return load_yaml(get_definition_path(rgc=rgc, name=name, is_recipe=is_recipe))
 
 
 def get_recipe(rgc, recipe_name):
@@ -241,7 +257,7 @@ def get_recipe(rgc, recipe_name):
     :param str recipe_name: the name of the recipe
     :return refgenconf.Recipe: the recipe object
     """
-    recipe_data = get_yaml_contents(rgc, recipe_name, True)
+    recipe_data = get_definition_contents(rgc, recipe_name, True)
     asset_class = get_asset_class(
         asset_class_name=recipe_data.pop("output_asset_class"), rgc=rgc
     )
@@ -256,8 +272,9 @@ def get_asset_class(rgc, asset_class_name):
     :param str asset_class_name: the name of the asset class
     :return refgenconf.AssetClass: the asset class object
     """
-    asset_class_data = get_yaml_contents(rgc, asset_class_name, False)
-    return RefGenConfAssetClass(**asset_class_data)
+    asset_class_path = get_definition_path(rgc, asset_class_name, False)
+    ac, _ = asset_class_factory(asset_class_definition_file=asset_class_path)
+    return ac
 
 
 def is_data_remote(rgc):
