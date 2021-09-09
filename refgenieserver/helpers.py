@@ -273,7 +273,10 @@ def get_asset_class(rgc, asset_class_name):
     :return refgenconf.AssetClass: the asset class object
     """
     asset_class_path = get_definition_path(rgc, asset_class_name, False)
-    ac, _ = asset_class_factory(asset_class_definition_file=asset_class_path)
+    ac, _ = asset_class_factory(
+        asset_class_definition_file=asset_class_path,
+        asset_class_definition_file_dir=os.path.dirname(asset_class_path),
+    )
     return ac
 
 
