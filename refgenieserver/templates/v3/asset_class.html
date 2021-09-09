@@ -24,11 +24,42 @@ NA {% else %} {{ x }} {% endif %} {% endmacro %} {%block content %}
   <div class="row align-items-center">
     <div class="col-8">
       <h3>Seek keys</h3>
-      <ul>
-        {% for key, value in asset_class.seek_keys.items() %}
-        <li>{{key}}: <code>{{value}}</code></li>
-        {% endfor %}
-      </ul>
+      <table
+        class="table table-hover table-sm"
+        id="recipe-seek_keys-table"
+        data-toggle="table"
+        data-search="true"
+      >
+        <thead class="thead-light">
+          <tr>
+            <th class="text-nowrap" data-align="center" data-sortable="true">
+              Name
+            </th>
+            <th class="text-nowrap" data-align="center" data-sortable="true">
+              Value
+            </th>
+            <th class="text-nowrap" data-align="center" data-sortable="true">
+              Type
+            </th>
+            <th class="text-nowrap" data-align="center" data-sortable="true">
+              Description
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for seek_key_name, seek_key_data in asset_class.seek_keys.items()
+          %}
+          <tr>
+            <td class="text-nowrap"><b>{{ seek_key_name }}</b></td>
+            <td class="text-nowrap">
+              <code>{{ seek_key_data["value"] }}</code>
+            </td>
+            <td class="text-nowrap">{{ seek_key_data["type"] }}</td>
+            <td class="text-nowrap">{{ seek_key_data["description"] }}</td>
+            {% endfor %}
+          </tr>
+        </tbody>
+      </table>
     </div>
     <div class="col-4">
       <h3>API endpoints</h3>

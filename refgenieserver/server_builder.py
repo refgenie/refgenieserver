@@ -743,7 +743,7 @@ def _archive_reduce(rgc_server):
     return matched_gats
 
 
-def _add_recipes_and_asset_classes(rgc, rgc_server, force=False):
+def _add_recipes_and_asset_classes(rgc, rgc_server, force=True):
     """
     Add recipes and asset classes to the server.
 
