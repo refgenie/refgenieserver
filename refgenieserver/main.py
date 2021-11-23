@@ -4,6 +4,7 @@ import logmuse
 import uvicorn
 from fastapi import FastAPI
 from refgenconf import RefGenConf, select_genome_config
+from refgenconf.const import CFG_ENV_VARS, PRIVATE_API
 from starlette.staticfiles import StaticFiles
 from starlette.templating import Jinja2Templates
 from ubiquerg import parse_registry_path
@@ -52,7 +53,16 @@ def main():
             if args.asset_registry_paths is not None
             else None
         )
-        archive(rgc, arp, args.force, args.remove, selected_cfg, args.genomes_desc)
+        archive(
+            rgc,
+            arp,
+            args.force,
+            args.remove,
+            selected_cfg,
+            args.genomes_desc,
+            map=args.map,
+            reduce=args.reduce,
+        )
     elif args.command == "serve":
         # the router imports need to be after the RefGenConf object is declared
         with rgc as r:

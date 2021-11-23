@@ -8,7 +8,7 @@ from starlette.responses import FileResponse, JSONResponse, RedirectResponse
 from ubiquerg import parse_registry_path
 
 from ..const import *
-from ..helpers import get_datapath_for_genome, get_openapi_version
+from ..helpers import get_datapath, get_openapi_version
 from ..main import _LOGGER, app, rgc, templates
 
 router = APIRouter()
@@ -94,7 +94,7 @@ async def download_asset(genome: str, asset: str, tag: str = None):
         genome, asset
     )  # returns 'default' for nonexistent genome/asset; no need to catch
     file_name = "{}__{}{}".format(asset, tag, ".tgz")
-    path, remote = get_datapath_for_genome(
+    path, remote = get_datapath(
         rgc,
         dict(
             genome=rgc.get_genome_alias(digest=genome, fallback=True),
@@ -184,7 +184,7 @@ async def download_asset_build_log(genome: str, asset: str, tag: str = None):
         genome, asset
     )  # returns 'default' for nonexistent genome/asset; no need to catch
     file_name = TEMPLATE_LOG.format(asset, tag)
-    path, remote = get_datapath_for_genome(
+    path, remote = get_datapath(
         rgc,
         dict(
             genome=rgc.get_genome_alias(digest=genome, fallback=True),
@@ -219,7 +219,7 @@ async def download_asset_build_recipe(genome: str, asset: str, tag: str = None):
         genome, asset
     )  # returns 'default' for nonexistent genome/asset; no need to catch
     file_name = TEMPLATE_RECIPE_JSON.format(asset, tag)
-    path, remote = get_datapath_for_genome(
+    path, remote = get_datapath(
         rgc,
         dict(
             genome=rgc.get_genome_alias(digest=genome, fallback=True),

@@ -1,16 +1,33 @@
 import logging
+import os
 from json import load
 from string import Formatter
 
 from fastapi import HTTPException
 from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
+from refgenconf.asset_class import asset_class_factory
+from refgenconf.const import (
+    CFG_ARCHIVE_CHECKSUM_KEY,
+    CFG_ARCHIVE_SIZE_KEY,
+    CFG_ASSET_CLASSES_KEY,
+    CFG_ASSET_TAGS_KEY,
+    CFG_ASSETS_KEY,
+    CFG_ENV_VARS,
+    CFG_GENOMES_KEY,
+    CFG_RECIPES_KEY,
+    CFG_SEEK_KEYS_KEY,
+    TEMPLATE_ASSET_CLASS_YAML,
+    TEMPLATE_ASSET_DIR_CONTENTS,
+    TEMPLATE_RECIPE_YAML,
+)
 from refgenconf.exceptions import RefgenconfError
 from refgenconf.helpers import send_data_request
+from refgenconf.recipe import Recipe as RefGenConfRecipe
 from ubiquerg import VersionInHelpParser, is_url
-from yacman import get_first_env_var
+from yacman import get_first_env_var, load_yaml
 
 from ._version import __version__ as v
-from .const import *
+from .const import BASE_DIR, CHANGED_KEYS, DEFAULT_PORT, MSG_404, PKG_NAME
 
 global _LOGGER
 _LOGGER = logging.getLogger(PKG_NAME)
@@ -101,6 +118,18 @@ def build_parser():
         help="Remove selected genome, genome/asset or genome/asset:tag",
     )
     sps["archive"].add_argument(
+        "-m",
+        "--map",
+        action="store_true",
+        dest="map",
+        help="Run the map procedure: archive assets and store the metadata in separate configs",
+    )
+    sps["archive"].add_argument(
+        "--reduce",
+        action="store_true",
+        help="Run the reduce procedure: gather the metadata produced with `refgenieserver archive --map`.",
+    )
+    sps["archive"].add_argument(
         "asset_registry_paths",
         metavar="asset-registry-paths",
         type=str,
@@ -141,7 +170,7 @@ def get_openapi_version(app):
         return "3.0.2"
 
 
-def get_datapath_for_genome(
+def get_datapath(
     rgc, fill_dict, pth_templ="{base}/{genome}/{file_name}", remote_key=None
 ):
     """
@@ -160,9 +189,9 @@ def get_datapath_for_genome(
     req_keys = [i[1] for i in Formatter().parse(pth_templ) if i[1] is not None]
     assert all(
         [k in req_keys for k in list(fill_dict.keys())]
-    ), f"Only the these keys are allowed in the fill_dict: {req_keys}"
-    fill_dict.update({"base": BASE_DIR})
-    # fill_dict.update({"base": rgc["genome_archive_folder"]})
+    ), f"Only these keys are allowed in the fill_dict: {req_keys}"
+    # fill_dict.update({"base": BASE_DIR})
+    fill_dict.update({"base": rgc["genome_archive_folder"]})
     remote = is_data_remote(rgc)
     if remote:
         if remote_key is None:
@@ -179,6 +208,76 @@ def get_datapath_for_genome(
         # and the value is a dict with 'prefix' key defined.
         fill_dict["base"] = rgc["remotes"][remote_key]["prefix"].rstrip("/")
     return pth_templ.format(**fill_dict), remote
+
+
+def get_definition_path(
+    rgc,
+    name,
+    is_recipe,
+):
+    """
+    Get the contents of the YAML file regardless of whether it is remote or local.
+
+    :param refgenconf.RefGenConf rgc: configuration object to use
+    :param str name: the name of the entity. E.g. recipe or asset_class name
+    :param bool is_recipe: whether the YAML file is a recipe
+    :return dict: the YAML file contents
+    """
+    templ = TEMPLATE_RECIPE_YAML if is_recipe else TEMPLATE_ASSET_CLASS_YAML
+    subdir = CFG_RECIPES_KEY if is_recipe else CFG_ASSET_CLASSES_KEY
+    fill_dict = dict(subdir=subdir, file_name=templ.format(name))
+    path, _ = get_datapath(
+        rgc, fill_dict, pth_templ="{base}/{subdir}/{file_name}", remote_key="http"
+    )
+    _LOGGER.info(f"Determined YAML {subdir} path: {path}")
+    return path
+
+
+def get_definition_contents(
+    rgc,
+    name,
+    is_recipe,
+):
+    """
+    Get the contents of the YAML file regardless of whether it is remote or local.
+
+    :param refgenconf.RefGenConf rgc: configuration object to use
+    :param str name: the name of the entity. E.g. recipe or asset_class name
+    :param bool is_recipe: whether the YAML file is a recipe
+    :return dict: the YAML file contents
+    """
+    return load_yaml(get_definition_path(rgc=rgc, name=name, is_recipe=is_recipe))
+
+
+def get_recipe(rgc, recipe_name):
+    """
+    Get the Recipe object from the configuration.
+
+    :param refgenconf.RefGenConf rgc: configuration object to use
+    :param str recipe_name: the name of the recipe
+    :return refgenconf.Recipe: the recipe object
+    """
+    recipe_data = get_definition_contents(rgc, recipe_name, True)
+    asset_class = get_asset_class(
+        asset_class_name=recipe_data.pop("output_asset_class"), rgc=rgc
+    )
+    return RefGenConfRecipe(output_asset_class=asset_class, **recipe_data)
+
+
+def get_asset_class(rgc, asset_class_name):
+    """
+    Get the AssetClass object from the configuration.
+
+    :param refgenconf.RefGenConf rgc: configuration object to use
+    :param str asset_class_name: the name of the asset class
+    :return refgenconf.AssetClass: the asset class object
+    """
+    asset_class_path = get_definition_path(rgc, asset_class_name, False)
+    ac, _ = asset_class_factory(
+        asset_class_definition_file=asset_class_path,
+        asset_class_definition_file_dir=os.path.dirname(asset_class_path),
+    )
+    return ac
 
 
 def is_data_remote(rgc):
@@ -276,7 +375,7 @@ def create_asset_file_path(rgc, genome, asset, tag, seek_key, remote_key="http")
     file_name = (
         f"{asset}__{tag}/{seek_key_target}" if seek_key != "dir" else f"{asset}__{tag}/"
     )
-    path, _ = get_datapath_for_genome(
+    path, _ = get_datapath(
         rgc, dict(genome=genome, file_name=file_name), remote_key=remote_key
     )
     _LOGGER.info(f"serving asset file path: {path}")
@@ -296,7 +395,7 @@ def serve_file_for_asset(rgc, genome, asset, tag, template):
     # returns 'default' for nonexistent genome/asset; no need to catch
     tag = tag or rgc.get_default_tag(genome, asset)
     file_name = template.format(asset, tag)
-    path, remote = get_datapath_for_genome(
+    path, remote = get_datapath(
         rgc, dict(genome=genome, file_name=file_name), remote_key="http"
     )
     if remote:
@@ -326,7 +425,7 @@ def serve_json_for_asset(rgc, genome, asset, tag, template):
     # returns 'default' for nonexistent genome/asset; no need to catch
     tag = tag or rgc.get_default_tag(genome, asset)
     file_name = template.format(asset, tag)
-    path, remote = get_datapath_for_genome(
+    path, remote = get_datapath(
         rgc, dict(genome=genome, file_name=file_name), remote_key="http"
     )
     if remote:
@@ -356,7 +455,7 @@ def get_asset_dir_contents(rgc, genome, asset, tag):
     # returns 'default' for nonexistent genome/asset; no need to catch
     tag = tag or rgc.get_default_tag(genome, asset)
     file_name = TEMPLATE_ASSET_DIR_CONTENTS.format(asset, tag)
-    path, remote = get_datapath_for_genome(
+    path, _ = get_datapath(
         rgc, dict(genome=genome, file_name=file_name), remote_key="http"
     )
     if is_url(path):

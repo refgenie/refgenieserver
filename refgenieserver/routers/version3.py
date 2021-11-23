@@ -4,19 +4,57 @@ from enum import Enum
 from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Path, Query, Response
+from refgenconf.asset_class import AssetClass as RefGenConfAssetClass
+from refgenconf.const import (
+    API_ID_ALIAS_ALIAS,
+    API_ID_ALIAS_DIGEST,
+    API_ID_ALIASES_DICT,
+    API_ID_ARCHIVE,
+    API_ID_ARCHIVE_DIGEST,
+    API_ID_ASSET_ATTRS,
+    API_ID_ASSET_CLASS_ATTRS,
+    API_ID_ASSET_CLASS_CONTENTS,
+    API_ID_ASSET_PATH,
+    API_ID_ASSETS,
+    API_ID_BUILD_INPUTS,
+    API_ID_CONTENTS,
+    API_ID_DEFAULT_TAG,
+    API_ID_DIGEST,
+    API_ID_GENOME_ATTRS,
+    API_ID_LOG,
+    API_ID_RECIPE,
+    API_ID_RECIPE_ATTRS,
+    API_ID_RECIPE_CONTENTS,
+    API_VERSION,
+    CFG_ALIASES_KEY,
+    CFG_ARCHIVE_CHECKSUM_KEY,
+    CFG_ASSET_CHECKSUM_KEY,
+    CFG_ASSET_TAGS_KEY,
+    CFG_ASSETS_KEY,
+    CFG_GENOMES_KEY,
+    DEFAULT_TAG,
+    OPERATION_IDS,
+    TEMPLATE_ASSET_DIR_CONTENTS,
+    TEMPLATE_LOG,
+    TEMPLATE_RECIPE_INPUTS_JSON,
+    TEMPLATE_RECIPE_JSON,
+)
+from refgenconf.recipe import Recipe as RefGenConfRecipe
 from refgenconf.refgenconf import map_paths_by_id
 from starlette.requests import Request
-from starlette.responses import FileResponse, RedirectResponse
+from starlette.responses import FileResponse, JSONResponse, RedirectResponse
 from ubiquerg import parse_registry_path
 from yacman import IK, UndefinedAliasError
 
 from ..const import *
-from ..data_models import Dict, List, Tag
+from ..data_models import Asset, AssetClass, Dict, List, Recipe, Tag
 from ..helpers import (
     create_asset_file_path,
+    get_asset_class,
     get_asset_dir_contents,
-    get_datapath_for_genome,
+    get_datapath,
     get_openapi_version,
+    get_recipe,
     is_data_remote,
     safely_get_example,
     serve_file_for_asset,
@@ -41,6 +79,8 @@ ex_digest = safely_get_example(
 ex_asset = safely_get_example(
     rgc, "asset", "list_assets_by_genome", "fasta", genome=ex_alias
 )
+ex_recipe = safely_get_example(rgc, "recipe", "list_recipes", "fasta")
+ex_asset_class = safely_get_example(rgc, "asset_class", "list_asset_classes", "fasta")
 
 router = APIRouter()
 
@@ -77,6 +117,18 @@ t = Path(
     regex=r"^\S+$",
     example=DEFAULT_TAG,
 )
+r = Path(
+    ...,
+    description="Recipe",
+    regex=r"^\S+$",
+    example=ex_recipe,
+)
+ac = Path(
+    ...,
+    description="Asset class",
+    regex=r"^\S+$",
+    example=ex_asset_class,
+)
 
 # API query parameter definitions
 tq = Query(
@@ -99,10 +151,17 @@ async def index(request: Request):
     _LOGGER.debug(f"RefGenConf object:\n{rgc}")
     templ_vars = {
         "request": request,
-        "genomes": rgc[CFG_GENOMES_KEY],
         "rgc": rgc,
         "openapi_version": get_openapi_version(app),
-        "columns": ["aliases", "digest", "description", "fasta asset", "# assets"],
+        "genome_columns": [
+            "aliases",
+            "digest",
+            "description",
+            "fasta asset",
+            "# assets",
+        ],
+        "recipe_columns": ["name", "description", "version"],
+        "asset_class_columns": ["name", "description", "version"],
         "current_year": current_year,
     }
     return templates.TemplateResponse("v3/index.html", dict(templ_vars, **ALL_VERSIONS))
@@ -140,6 +199,51 @@ async def genome_splash_page(request: Request, genome: str = g):
     _LOGGER.debug(f"merged vars: {dict(templ_vars, **ALL_VERSIONS)}")
     return templates.TemplateResponse(
         "v3/genome.html", dict(templ_vars, **ALL_VERSIONS)
+    )
+
+
+@router.get("/recipes/splash/{recipe_name}", tags=api_version_tags)
+async def recipe_splash_page(request: Request, recipe_name: str = r):
+    """
+    Returns a recipe splash page
+    """
+    links_dict = {
+        OPERATION_IDS["v3_recipe"][oid]: path.format(recipe=recipe_name)
+        for oid, path in map_paths_by_id(app.openapi()).items()
+        if oid in OPERATION_IDS["v3_recipe"].keys()
+    }
+    templ_vars = {
+        "rgc": rgc,
+        "recipe": get_recipe(rgc, recipe_name),
+        "request": request,
+        "current_year": current_year,
+        "links_dict": links_dict,
+    }
+    _LOGGER.debug(f"merged vars: {dict(templ_vars, **ALL_VERSIONS)}")
+    return templates.TemplateResponse(
+        "v3/recipe.html", dict(templ_vars, **ALL_VERSIONS)
+    )
+
+
+@router.get("/asset_classes/splash/{asset_class_name}", tags=api_version_tags)
+async def asset_class_name_splash_page(request: Request, asset_class_name: str = r):
+    """
+    Returns a asset class splash page
+    """
+    links_dict = {
+        OPERATION_IDS["v3_asset_class"][oid]: path.format(asset_class=asset_class_name)
+        for oid, path in map_paths_by_id(app.openapi()).items()
+        if oid in OPERATION_IDS["v3_asset_class"].keys()
+    }
+    templ_vars = {
+        "asset_class": get_asset_class(rgc, asset_class_name),
+        "request": request,
+        "current_year": current_year,
+        "links_dict": links_dict,
+    }
+    _LOGGER.debug(f"merged vars: {dict(templ_vars, **ALL_VERSIONS)}")
+    return templates.TemplateResponse(
+        "v3/asset_class.html", dict(templ_vars, **ALL_VERSIONS)
     )
 
 
@@ -188,6 +292,7 @@ async def asset_splash_page(
         "genome": genome,
         "asset": asset,
         "tag": tag,
+        "asset_class": rgc.get_assets_asset_class(genome, asset),
         "rgc": rgc,
         "prp": parse_registry_path,
         "links_dict": links_dict,
@@ -250,6 +355,22 @@ async def list_available_assets(
 
 
 @router.get(
+    "/assets/asset_class/{genome}/{asset}",
+    operation_id=API_VERSION + API_ID_ASSETS_ASSET_CLASS,
+    tags=api_version_tags,
+    response_model=str,
+)
+async def get_assets_asset_class_name(genome: str = g, asset: str = a):
+    """
+    Returns an asset class name. Requires the genome name and the asset name as an input.
+    """
+    return Response(
+        content=rgc.get_assets_asset_class(genome, asset),
+        media_type="text/plain",
+    )
+
+
+@router.get(
     "/assets/archive/{genome}/{asset}",
     operation_id=API_VERSION + API_ID_ARCHIVE,
     tags=api_version_tags,
@@ -265,7 +386,7 @@ async def download_asset(genome: str = g, asset: str = a, tag: Optional[str] = t
         genome, asset
     )  # returns 'default' for nonexistent genome/asset; no need to catch
     file_name = f"{asset}__{tag}.tgz"
-    path, remote = get_datapath_for_genome(
+    path, remote = get_datapath(
         rgc, dict(genome=genome, file_name=file_name), remote_key="http"
     )
     _LOGGER.info(f"file source: {path}")
@@ -428,6 +549,30 @@ async def download_asset_build_log(
 
 
 @router.get(
+    "/assets/build_inputs/{genome}/{asset}",
+    operation_id=API_VERSION + API_ID_BUILD_INPUTS,
+    tags=api_version_tags,
+)
+async def download_asset_build_inputs(
+    genome: str = g, asset: str = a, tag: Optional[str] = tq
+):
+    """
+    Returns the build inputs.
+    Requires the genome name and the asset name as an input.
+
+    Optionally, 'tag' query parameter can be specified to get a tagged asset archive.
+    Default tag is returned otherwise.
+    """
+    return serve_json_for_asset(
+        rgc=rgc,
+        genome=genome,
+        asset=asset,
+        tag=tag,
+        template=TEMPLATE_RECIPE_INPUTS_JSON,
+    )
+
+
+@router.get(
     "/assets/dir_contents/{genome}/{asset}",
     operation_id=API_VERSION + API_ID_CONTENTS,
     tags=api_version_tags,
@@ -436,7 +581,7 @@ async def download_asset_directory_contents(
     genome: str = g, asset: str = a, tag: Optional[str] = tq
 ):
     """
-    Returns a asset directory tree file.
+    Returns an asset directory contents.
     Requires the genome name and the asset name as an input.
 
     Optionally, 'tag' query parameter can be specified to get a tagged asset archive.
@@ -558,5 +703,101 @@ async def get_genome_alias(genome_digest: str = g):
         return alias
     except (KeyError, UndefinedAliasError):
         msg = MSG_404.format(f"genome ({genome_digest})")
+        _LOGGER.warning(msg)
+        raise HTTPException(status_code=404, detail=msg)
+
+
+@router.get("/recipes/list", response_model=List[str], tags=api_version_tags)
+async def list_available_recipes():
+    """
+    Returns a list of **recipes** available on the server
+    """
+    _LOGGER.info("serving recipes list")
+    return rgc.list_recipes()
+
+
+@router.get("/asset_classes/list", response_model=List[str], tags=api_version_tags)
+async def list_available_asset_classes():
+    """
+    Returns a list of **asset classes** available on the server
+    """
+    _LOGGER.info("serving asset classes list")
+    return rgc.list_asset_classes()
+
+
+@router.get(
+    "/recipes/attrs/{recipe}",
+    response_model=Dict[str, str],
+    tags=api_version_tags,
+    operation_id=API_VERSION + API_ID_RECIPE_ATTRS,
+)
+async def list_recipe_attrs(recipe: str = r):
+    """
+    Returns a dictionary of selected recipe attributes
+    """
+    _LOGGER.info("serving recipes attributes list")
+    try:
+        return rgc.recipes[recipe]
+    except KeyError:
+        msg = MSG_404.format(f"recipe ({recipe})")
+        _LOGGER.warning(msg)
+        raise HTTPException(status_code=404, detail=msg)
+
+
+@router.get(
+    "/asset_classes/attrs/{asset_class}",
+    response_model=Dict[str, str],
+    tags=api_version_tags,
+    operation_id=API_VERSION + API_ID_ASSET_CLASS_ATTRS,
+)
+async def list_recipe_attrs(asset_class: str = ac):
+    """
+    Returns a dictionary of selected asset class attributes
+    """
+    _LOGGER.info("serving recipes attributes list")
+    try:
+        return rgc.asset_classes[asset_class]
+    except KeyError:
+        msg = MSG_404.format(f"asset class ({asset_class})")
+        _LOGGER.warning(msg)
+        raise HTTPException(status_code=404, detail=msg)
+
+
+@router.get(
+    "/recipes/contents/{recipe}",
+    response_model=Recipe,
+    tags=api_version_tags,
+    operation_id=API_VERSION + API_ID_RECIPE_CONTENTS,
+)
+async def get_recipe_contents(recipe: str = r):
+    """
+    Returns a dictionary of selected recipe contents
+    """
+    try:
+        recipe = get_recipe(rgc=rgc, recipe_name=recipe)
+        _LOGGER.info(f"Recipe object: {recipe}")
+        return JSONResponse(recipe.to_dict())
+    except Exception as e:
+        msg = MSG_404.format(f"recipe ({recipe})")
+        _LOGGER.warning(msg)
+        raise HTTPException(status_code=404, detail=msg)
+
+
+@router.get(
+    "/asset_classes/contents/{asset_class}",
+    response_model=AssetClass,
+    tags=api_version_tags,
+    operation_id=API_VERSION + API_ID_ASSET_CLASS_CONTENTS,
+)
+async def get_asset_class_contents(asset_class: str = r):
+    """
+    Returns a dictionary of selected asset class contents
+    """
+    try:
+        asset_class = get_asset_class(rgc=rgc, asset_class_name=asset_class)
+        _LOGGER.info(f"AssetClass object: {asset_class}")
+        return JSONResponse(asset_class.to_dict())
+    except Exception as e:
+        msg = MSG_404.format(f"asset class ({asset_class})")
         _LOGGER.warning(msg)
         raise HTTPException(status_code=404, detail=msg)

@@ -1,4 +1,6 @@
 import logging
+import os
+import re
 import sys
 from glob import glob
 from json import dump
@@ -6,22 +8,60 @@ from subprocess import run
 
 from attmap import PathExAttMap as PXAM
 from refgenconf import RefGenConf
+from refgenconf.const import (
+    ARCHIVE_MAP_CFG,
+    BUILD_STATS_DIR,
+    CFG_ALIASES_KEY,
+    CFG_ARCHIVE_CHECKSUM_KEY,
+    CFG_ARCHIVE_CONFIG_KEY,
+    CFG_ARCHIVE_KEY,
+    CFG_ARCHIVE_KEY_OLD,
+    CFG_ARCHIVE_SIZE_KEY,
+    CFG_ASSET_CHECKSUM_KEY,
+    CFG_ASSET_CHILDREN_KEY,
+    CFG_ASSET_CLASS_FOLDER_KEY,
+    CFG_ASSET_CLASS_KEY,
+    CFG_ASSET_DEFAULT_TAG_KEY,
+    CFG_ASSET_DESC_KEY,
+    CFG_ASSET_PARENTS_KEY,
+    CFG_ASSET_PATH_KEY,
+    CFG_ASSET_SIZE_KEY,
+    CFG_ASSET_TAGS_KEY,
+    CFG_ASSETS_KEY,
+    CFG_GENOME_DESC_KEY,
+    CFG_GENOMES_KEY,
+    CFG_RECIPE_FOLDER_KEY,
+    CFG_SEEK_KEYS_KEY,
+    CFG_VERSION_KEY,
+    DEFAULT_TAG,
+    LOCKED_ARCHIVE_MAP_CFG,
+    ORI_LOG_NAME_REGEX,
+    REFGENIE_BY_CFG,
+    REQ_CFG_VERSION,
+    TEMPLATE_ASSET_DIR_CONTENTS,
+    TEMPLATE_LOG,
+    TEMPLATE_RECIPE_INPUTS_JSON,
+    TEMPLATE_RECIPE_JSON,
+)
 from refgenconf.exceptions import (
     ConfigNotCompliantError,
     GenomeConfigFormatError,
     MissingConfigDataError,
     RefgenconfError,
 )
-from refgenconf.helpers import replace_str_in_obj, swap_names_in_tree
+from refgenconf.helpers import block_iter_repr, replace_str_in_obj, swap_names_in_tree
+from rich.progress import track
 from ubiquerg import checksum, is_command_callable, parse_registry_path, size
+from yacman import UndefinedAliasError
 
-from .const import *
+from .const import CFG_LEGACY_ARCHIVE_CHECKSUM_KEY, DESC_PLACEHOLDER, PKG_NAME
 
-global _LOGGER
 _LOGGER = logging.getLogger(PKG_NAME)
 
 
-def archive(rgc, registry_paths, force, remove, cfg_path, genomes_desc):
+def archive(
+    rgc, registry_paths, force, remove, cfg_path, genomes_desc, map=False, reduce=False
+):
     """
     Takes the RefGenConf object and builds individual tar archives
     that can be then served with 'refgenieserver serve'. Additionally determines their md5 checksums, file sizes and
@@ -35,6 +75,7 @@ def archive(rgc, registry_paths, force, remove, cfg_path, genomes_desc):
     :param bool remove: whether remove specified genome/asset:tag from the archive
     :param str cfg_path: config file path
     """
+
     if float(rgc[CFG_VERSION_KEY]) < float(REQ_CFG_VERSION):
         raise ConfigNotCompliantError(
             f"You need to update the genome config to v{REQ_CFG_VERSION} in order to use the archiver. "
@@ -103,7 +144,21 @@ def archive(rgc, registry_paths, force, remove, cfg_path, genomes_desc):
         exit(1)
     else:
         _LOGGER.debug(f"Genomes to be processed: {str(genomes)}")
-    genomes = [rgc.get_genome_alias_digest(g) for g in genomes]
+    genomes = [rgc.get_genome_alias_digest(g, fallback=True) for g in genomes]
+
+    if reduce:
+        _LOGGER.info("Running the reduce procedure. No assets will be archived.")
+        matched_gats = _archive_reduce(rgc_server)
+        if matched_gats:
+            _LOGGER.info(
+                f"Reduced {len(matched_gats)} configs: {block_iter_repr(matched_gats)}"
+            )
+            _LOGGER.info(f"Config file: {rgc_server.file_path}")
+        else:
+            _LOGGER.warning(f"No map configs to reduce")
+        _add_recipes_and_asset_classes(rgc, rgc_server)
+        sys.exit(0)
+
     if genomes_desc is not None:
         if os.path.exists(genomes_desc):
             import csv
@@ -159,9 +214,13 @@ def archive(rgc, registry_paths, force, remove, cfg_path, genomes_desc):
             default_tag = rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][
                 asset_name
             ].setdefault(CFG_ASSET_DEFAULT_TAG_KEY, DEFAULT_TAG)
+            asset_class = rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][
+                asset_name
+            ].setdefault(CFG_ASSET_CLASS_KEY, asset_name)
             asset_attrs = {
                 CFG_ASSET_DESC_KEY: asset_desc,
                 CFG_ASSET_DEFAULT_TAG_KEY: default_tag,
+                CFG_ASSET_CLASS_KEY: asset_class,
             }
             _LOGGER.debug(f"Updating '{genome}/{asset_name}' asset attributes...")
             with rgc_server as r:
@@ -175,6 +234,18 @@ def archive(rgc, registry_paths, force, remove, cfg_path, genomes_desc):
                 ].keys()
             )
             for tag_name in tags if isinstance(tags, list) else [tags]:
+                if map:
+                    locked_map_cfg_path = _get_map_cfg_path(
+                        rgc_server, genome, asset_name, tag_name, locked=True
+                    )
+                    rgc_server.make_writable(filepath=locked_map_cfg_path)
+                    rgc_server.make_readonly()
+                    _LOGGER.info(
+                        f"Running map step. Using config: {locked_map_cfg_path}"
+                    )
+                    map_cfg_path = _get_map_cfg_path(
+                        rgc_server, genome, asset_name, tag_name
+                    )
                 if not rgc.is_asset_complete(genome, asset_name, tag_name):
                     raise MissingConfigDataError(
                         f"Asset '{genome}/{asset_name}:{tag_name}' is incomplete. "
@@ -211,6 +282,9 @@ def archive(rgc, registry_paths, force, remove, cfg_path, genomes_desc):
                         _get_asset_dir_contents(target_file_core, asset_name, tag_name)
                         _check_tgz(input_file, target_file)
                         _copy_recipe(input_file, target_dir, asset_name, tag_name)
+                        _copy_recipe_inputs(
+                            input_file, target_dir, asset_name, tag_name
+                        )
                         _copy_log(input_file, target_dir, asset_name, tag_name)
                         # TODO: remove the rest of this try block in the future
                         _check_tgz_legacy(
@@ -295,12 +369,33 @@ def archive(rgc, registry_paths, force, remove, cfg_path, genomes_desc):
                         ][tag_name][CFG_ARCHIVE_CHECKSUM_KEY]
                         _LOGGER.debug(exists_msg + " Skipping")
                     except KeyError:
-                        _LOGGER.debug(exists_msg + " Calculating archive digest")
-                        tag_attrs = {CFG_ARCHIVE_CHECKSUM_KEY: checksum(target_file)}
+                        _LOGGER.debug(
+                            exists_msg + " Calculating archive digest and size"
+                        )
+                        tag_data = rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][
+                            asset_name
+                        ][CFG_ASSET_TAGS_KEY][tag_name]
+                        tag_data.update(
+                            {
+                                CFG_ARCHIVE_CHECKSUM_KEY: checksum(target_file),
+                                CFG_ARCHIVE_SIZE_KEY: size(target_file),
+                                CFG_ASSET_SIZE_KEY: size(input_file),
+                            }
+                        )
                         with rgc_server as r:
-                            r.update_tags(genome, asset_name, tag_name, tag_attrs)
+                            r.update_tags(genome, asset_name, tag_name, tag_data)
+                if map:
+                    # move the contents of the locked map config to a map config,
+                    # which is discoverable by the reduce step
+                    os.rename(locked_map_cfg_path, map_cfg_path)
+                    _LOGGER.info(
+                        f"Asset metadata saved in '{map_cfg_path}'. "
+                        f"To make the asset accessible globally run: refgenieserver archive --reduce"
+                    )
 
         counter += 1
+    if not map:
+        _add_recipes_and_asset_classes(rgc, rgc_server)
     _LOGGER.info(f"Builder finished; server config file saved: {rgc_server.file_path}")
 
 
@@ -370,18 +465,28 @@ def _check_tgz_legacy(path, output, asset_name, genome_name, alias):
 
 def _copy_log(input_dir, target_dir, asset_name, tag_name):
     """
-    Copy the log file
+    Copy the log file to the target directory
 
     :param str input_dir: path to the directory to copy the recipe from
     :param str target_dir: path to the directory to copy the recipe to
+    :param str asset_name: name of the asset
+    :param str tag_name: name of the tag
+    :raise RefgenconfError: if there are more than one log files matched
     """
-    log_path = f"{input_dir}/{BUILD_STATS_DIR}/{ORI_LOG_NAME}"
+    log_path_regex = f"{input_dir}/{BUILD_STATS_DIR}/{ORI_LOG_NAME_REGEX}"
+    # match log files
+    matched_logs = glob(log_path_regex)
+    if len(matched_logs) > 1:
+        raise RefgenconfError(
+            f"More than one log file matched with '{log_path_regex}': {matched_logs}"
+        )
+    if len(matched_logs) == 0:
+        _LOGGER.warning(f"No log file matched with '{log_path_regex}'")
+        return
+    log_path = matched_logs[0]
     if log_path and os.path.exists(log_path):
         run(
-            "cp "
-            + log_path
-            + " "
-            + os.path.join(target_dir, TEMPLATE_LOG.format(asset_name, tag_name)),
+            f"cp {log_path} {os.path.join(target_dir, TEMPLATE_LOG.format(asset_name, tag_name))}",
             shell=True,
         )
         _LOGGER.debug(f"Log copied to: {target_dir}")
@@ -420,7 +525,7 @@ def _get_asset_dir_contents(asset_dir, asset_name, tag_name):
     )
     files = [
         os.path.relpath(os.path.join(dp, f), asset_dir)
-        for dp, dn, fn in os.walk(asset_dir)
+        for dp, _, fn in os.walk(asset_dir)
         for f in fn
         if BUILD_STATS_DIR not in dp
     ]
@@ -445,11 +550,31 @@ def _copy_recipe(input_dir, target_dir, asset_name, tag_name):
         f"{input_dir}/{BUILD_STATS_DIR}/"
         f"{TEMPLATE_RECIPE_JSON.format(asset_name, tag_name)}"
     )
-    if recipe_path and os.path.exists(recipe_path):
-        run("cp " + recipe_path + " " + target_dir, shell=True)
+    if os.path.exists(recipe_path):
+        run(f"cp {recipe_path} {target_dir}", shell=True)
         _LOGGER.debug(f"Recipe copied to: {target_dir}")
     else:
         _LOGGER.warning(f"Recipe not found: {recipe_path}")
+
+
+def _copy_recipe_inputs(input_dir, target_dir, asset_name, tag_name):
+    """
+    Copy the recipe inputs
+
+    :param str input_dir: path to the directory to copy the recipe inputs from
+    :param str target_dir: path to the directory to copy the recipe inputs to
+    :param str asset_name: asset name
+    :param str tag_name: tag name
+    """
+    recipe_inputs_path = (
+        f"{input_dir}/{BUILD_STATS_DIR}/"
+        f"{TEMPLATE_RECIPE_INPUTS_JSON.format(asset_name, tag_name)}"
+    )
+    if os.path.exists(recipe_inputs_path):
+        run(f"cp {recipe_inputs_path} {target_dir}", shell=True)
+        _LOGGER.debug(f"Recipe inputs copied to: {target_dir}")
+    else:
+        _LOGGER.warning(f"Recipe inputs not found: {recipe_inputs_path}")
 
 
 def _remove_archive(rgc, registry_paths, cfg_archive_folder_key=CFG_ARCHIVE_KEY):
@@ -537,3 +662,113 @@ def _get_paths_element(registry_paths, element):
     :return list[str]: extracted elements
     """
     return [x[element] for x in _correct_registry_paths(registry_paths)]
+
+
+def _get_map_cfg_path(rgc, genome=None, asset=None, tag=None, locked=False):
+    result_dir = os.path.join(rgc.data_dir, genome, asset, tag, BUILD_STATS_DIR)
+    return os.path.join(
+        result_dir, LOCKED_ARCHIVE_MAP_CFG if locked else ARCHIVE_MAP_CFG
+    )
+
+
+def _archive_reduce(rgc_server):
+    """
+    Run the reduce procedure on the map archive configs
+
+    :param refgenconf.RefGenConf rgc_server: RefGenConf object
+    :return list[str]: genome/asset:tags that were reduced
+    """
+
+    def _map_cfg_match_pattern(data_dir, match_all_str):
+        """
+        Create a path to the map genome config witb a provided 'match all' character,
+        which needs to be different depending on the matchig scenario.
+
+        :param str data_dir: an absolute path to the data directory
+        :param str match_all_str: match all character to use
+        """
+        return os.path.join(
+            data_dir,
+            *([match_all_str] * 3),
+            BUILD_STATS_DIR,
+            ARCHIVE_MAP_CFG,
+        )
+
+    regex_pattern = _map_cfg_match_pattern(rgc_server.data_dir, "(\S+)")
+    glob_pattern = _map_cfg_match_pattern(rgc_server.data_dir, "*")
+    rgc_map_filepaths = glob(glob_pattern, recursive=True)
+    if len(rgc_map_filepaths) == 0:
+        return
+    _LOGGER.debug(f"Map configs to reduce: {block_iter_repr(rgc_map_filepaths)}")
+    matched_gats = []
+    for rgc_map_filepath in track(
+        rgc_map_filepaths,
+        description=f"Reducing {len(rgc_map_filepaths)} configs",
+    ):
+        matched_genome, matched_asset, matched_tag = re.match(
+            pattern=regex_pattern, string=rgc_map_filepath
+        ).groups()
+        matched_gat = f"{matched_genome}/{matched_asset}:{matched_tag}"
+        map_rgc = RefGenConf(filepath=rgc_map_filepath, writable=False)
+        try:
+            tag_dict = map_rgc.genomes[matched_genome][CFG_ASSETS_KEY][matched_asset][
+                CFG_ASSET_TAGS_KEY
+            ][matched_tag]
+        except Exception as e:
+            _LOGGER.error(f"{matched_tag} not in config.")
+            continue
+        else:
+            _LOGGER.debug(f"{matched_gat} found in config.")
+            with rgc_server as r:
+                try:
+                    r.update_tags(
+                        genome=matched_genome,
+                        asset=matched_asset,
+                        tag=matched_tag,
+                        data=tag_dict,
+                    )
+                except UndefinedAliasError as e:
+                    _LOGGER.error(f"{matched_gat} alias issue: {e}")
+                    alias = map_rgc.get_genome_alias(
+                        digest=matched_genome, fallback=True
+                    )
+                    _LOGGER.info(f"Determined genome alias: {alias}")
+                    r.set_genome_alias(
+                        genome=alias,
+                        digest=matched_genome,
+                        create_genome=True,
+                    )
+            matched_gats.append(matched_gat)
+            os.remove(rgc_map_filepath)
+    return matched_gats
+
+
+def _add_recipes_and_asset_classes(rgc, rgc_server, force=True):
+    """
+    Add recipes and asset classes to the server.
+
+    :param RefGenConf rgc: refgenconf object
+    :param RefGenConf rgc_server: refgenconf server object
+    :param bool force: whether to force addition of recipes and asset classes
+    """
+    with rgc_server as r:
+        r[CFG_RECIPE_FOLDER_KEY] = os.path.join(r[CFG_ARCHIVE_KEY], "recipes")
+        r[CFG_ASSET_CLASS_FOLDER_KEY] = os.path.join(
+            r[CFG_ARCHIVE_KEY], "asset_classes"
+        )
+    for asset_class_name in rgc.list_asset_classes():
+        _LOGGER.debug(f"Adding '{asset_class_name}' asset class")
+        try:
+            rgc_server.add_asset_class(
+                asset_class_path=rgc.get_asset_class_file(asset_class_name), force=force
+            )
+        except Exception as e:
+            _LOGGER.warning(e)
+    for recipe_name in rgc.list_recipes():
+        _LOGGER.debug(f"Adding '{recipe_name}' recipe")
+        try:
+            rgc_server.add_recipe(
+                recipe_path=rgc.get_recipe_file(recipe_name), force=force
+            )
+        except Exception as e:
+            _LOGGER.warning(e)

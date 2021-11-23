@@ -1,0 +1,76 @@
+{% extends "v3/base.html" %} {% block title %}{{ asset_class.name }}{% endblock
+%} {% block head %} {{ super() }}
+<script>
+  $(document).ready(function () {
+    $('[data-toggle="tooltip"]').tooltip();
+  });
+</script>
+{% endblock %} {% macro safe_show_attr(x) %} {% if x is none or not x|length %}
+NA {% else %} {{ x }} {% endif %} {% endmacro %} {%block content %}
+<div class="container">
+  <div class="row align-items-center">
+    <div class="col-6">
+      <h2>{{ asset_class.name }} (version: {{asset_class.version}})</h2>
+    </div>
+  </div>
+  <div class="row align-items-center">
+    <div class="col-12">
+      <p>
+        Description:
+        <i>{{ asset_class.description }}</i>
+      </p>
+    </div>
+  </div>
+  <div class="row align-items-center">
+    <div class="col-8">
+      <h3>Seek keys</h3>
+      <table
+        class="table table-hover table-sm"
+        id="recipe-seek_keys-table"
+        data-toggle="table"
+        data-search="true"
+      >
+        <thead class="thead-light">
+          <tr>
+            <th class="text-nowrap" data-align="center" data-sortable="true">
+              Name
+            </th>
+            <th class="text-nowrap" data-align="center" data-sortable="true">
+              Value
+            </th>
+            <th class="text-nowrap" data-align="center" data-sortable="true">
+              Type
+            </th>
+            <th class="text-nowrap" data-align="center" data-sortable="true">
+              Description
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for seek_key_name, seek_key_data in asset_class.seek_keys.items()
+          %}
+          <tr>
+            <td class="text-nowrap"><b>{{ seek_key_name }}</b></td>
+            <td class="text-nowrap">
+              <code>{{ seek_key_data["value"] }}</code>
+            </td>
+            <td class="text-nowrap">{{ seek_key_data["type"] }}</td>
+            <td class="text-nowrap">{{ seek_key_data["description"] }}</td>
+            {% endfor %}
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="col-4">
+      <h3>API endpoints</h3>
+      <ul>
+        {% for id, path in links_dict.items() %}
+        <li>
+          <a href="{{ path }}?tag={{ tag|urlencode }}">{{ id }}</a>
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endblock %}
+  </div>
+</div>

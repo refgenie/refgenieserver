@@ -45,7 +45,7 @@ jobs:
   deploy:
     env:
       service: dev1
-      data-repo: rg.databio.org
+      data-repo: aws_igenomes
     name: Deploy
     runs-on: ubuntu-latest
     steps:
@@ -63,7 +63,7 @@ jobs:
 
 
     - name: Checkout demo repo
-      uses: actions/checkout@v2   
+      uses: actions/checkout@v2
       with:
         repository: refgenie/${{ env.data-repo }}
         refs: refs/heads/master
