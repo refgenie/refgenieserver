@@ -1,4 +1,5 @@
-""" Package constants """
+"""Package constants"""
+
 import os
 from platform import python_version
 

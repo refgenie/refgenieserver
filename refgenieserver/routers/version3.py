@@ -233,7 +233,7 @@ async def get_alias_dict():
 async def list_available_assets(
     includeSeekKeys: Optional[bool] = Query(
         False, description="Whether to include seek keys in the response"
-    )
+    ),
 ):
     """
     Returns a list of assets that can be downloaded, keyed by the respective genome digests.

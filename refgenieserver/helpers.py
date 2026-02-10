@@ -52,16 +52,18 @@ def build_parser():
     # add arguments that are common for both subparsers
     for cmd, desc in msg_by_cmd.items():
         sps[cmd] = add_subparser(cmd, desc)
-        sps[cmd].add_argument(
-            "-c",
-            "--config",
-            required=False,
-            dest="config",
-            help=f"A path to the refgenie config file (YAML). If not provided, the "
-            f"first available environment variable among: "
-            f"'{', '.join(CFG_ENV_VARS)}' will be used if set. "
-            f"Currently: {env_var_val}",
-        ),
+        (
+            sps[cmd].add_argument(
+                "-c",
+                "--config",
+                required=False,
+                dest="config",
+                help=f"A path to the refgenie config file (YAML). If not provided, the "
+                f"first available environment variable among: "
+                f"'{', '.join(CFG_ENV_VARS)}' will be used if set. "
+                f"Currently: {env_var_val}",
+            ),
+        )
         sps[cmd].add_argument(
             "-d",
             "--dbg",
@@ -158,9 +160,9 @@ def get_datapath_for_genome(
         the source is remote
     """
     req_keys = [i[1] for i in Formatter().parse(pth_templ) if i[1] is not None]
-    assert all(
-        [k in req_keys for k in list(fill_dict.keys())]
-    ), f"Only the these keys are allowed in the fill_dict: {req_keys}"
+    assert all([k in req_keys for k in list(fill_dict.keys())]), (
+        f"Only the these keys are allowed in the fill_dict: {req_keys}"
+    )
     fill_dict.update({"base": BASE_DIR})
     # fill_dict.update({"base": rgc["genome_archive_folder"]})
     remote = is_data_remote(rgc)

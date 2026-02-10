@@ -1,1 +1,4 @@
-__version__ = "0.7.0"
+# Version is defined in pyproject.toml
+from importlib.metadata import version
+
+__version__ = version("refgenieserver")
