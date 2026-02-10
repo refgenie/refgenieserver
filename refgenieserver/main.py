@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import sys
 
 import logmuse
@@ -24,7 +26,7 @@ templates = Jinja2Templates(directory=TEMPLATES_PATH)
 templates.env.filters["os_path_join"] = lambda paths: os.path.join(*paths)
 
 
-def main():
+def main() -> None:
     """Entry point for the refgenieserver CLI."""
     global rgc, _LOGGER
     parser = build_parser()

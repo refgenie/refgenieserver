@@ -1,6 +1,10 @@
+from __future__ import annotations
+
+import argparse
 import logging
 from json import load
 from string import Formatter
+from typing import TYPE_CHECKING, Any
 
 from fastapi import HTTPException
 from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
@@ -9,6 +13,11 @@ from refgenconf.helpers import send_data_request
 from ubiquerg import VersionInHelpParser, is_url
 from yacman import get_first_env_var
 
+if TYPE_CHECKING:
+    from fastapi import FastAPI
+    from refgenconf import RefGenConf
+    from starlette.responses import Response
+
 from ._version import __version__ as v
 from .const import *
 
@@ -16,7 +25,7 @@ global _LOGGER
 _LOGGER = logging.getLogger(PKG_NAME)
 
 
-def build_parser():
+def build_parser() -> argparse.ArgumentParser:
     """Build the argument parser.
 
     Returns:
@@ -112,7 +121,7 @@ def build_parser():
     return parser
 
 
-def preprocess_attrs(attrs):
+def preprocess_attrs(attrs: dict) -> dict:
     """Rename keys based on the CHANGED_KEYS mapping (new_key:old_key).
 
     Args:
@@ -131,7 +140,7 @@ def preprocess_attrs(attrs):
     return attrs_cpy
 
 
-def get_openapi_version(app):
+def get_openapi_version(app: FastAPI) -> str:
     """Get the OpenAPI version from the OpenAPI description JSON.
 
     Args:
@@ -148,8 +157,11 @@ def get_openapi_version(app):
 
 
 def get_datapath_for_genome(
-    rgc, fill_dict, pth_templ="{base}/{genome}/{file_name}", remote_key=None
-):
+    rgc: RefGenConf,
+    fill_dict: dict[str, str],
+    pth_templ: str = "{base}/{genome}/{file_name}",
+    remote_key: str | None = None,
+) -> tuple[str, bool]:
     """Get the path to the data file to serve.
 
     Depending on the remote URL base being set or not, returns either a remote
@@ -188,7 +200,7 @@ def get_datapath_for_genome(
     return pth_templ.format(**fill_dict), remote
 
 
-def is_data_remote(rgc):
+def is_data_remote(rgc: RefGenConf) -> bool:
     """Determine if the server genome config defines a remote data source.
 
     Checks for a 'remotes' key with correct structure (each remote has a
@@ -214,7 +226,7 @@ def is_data_remote(rgc):
     )
 
 
-def purge_nonservable(rgc):
+def purge_nonservable(rgc: RefGenConf) -> RefGenConf:
     """Remove entries not processed by the archiver that should not be served.
 
     Args:
@@ -224,7 +236,7 @@ def purge_nonservable(rgc):
         The configuration object with only servable entries.
     """
 
-    def _check_servable(rgc, genome, asset, tag):
+    def _check_servable(rgc: RefGenConf, genome: str, asset: str, tag: str) -> bool:
         tag_data = rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][asset][
             CFG_ASSET_TAGS_KEY
         ][tag]
@@ -248,7 +260,9 @@ def purge_nonservable(rgc):
     return rgc
 
 
-def safely_get_example(rgc, entity, rgc_method, default, **kwargs):
+def safely_get_example(
+    rgc: RefGenConf, entity: str, rgc_method: str, default: str, **kwargs: Any
+) -> str:
     """Safely get an example value from the config, falling back to a default.
 
     Args:
@@ -272,7 +286,14 @@ def safely_get_example(rgc, entity, rgc_method, default, **kwargs):
         return default
 
 
-def create_asset_file_path(rgc, genome, asset, tag, seek_key, remote_key="http"):
+def create_asset_file_path(
+    rgc: RefGenConf,
+    genome: str,
+    asset: str,
+    tag: str | None,
+    seek_key: str,
+    remote_key: str = "http",
+) -> str:
     """Construct a path to an unarchived asset file.
 
     Args:
@@ -316,7 +337,9 @@ def create_asset_file_path(rgc, genome, asset, tag, seek_key, remote_key="http")
     return path
 
 
-def serve_file_for_asset(rgc, genome, asset, tag, template):
+def serve_file_for_asset(
+    rgc: RefGenConf, genome: str, asset: str, tag: str | None, template: str
+) -> Response:
     """Serve a file, like a build log.
 
     Args:
@@ -353,7 +376,9 @@ def serve_file_for_asset(rgc, genome, asset, tag, template):
         raise HTTPException(status_code=404, detail=msg)
 
 
-def serve_json_for_asset(rgc, genome, asset, tag, template):
+def serve_json_for_asset(
+    rgc: RefGenConf, genome: str, asset: str, tag: str | None, template: str
+) -> Response:
     """Serve a JSON object, like a recipe or asset directory contents.
 
     Args:
@@ -390,7 +415,9 @@ def serve_json_for_asset(rgc, genome, asset, tag, template):
         raise HTTPException(status_code=404, detail=msg)
 
 
-def get_asset_dir_contents(rgc, genome, asset, tag):
+def get_asset_dir_contents(
+    rgc: RefGenConf, genome: str, asset: str, tag: str | None
+) -> list:
     """Get the asset directory contents as a list.
 
     Args:

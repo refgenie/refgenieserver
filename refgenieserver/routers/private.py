@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from fastapi import APIRouter
 
 from ..const import *
@@ -15,7 +17,7 @@ api_version_tags = [PRIV_API_ID]
     operation_id=PRIVATE_API + API_ID_GENOMES_DICT,
     response_model=Dict[str, Genome],
 )
-async def get_genomes_dict():
+async def get_genomes_dict() -> dict:
     """Return the entire 'genomes' section of the config (private endpoint)."""
     _LOGGER.info(f"serving genomes dict: '{rgc[CFG_GENOMES_KEY]}'")
     return rgc[CFG_GENOMES_KEY]

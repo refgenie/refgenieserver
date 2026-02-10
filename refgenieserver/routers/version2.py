@@ -1,10 +1,12 @@
+from __future__ import annotations
+
 from copy import copy
 
 from fastapi import APIRouter, HTTPException
 from refgenconf.helpers import replace_str_in_obj
 from refgenconf.refgenconf import map_paths_by_id
 from starlette.requests import Request
-from starlette.responses import FileResponse, JSONResponse, RedirectResponse
+from starlette.responses import FileResponse, JSONResponse, RedirectResponse, Response
 from ubiquerg import parse_registry_path
 
 from ..const import *
@@ -18,7 +20,7 @@ api_version_tags = [API2_ID]
 
 @router.get("/", tags=api_version_tags)
 @router.get("/index", tags=api_version_tags)
-async def index(request: Request):
+async def index(request: Request) -> Response:
     """Return a landing page HTML with the server resources ready to download."""
     _LOGGER.debug("RefGenConf object:\n{}".format(rgc))
     templ_vars = {
@@ -32,7 +34,9 @@ async def index(request: Request):
 
 
 @router.get("/asset/{genome}/{asset}/splash", tags=api_version_tags)
-async def asset_splash_page(request: Request, genome: str, asset: str, tag: str = None):
+async def asset_splash_page(
+    request: Request, genome: str, asset: str, tag: str | None = None
+) -> Response:
     """Return an asset splash page.
 
     Args:
@@ -64,14 +68,14 @@ async def asset_splash_page(request: Request, genome: str, asset: str, tag: str 
 
 
 @router.get("/genomes", tags=api_version_tags)
-async def list_available_genomes():
+async def list_available_genomes() -> list[str]:
     """Return a list of genomes this server holds at least one asset for."""
     _LOGGER.info("serving genomes string: '{}'".format(rgc.genomes_str()))
     return rgc.genomes_list()
 
 
 @router.get("/assets", operation_id=API_ID_ASSETS, tags=api_version_tags)
-async def list_available_assets():
+async def list_available_assets() -> dict:
     """Return a list of all assets that can be downloaded."""
     ret_dict = rgc.list(include_tags=True)
     _LOGGER.info("serving assets dict: {}".format(ret_dict))
@@ -83,7 +87,7 @@ async def list_available_assets():
     operation_id=API_ID_ARCHIVE,
     tags=api_version_tags,
 )
-async def download_asset(genome: str, asset: str, tag: str = None):
+async def download_asset(genome: str, asset: str, tag: str | None = None) -> Response:
     """Return an asset archive.
 
     Args:
@@ -123,7 +127,7 @@ async def download_asset(genome: str, asset: str, tag: str = None):
     operation_id=API_ID_DEFAULT_TAG,
     tags=api_version_tags,
 )
-async def get_asset_default_tag(genome: str, asset: str):
+async def get_asset_default_tag(genome: str, asset: str) -> str:
     """Return the default tag name.
 
     Args:
@@ -138,7 +142,7 @@ async def get_asset_default_tag(genome: str, asset: str):
     operation_id=API_ID_DIGEST,
     tags=api_version_tags,
 )
-async def get_asset_digest(genome: str, asset: str, tag: str):
+async def get_asset_digest(genome: str, asset: str, tag: str) -> str:
     """Return the asset digest.
 
     Args:
@@ -163,7 +167,7 @@ async def get_asset_digest(genome: str, asset: str, tag: str):
     operation_id=API_ID_ARCHIVE_DIGEST,
     tags=api_version_tags,
 )
-async def get_archive_digest(genome: str, asset: str, tag: str):
+async def get_archive_digest(genome: str, asset: str, tag: str) -> str:
     """Return the archive digest.
 
     Args:
@@ -186,7 +190,9 @@ async def get_archive_digest(genome: str, asset: str, tag: str):
 @router.get(
     "/asset/{genome}/{asset}/log", operation_id=API_ID_LOG, tags=api_version_tags
 )
-async def download_asset_build_log(genome: str, asset: str, tag: str = None):
+async def download_asset_build_log(
+    genome: str, asset: str, tag: str | None = None
+) -> Response:
     """Return a build log.
 
     Args:
@@ -223,7 +229,9 @@ async def download_asset_build_log(genome: str, asset: str, tag: str = None):
 @router.get(
     "/asset/{genome}/{asset}/recipe", operation_id=API_ID_RECIPE, tags=api_version_tags
 )
-async def download_asset_build_recipe(genome: str, asset: str, tag: str = None):
+async def download_asset_build_recipe(
+    genome: str, asset: str, tag: str | None = None
+) -> Response:
     """Return a build recipe.
 
     Args:
@@ -262,7 +270,9 @@ async def download_asset_build_recipe(genome: str, asset: str, tag: str = None):
 @router.get(
     "/asset/{genome}/{asset}", operation_id=API_ID_ASSET_ATTRS, tags=api_version_tags
 )
-async def download_asset_attributes(genome: str, asset: str, tag: str = None):
+async def download_asset_attributes(
+    genome: str, asset: str, tag: str | None = None
+) -> dict:
     """Return a dictionary of asset attributes (archive size, digest, etc.).
 
     Args:
@@ -303,7 +313,7 @@ async def download_asset_attributes(genome: str, asset: str, tag: str = None):
 
 
 @router.get("/genome/{genome}/genome_digest", tags=api_version_tags)
-async def download_genome_digest(genome: str):
+async def download_genome_digest(genome: str) -> str:
     """Return the genome digest.
 
     Args:
@@ -320,7 +330,7 @@ async def download_genome_digest(genome: str):
 
 
 @router.get("/genome/{genome}", operation_id=API_ID_GENOME_ATTRS, tags=api_version_tags)
-async def download_genome_attributes(genome: str):
+async def download_genome_attributes(genome: str) -> dict:
     """Return a dictionary of genome attributes (archive size, digest, etc.).
 
     Args:
@@ -339,7 +349,7 @@ async def download_genome_attributes(genome: str):
 
 
 @router.get("/genomes/{asset}", tags=api_version_tags)
-async def list_genomes_by_asset(asset: str):
+async def list_genomes_by_asset(asset: str) -> list[str]:
     """Return a list of genomes that have the requested asset defined.
 
     Args:

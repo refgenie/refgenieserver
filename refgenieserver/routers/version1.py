@@ -1,9 +1,11 @@
+from __future__ import annotations
+
 from copy import copy
 
 from fastapi import APIRouter, HTTPException
 from refgenconf.helpers import replace_str_in_obj
 from starlette.requests import Request
-from starlette.responses import FileResponse, RedirectResponse
+from starlette.responses import FileResponse, RedirectResponse, Response
 
 from ..const import *
 from ..helpers import get_datapath_for_genome, get_openapi_version, preprocess_attrs
@@ -16,7 +18,7 @@ api_version_tags = [API1_ID]
 
 @router.get("/", tags=api_version_tags)
 @router.get("/index", tags=api_version_tags)
-async def index(request: Request):
+async def index(request: Request) -> Response:
     """Return a landing page HTML with the server resources ready to download."""
     _LOGGER.debug("RefGenConf object:\n{}".format(rgc))
     templ_vars = {
@@ -30,14 +32,14 @@ async def index(request: Request):
 
 
 @router.get("/genomes", tags=api_version_tags)
-def list_available_genomes():
+def list_available_genomes() -> list[str]:
     """Return a list of genomes this server holds at least one asset for."""
     _LOGGER.info("serving genomes string: '{}'".format(rgc.genomes_str()))
     return rgc.genomes_list()
 
 
 @router.get("/assets", tags=api_version_tags)
-def list_available_assets():
+def list_available_assets() -> dict:
     """Return a list of all assets that can be downloaded."""
     ret_dict = rgc.list(include_tags=True)
     _LOGGER.info("serving assets dict: {}".format(ret_dict))
@@ -45,7 +47,7 @@ def list_available_assets():
 
 
 @router.get("/asset/{genome}/{asset}/archive", tags=api_version_tags)
-async def download_asset(genome: str, asset: str, tag: str = None):
+async def download_asset(genome: str, asset: str, tag: str | None = None) -> Response:
     """Return an asset archive.
 
     Since tags were introduced, the default tag is selected behind the scenes.
@@ -83,7 +85,7 @@ async def download_asset(genome: str, asset: str, tag: str = None):
 
 
 @router.get("/asset/{genome}/{asset}", tags=api_version_tags)
-def download_asset_attributes(genome: str, asset: str):
+def download_asset_attributes(genome: str, asset: str) -> dict:
     """Return a dictionary of asset attributes (archive size, checksum, etc.).
 
     Since tags were introduced, the default tag is selected behind the scenes.
@@ -124,7 +126,7 @@ def download_asset_attributes(genome: str, asset: str):
 
 
 @router.get("/genomes/{asset}", tags=api_version_tags)
-def list_genomes_by_asset(asset: str):
+def list_genomes_by_asset(asset: str) -> list[str]:
     """Return a list of genomes that have the requested asset defined.
 
     Args:

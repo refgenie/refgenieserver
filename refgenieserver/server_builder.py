@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 import sys
 from glob import glob
@@ -21,7 +23,14 @@ global _LOGGER
 _LOGGER = logging.getLogger(PKG_NAME)
 
 
-def archive(rgc, registry_paths, force, remove, cfg_path, genomes_desc):
+def archive(
+    rgc: RefGenConf,
+    registry_paths: list[dict] | None,
+    force: bool,
+    remove: bool,
+    cfg_path: str,
+    genomes_desc: str | None,
+) -> None:
     """Build tar archives for serving with 'refgenieserver serve'.
 
     Determines md5 checksums and file sizes and updates the original refgenie
@@ -305,7 +314,7 @@ def archive(rgc, registry_paths, force, remove, cfg_path, genomes_desc):
     _LOGGER.info(f"Builder finished; server config file saved: {rgc_server.file_path}")
 
 
-def _check_tgz(path, output):
+def _check_tgz(path: str, output: str) -> None:
     """Check if file exists and tar it, using pigz if available.
 
     Args:
@@ -331,7 +340,9 @@ def _check_tgz(path, output):
         raise OSError(f"Entity '{path}' does not exist")
 
 
-def _check_tgz_legacy(path, output, asset_name, genome_name, alias):
+def _check_tgz_legacy(
+    path: str, output: str, asset_name: str, genome_name: str, alias: str | list[str]
+) -> None:
     """Legacy version of _check_tgz, to be removed in the future.
 
     Checks if file exists and tars it with alias-based naming. Uses pigz
@@ -373,7 +384,7 @@ def _check_tgz_legacy(path, output, asset_name, genome_name, alias):
             raise OSError(f"Entity '{path}' does not exist")
 
 
-def _copy_log(input_dir, target_dir, asset_name, tag_name):
+def _copy_log(input_dir: str, target_dir: str, asset_name: str, tag_name: str) -> None:
     """Copy the build log file.
 
     Args:
@@ -396,7 +407,7 @@ def _copy_log(input_dir, target_dir, asset_name, tag_name):
         _LOGGER.warning(f"Log not found: {log_path}")
 
 
-def _copy_asset_dir(input_dir, target_dir):
+def _copy_asset_dir(input_dir: str, target_dir: str) -> None:
     """Copy the asset directory via rsync.
 
     Args:
@@ -413,7 +424,7 @@ def _copy_asset_dir(input_dir, target_dir):
         _LOGGER.warning(f"Asset directory not found: {input_dir}")
 
 
-def _get_asset_dir_contents(asset_dir, asset_name, tag_name):
+def _get_asset_dir_contents(asset_dir: str, asset_name: str, tag_name: str) -> None:
     """Create a JSON file listing the unarchived asset directory contents.
 
     Args:
@@ -439,7 +450,9 @@ def _get_asset_dir_contents(asset_dir, asset_name, tag_name):
     )
 
 
-def _copy_recipe(input_dir, target_dir, asset_name, tag_name):
+def _copy_recipe(
+    input_dir: str, target_dir: str, asset_name: str, tag_name: str
+) -> None:
     """Copy the build recipe file.
 
     Args:
@@ -459,7 +472,11 @@ def _copy_recipe(input_dir, target_dir, asset_name, tag_name):
         _LOGGER.warning(f"Recipe not found: {recipe_path}")
 
 
-def _remove_archive(rgc, registry_paths, cfg_archive_folder_key=CFG_ARCHIVE_KEY):
+def _remove_archive(
+    rgc: RefGenConf,
+    registry_paths: list[dict],
+    cfg_archive_folder_key: str = CFG_ARCHIVE_KEY,
+) -> list[str]:
     """Remove archives and corresponding entries from the RefGenConf object.
 
     Args:
@@ -513,7 +530,7 @@ def _remove_archive(rgc, registry_paths, cfg_archive_folder_key=CFG_ARCHIVE_KEY)
     return ret
 
 
-def _correct_registry_paths(registry_paths):
+def _correct_registry_paths(registry_paths: list[dict]) -> list[dict]:
     """Correct registry paths by swapping 'namespace' and 'item' keys.
 
     parse_registry_path recognizes 'item' as the central element, but we
@@ -526,7 +543,7 @@ def _correct_registry_paths(registry_paths):
         Corrected registry paths.
     """
 
-    def _swap(rp):
+    def _swap(rp: dict) -> dict:
         """Swap 'namespace' and 'item' values in a registry path dict.
 
         Args:
@@ -542,7 +559,7 @@ def _correct_registry_paths(registry_paths):
     return [_swap(x) if x["namespace"] is None else x for x in registry_paths]
 
 
-def _get_paths_element(registry_paths, element):
+def _get_paths_element(registry_paths: list[dict], element: str) -> list[str | None]:
     """Extract a specific element from a collection of registry paths.
 
     Args:
