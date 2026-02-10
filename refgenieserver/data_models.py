@@ -4,9 +4,7 @@ from pydantic import BaseModel
 
 
 class Tag(BaseModel):
-    """
-    Tag data model
-    """
+    """Tag data model."""
 
     asset_path: str
     asset_digest: str
@@ -19,9 +17,7 @@ class Tag(BaseModel):
 
 
 class Asset(BaseModel):
-    """
-    Asset data model
-    """
+    """Asset data model."""
 
     asset_description: str
     tags: Dict[str, Tag]
@@ -29,9 +25,7 @@ class Asset(BaseModel):
 
 
 class Genome(BaseModel):
-    """
-    Genome data model
-    """
+    """Genome data model."""
 
     genome_description: str
     assets: Dict[str, Asset]

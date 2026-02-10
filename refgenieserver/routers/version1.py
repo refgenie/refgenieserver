@@ -17,9 +17,7 @@ api_version_tags = [API1_ID]
 @router.get("/", tags=api_version_tags)
 @router.get("/index", tags=api_version_tags)
 async def index(request: Request):
-    """
-    Returns a landing page HTML with the server resources ready do download. No inputs required.
-    """
+    """Return a landing page HTML with the server resources ready to download."""
     _LOGGER.debug("RefGenConf object:\n{}".format(rgc))
     templ_vars = {
         "request": request,
@@ -33,18 +31,14 @@ async def index(request: Request):
 
 @router.get("/genomes", tags=api_version_tags)
 def list_available_genomes():
-    """
-    Returns a list of genomes this server holds at least one asset for. No inputs required.
-    """
+    """Return a list of genomes this server holds at least one asset for."""
     _LOGGER.info("serving genomes string: '{}'".format(rgc.genomes_str()))
     return rgc.genomes_list()
 
 
 @router.get("/assets", tags=api_version_tags)
 def list_available_assets():
-    """
-    Returns a list of all assets that can be downloaded. No inputs required.
-    """
+    """Return a list of all assets that can be downloaded."""
     ret_dict = rgc.list(include_tags=True)
     _LOGGER.info("serving assets dict: {}".format(ret_dict))
     return ret_dict
@@ -52,11 +46,14 @@ def list_available_assets():
 
 @router.get("/asset/{genome}/{asset}/archive", tags=api_version_tags)
 async def download_asset(genome: str, asset: str, tag: str = None):
-    """
-    Returns an archive. Requires the genome name and the asset name as an input.
+    """Return an asset archive.
 
-    Since the refgenconf.RefGenConf object structure has changed (tags were introduced),
-    the default tag has to be selected behind the scenes
+    Since tags were introduced, the default tag is selected behind the scenes.
+
+    Args:
+        genome: Genome name.
+        asset: Asset name.
+        tag: Tag name (default tag used if not specified).
     """
     tag = tag or rgc.get_default_tag(
         genome, asset
@@ -87,12 +84,13 @@ async def download_asset(genome: str, asset: str, tag: str = None):
 
 @router.get("/asset/{genome}/{asset}", tags=api_version_tags)
 def download_asset_attributes(genome: str, asset: str):
-    """
-    Returns a dictionary of asset attributes, like archive size, archive checksum etc.
-    Requires the genome name and the asset name as an input.
+    """Return a dictionary of asset attributes (archive size, checksum, etc.).
 
-    Since the refgenconf.RefGenConf object structure has changed (tags were introduced),
-    the default tag has to be selected behind the scenes
+    Since tags were introduced, the default tag is selected behind the scenes.
+
+    Args:
+        genome: Genome name.
+        asset: Asset name.
     """
     try:
         attrs = preprocess_attrs(
@@ -127,8 +125,10 @@ def download_asset_attributes(genome: str, asset: str):
 
 @router.get("/genomes/{asset}", tags=api_version_tags)
 def list_genomes_by_asset(asset: str):
-    """
-    Returns a list of genomes that have the requested asset defined. Requires the asset name as an input.
+    """Return a list of genomes that have the requested asset defined.
+
+    Args:
+        asset: Asset name.
     """
     genomes = rgc.list_genomes_by_asset(asset)
     _LOGGER.info("serving genomes by '{}' asset: {}".format(asset, genomes))

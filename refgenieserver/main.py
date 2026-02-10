@@ -25,6 +25,7 @@ templates.env.filters["os_path_join"] = lambda paths: os.path.join(*paths)
 
 
 def main():
+    """Entry point for the refgenieserver CLI."""
     global rgc, _LOGGER
     parser = build_parser()
     args = parser.parse_args()

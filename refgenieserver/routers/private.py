@@ -16,8 +16,6 @@ api_version_tags = [PRIV_API_ID]
     response_model=Dict[str, Genome],
 )
 async def get_genomes_dict():
-    """
-    **Private endpoint**, which returns the entire 'genomes' part of the config
-    """
+    """Return the entire 'genomes' section of the config (private endpoint)."""
     _LOGGER.info(f"serving genomes dict: '{rgc[CFG_GENOMES_KEY]}'")
     return rgc[CFG_GENOMES_KEY]

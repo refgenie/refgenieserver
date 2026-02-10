@@ -22,18 +22,19 @@ _LOGGER = logging.getLogger(PKG_NAME)
 
 
 def archive(rgc, registry_paths, force, remove, cfg_path, genomes_desc):
-    """
-    Takes the RefGenConf object and builds individual tar archives
-    that can be then served with 'refgenieserver serve'. Additionally determines their md5 checksums, file sizes and
-    updates the original refgenie config with these data. If the --asset and/or --genome options  are used (specific
-    build is requested) the archiver will check for the existence of config file saved in the path provided in
-    `genome_server` in the original config and update it so that no archive metadata is lost
+    """Build tar archives for serving with 'refgenieserver serve'.
 
-    :param RefGenConf rgc: configuration object with the data to build the servable archives for
-    :param list[dict] registry_paths: a collection of mappings that identifies the assets to update
-    :param bool force: whether to force the build of archive, regardless of its existence
-    :param bool remove: whether remove specified genome/asset:tag from the archive
-    :param str cfg_path: config file path
+    Determines md5 checksums and file sizes and updates the original refgenie
+    config with these data. If specific assets/genomes are requested, checks
+    for the server config file and updates it to preserve archive metadata.
+
+    Args:
+        rgc: Configuration object with data to build servable archives for.
+        registry_paths: Collection of mappings identifying assets to update.
+        force: Whether to force the build regardless of existence.
+        remove: Whether to remove specified genome/asset:tag from the archive.
+        cfg_path: Config file path.
+        genomes_desc: Path to CSV file with genome descriptions.
     """
     if float(rgc[CFG_VERSION_KEY]) < float(REQ_CFG_VERSION):
         raise ConfigNotCompliantError(
@@ -305,13 +306,14 @@ def archive(rgc, registry_paths, force, remove, cfg_path, genomes_desc):
 
 
 def _check_tgz(path, output):
-    """
-    Check if file exists and tar it.
-    If gzipping is requested, the pigz software is used if available.
+    """Check if file exists and tar it, using pigz if available.
 
-    :param str path: path to the file to be tarred
-    :param str output: path to the result file
-    :raise OSError: if the file/directory meant to be archived does not exist
+    Args:
+        path: Path to the file to be tarred.
+        output: Path to the result file.
+
+    Raises:
+        OSError: If the file/directory to be archived does not exist.
     """
     pth, tag_name = os.path.split(path)
     if os.path.exists(path):
@@ -330,17 +332,20 @@ def _check_tgz(path, output):
 
 
 def _check_tgz_legacy(path, output, asset_name, genome_name, alias):
-    """
-    NOTE: This is a duplication of the _check_tgz function, kept separate as in
-    the future this step will be simply removed.
+    """Legacy version of _check_tgz, to be removed in the future.
 
-    Check if file exists and tar it.
-    If gzipping is requested, the availability of pigz software is checked and used.
+    Checks if file exists and tars it with alias-based naming. Uses pigz
+    if available.
 
-    :param str path: path to the file to be tarred
-    :param str output: path to the result file
-    :param str asset_name: name of the asset
-    :raise OSError: if the file/directory meant to be archived does not exist
+    Args:
+        path: Path to the file to be tarred.
+        output: Path to the result file.
+        asset_name: Name of the asset.
+        genome_name: Genome digest name.
+        alias: Genome alias or list of aliases.
+
+    Raises:
+        OSError: If the file/directory to be archived does not exist.
     """
     # TODO: remove in the future
     if isinstance(alias, str):
@@ -369,11 +374,13 @@ def _check_tgz_legacy(path, output, asset_name, genome_name, alias):
 
 
 def _copy_log(input_dir, target_dir, asset_name, tag_name):
-    """
-    Copy the log file
+    """Copy the build log file.
 
-    :param str input_dir: path to the directory to copy the recipe from
-    :param str target_dir: path to the directory to copy the recipe to
+    Args:
+        input_dir: Path to the source directory.
+        target_dir: Path to the destination directory.
+        asset_name: Asset name.
+        tag_name: Tag name.
     """
     log_path = f"{input_dir}/{BUILD_STATS_DIR}/{ORI_LOG_NAME}"
     if log_path and os.path.exists(log_path):
@@ -390,11 +397,11 @@ def _copy_log(input_dir, target_dir, asset_name, tag_name):
 
 
 def _copy_asset_dir(input_dir, target_dir):
-    """
-    Copy the asset directory
+    """Copy the asset directory via rsync.
 
-    :param str input_dir: path to the directory to copy the asset dir from
-    :param str target_dir: path to the directory to copy the asset dir to
+    Args:
+        input_dir: Path to the source directory.
+        target_dir: Path to the destination directory.
     """
     if input_dir and os.path.exists(input_dir):
         run(
@@ -407,12 +414,12 @@ def _copy_asset_dir(input_dir, target_dir):
 
 
 def _get_asset_dir_contents(asset_dir, asset_name, tag_name):
-    """
-    Create a file tree with contents of the unarchived asset directory
+    """Create a JSON file listing the unarchived asset directory contents.
 
-    :param str asset_dir: path to the asset directory to get the contents of
-    :param str asset_name: name of the asset
-    :param str tag_name: name of the tag
+    Args:
+        asset_dir: Path to the asset directory.
+        asset_name: Name of the asset.
+        tag_name: Name of the tag.
     """
     asset_dir_contents_file_path = os.path.join(
         os.path.dirname(asset_dir),
@@ -433,13 +440,13 @@ def _get_asset_dir_contents(asset_dir, asset_name, tag_name):
 
 
 def _copy_recipe(input_dir, target_dir, asset_name, tag_name):
-    """
-    Copy the recipe
+    """Copy the build recipe file.
 
-    :param str input_dir: path to the directory to copy the recipe from
-    :param str target_dir: path to the directory to copy the recipe to
-    :param str asset_name: asset name
-    :param str tag_name: tag name
+    Args:
+        input_dir: Path to the source directory.
+        target_dir: Path to the destination directory.
+        asset_name: Asset name.
+        tag_name: Tag name.
     """
     recipe_path = (
         f"{input_dir}/{BUILD_STATS_DIR}/"
@@ -453,14 +460,15 @@ def _copy_recipe(input_dir, target_dir, asset_name, tag_name):
 
 
 def _remove_archive(rgc, registry_paths, cfg_archive_folder_key=CFG_ARCHIVE_KEY):
-    """
-    Remove archives and corresponding entries from the RefGenConf object
+    """Remove archives and corresponding entries from the RefGenConf object.
 
-    :param refgenconf.RefGenConf rgc: object to remove the entries from
-    :param list[dict] registry_paths: entries to remove
-    :param str cfg_archive_folder_key: configuration archive folder key in the genome
-        configuration file
-    :return list[str]: removed file paths
+    Args:
+        rgc: Configuration object to remove entries from.
+        registry_paths: Entries to remove.
+        cfg_archive_folder_key: Archive folder key in the genome config file.
+
+    Returns:
+        List of removed file paths.
     """
     ret = []
     for registry_path in _correct_registry_paths(registry_paths):
@@ -506,20 +514,26 @@ def _remove_archive(rgc, registry_paths, cfg_archive_folder_key=CFG_ARCHIVE_KEY)
 
 
 def _correct_registry_paths(registry_paths):
-    """
-    parse_registry_path function recognizes the 'item' as the central element of the asset registry path.
-    We require the 'namespace' to be the central one. Consequently, this function swaps them.
+    """Correct registry paths by swapping 'namespace' and 'item' keys.
 
-    :param list[dict] registry_paths: output of parse_registry_path
-    :return list[dict]: corrected registry paths
+    parse_registry_path recognizes 'item' as the central element, but we
+    require 'namespace' to be central. This function swaps them.
+
+    Args:
+        registry_paths: Output of parse_registry_path.
+
+    Returns:
+        Corrected registry paths.
     """
 
     def _swap(rp):
-        """
-        Swaps dict values of 'namespace' with 'item' keys
+        """Swap 'namespace' and 'item' values in a registry path dict.
 
-        :param dict rp: dict to swap values for
-        :return dict: dict with swapped values
+        Args:
+            rp: Dict to swap values for.
+
+        Returns:
+            Dict with swapped values.
         """
         rp["namespace"] = rp["item"]
         rp["item"] = None
@@ -529,11 +543,13 @@ def _correct_registry_paths(registry_paths):
 
 
 def _get_paths_element(registry_paths, element):
-    """
-    Extract the specific element from a collection of registry paths
+    """Extract a specific element from a collection of registry paths.
 
-    :param list[dict] registry_paths: output of parse_registry_path
-    :param str element: 'protocol', 'namespace', 'item' or 'tag'
-    :return list[str]: extracted elements
+    Args:
+        registry_paths: Output of parse_registry_path.
+        element: One of 'protocol', 'namespace', 'item', or 'tag'.
+
+    Returns:
+        List of extracted elements.
     """
     return [x[element] for x in _correct_registry_paths(registry_paths)]
