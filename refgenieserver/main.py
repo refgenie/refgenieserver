@@ -48,7 +48,7 @@ def main() -> None:
         )
     )
     # this RefGenConf object will be used in the server, so it's read-only
-    rgc = RefGenConf(filepath=selected_cfg, writable=False)
+    rgc = RefGenConf.from_yaml_file(selected_cfg)
     if args.command == "archive":
         arp = (
             [parse_registry_path(x) for x in args.asset_registry_paths]

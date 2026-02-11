@@ -6,7 +6,7 @@ from glob import glob
 from json import dump
 from subprocess import run
 
-from attmap import PathExAttMap as PXAM
+from yacman import write_lock
 from refgenconf import RefGenConf
 from refgenconf.exceptions import (
     ConfigNotCompliantError,
@@ -80,7 +80,7 @@ def archive(
     # make it RW compatible and point to new target path for server use or initialize a new object
     if os.path.exists(server_rgc_path):
         _LOGGER.debug(f"'{server_rgc_path}' file was found and will be updated")
-        rgc_server = RefGenConf(filepath=server_rgc_path)
+        rgc_server = RefGenConf.from_yaml_file(server_rgc_path)
         if remove:
             if not registry_paths:
                 _LOGGER.error(
@@ -88,8 +88,9 @@ def archive(
                     "Use 'asset_registry_path' argument."
                 )
                 exit(1)
-            with rgc_server as r:
+            with write_lock(rgc_server) as r:
                 _remove_archive(r, registry_paths, CFG_ARCHIVE_KEY)
+                r.write()
             exit(0)
     else:
         if remove:
@@ -98,9 +99,9 @@ def archive(
             )
             exit(1)
         _LOGGER.debug(f"'{server_rgc_path}' file was not found and will be created")
-        rgc_server = RefGenConf(filepath=rgc.file_path)
-        rgc_server.make_writable(filepath=server_rgc_path)
-        rgc_server.make_readonly()
+        rgc_server = RefGenConf.from_yaml_file(rgc.file_path)
+        rgc_server.write_copy(server_rgc_path)
+        rgc_server.filepath = os.path.abspath(server_rgc_path)
     if registry_paths:
         genomes = _get_paths_element(registry_paths, "namespace")
         asset_list = _get_paths_element(registry_paths, "item")
@@ -151,9 +152,10 @@ def archive(
             CFG_GENOME_DESC_KEY: genome_desc,
             CFG_ALIASES_KEY: genome_aliases,
         }
-        with rgc_server as r:
-            r[CFG_GENOMES_KEY].setdefault(genome, PXAM())
+        with write_lock(rgc_server) as r:
+            r[CFG_GENOMES_KEY].setdefault(genome, {})
             r[CFG_GENOMES_KEY][genome].update(genome_attrs)
+            r.write()
         _LOGGER.debug(f"Updating '{genome}' genome attributes...")
         asset = asset_list[counter] if asset_list is not None else None
         assets = asset or rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY].keys()
@@ -174,8 +176,9 @@ def archive(
                 CFG_ASSET_DEFAULT_TAG_KEY: default_tag,
             }
             _LOGGER.debug(f"Updating '{genome}/{asset_name}' asset attributes...")
-            with rgc_server as r:
+            with write_lock(rgc_server) as r:
                 r.update_assets(genome, asset_name, asset_attrs)
+                r.write()
 
             tag = tag_list[counter] if tag_list is not None else None
             tags = (
@@ -264,7 +267,7 @@ def archive(
                             {CFG_LEGACY_ARCHIVE_CHECKSUM_KEY: legacy_digest}
                         )
                         _LOGGER.debug(f"attr dict: {tag_attrs}")
-                        with rgc_server as r:
+                        with write_lock(rgc_server) as r:
                             for parent in parents:
                                 # here we update any pre-existing parents' children
                                 # attr with the newly added asset
@@ -297,6 +300,7 @@ def archive(
                                     children=True,
                                 )
                             r.update_tags(genome, asset_name, tag_name, tag_attrs)
+                            r.write()
                 else:
                     exists_msg = f"'{target_file}' exists."
                     try:
@@ -307,8 +311,9 @@ def archive(
                     except KeyError:
                         _LOGGER.debug(exists_msg + " Calculating archive digest")
                         tag_attrs = {CFG_ARCHIVE_CHECKSUM_KEY: checksum(target_file)}
-                        with rgc_server as r:
+                        with write_lock(rgc_server) as r:
                             r.update_tags(genome, asset_name, tag_name, tag_attrs)
+                            r.write()
 
         counter += 1
     _LOGGER.info(f"Builder finished; server config file saved: {rgc_server.file_path}")
