@@ -11,7 +11,6 @@ from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from refgenconf.exceptions import RefgenconfError
 from refgenconf.helpers import send_data_request
 from ubiquerg import VersionInHelpParser, is_url
-from yacman import get_first_env_var
 
 if TYPE_CHECKING:
     from fastapi import FastAPI
@@ -31,11 +30,12 @@ def build_parser() -> argparse.ArgumentParser:
     Returns:
         The configured argument parser.
     """
-    env_var_val = (
-        get_first_env_var(CFG_ENV_VARS)[1]
-        if get_first_env_var(CFG_ENV_VARS) is not None
-        else "not set"
-    )
+    env_var_val = "not set"
+    for var in CFG_ENV_VARS:
+        val = os.environ.get(var)
+        if val is not None:
+            env_var_val = val
+            break
     banner = "%(prog)s - refgenie web server utilities"
     additional_description = (
         "For subcommand-specific options, type: '%(prog)s <subcommand> -h'"

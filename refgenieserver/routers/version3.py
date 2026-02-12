@@ -10,7 +10,7 @@ from refgenconf.refgenconf import map_paths_by_id
 from starlette.requests import Request
 from starlette.responses import FileResponse, RedirectResponse
 from ubiquerg import parse_registry_path
-from yacman import IK, UndefinedAliasError
+from yacman import UndefinedAliasError
 
 from ..const import *
 from ..data_models import Dict, List, Tag
@@ -198,7 +198,7 @@ async def asset_splash_page(
 async def list_available_genomes() -> list[str]:
     """Return a list of genome digests this server serves at least one asset for."""
     _LOGGER.info("serving genomes list")
-    return list(rgc.genomes[IK]["aliases_raw"].keys())
+    return list(rgc[CFG_GENOMES_KEY].keys())
 
 
 @router.get(
@@ -210,7 +210,10 @@ async def list_available_genomes() -> list[str]:
 async def get_alias_dict() -> dict[str, list[str]]:
     """Return a dictionary of alias lists keyed by genome digests."""
     _LOGGER.info("serving genomes alias dict")
-    return rgc.genomes[IK]["aliases_raw"]
+    return {
+        g: rgc[CFG_GENOMES_KEY][g].get(CFG_ALIASES_KEY, [])
+        for g in rgc[CFG_GENOMES_KEY].keys()
+    }
 
 
 @router.get(

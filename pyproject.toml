@@ -1,6 +1,6 @@
 [project]
 name = "refgenieserver"
-version = "0.7.0"
+version = "0.8.0"
 description = "A web interface and RESTful API for reference genome assets"
 readme = "README.md"
 license = "BSD-2-Clause"
@@ -27,6 +27,7 @@ dependencies = [
     "refgenconf>=0.12.2",
     "ubiquerg>=0.6.1",
     "uvicorn>=0.7.1",
+    "yacman>=0.9.5",
 ]
 
 [project.urls]
