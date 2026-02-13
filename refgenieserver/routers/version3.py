@@ -50,41 +50,41 @@ router = APIRouter()
 g = Path(
     ...,
     description="Genome digest",
-    regex=r"^\w+$",
+    pattern=r"^\w+$",
     max_length=48,
     min_length=48,
-    example=ex_digest,
+    examples={"default": ex_digest},
 )
 al = Path(
     ...,
     description="Genome alias",
-    regex=r"^\S+$",
-    example=ex_alias,
+    pattern=r"^\S+$",
+    examples={"default": ex_alias},
 )
 a = Path(
     ...,
     description="Asset name",
-    regex=r"^\S+$",
-    example=ex_asset,
+    pattern=r"^\S+$",
+    examples={"default": ex_asset},
 )
 s = Path(
     ...,
     description="Seek key name",
-    regex=r"^\S+$",
-    example=ex_asset,
+    pattern=r"^\S+$",
+    examples={"default": ex_asset},
 )
 t = Path(
     ...,
     description="Tag name",
-    regex=r"^\S+$",
-    example=DEFAULT_TAG,
+    pattern=r"^\S+$",
+    examples={"default": DEFAULT_TAG},
 )
 
 # API query parameter definitions
 tq = Query(
     None,
     description="Tag name",
-    regex=r"^\S+$",
+    pattern=r"^\S+$",
 )
 
 api_version_tags = [API3_ID]

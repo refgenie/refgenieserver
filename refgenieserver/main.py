@@ -61,6 +61,9 @@ def main() -> None:
         purge_nonservable(rgc)
         from .routers import private, version1, version2, version3
 
+        # v3 is registered at both root (latest/default API) and /v3 (versioned).
+        # This intentional dual-registration causes harmless "Duplicate Operation ID"
+        # warnings from FastAPI. These only affect OpenAPI codegen tools, not API usage.
         app.include_router(version3.router)
         app.include_router(version1.router, prefix="/v1")
         app.include_router(version2.router, prefix="/v2")
