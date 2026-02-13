@@ -244,19 +244,32 @@ def purge_nonservable(rgc: RefGenConf) -> RefGenConf:
             [r in tag_data for r in [CFG_ARCHIVE_CHECKSUM_KEY, CFG_ARCHIVE_SIZE_KEY]]
         )
 
+    # Collect items to remove (don't modify during iteration)
+    to_remove = []
+
     for genome_name, genome in rgc[CFG_GENOMES_KEY].items():
+        if CFG_ASSETS_KEY not in genome:
+            continue
         for asset_name, asset in genome[CFG_ASSETS_KEY].items():
-            try:
-                for tag_name, tag in asset[CFG_ASSET_TAGS_KEY].items():
-                    if not _check_servable(rgc, genome_name, asset_name, tag_name):
-                        _LOGGER.debug(
-                            "Removing '{}/{}:{}', it's not servable".format(
-                                genome_name, asset_name, tag_name
-                            )
+            if CFG_ASSET_TAGS_KEY not in asset:
+                to_remove.append((genome_name, asset_name, None))
+                continue
+            for tag_name in list(asset[CFG_ASSET_TAGS_KEY].keys()):
+                if not _check_servable(rgc, genome_name, asset_name, tag_name):
+                    _LOGGER.debug(
+                        "Removing '{}/{}:{}', it's not servable".format(
+                            genome_name, asset_name, tag_name
                         )
-                        rgc.cfg_remove_assets(genome_name, asset_name, tag_name)
-            except KeyError:
-                rgc.cfg_remove_assets(genome_name, asset_name)
+                    )
+                    to_remove.append((genome_name, asset_name, tag_name))
+
+    # Remove after iteration completes
+    for genome_name, asset_name, tag_name in to_remove:
+        try:
+            rgc.cfg_remove_assets(genome_name, asset_name, tag_name)
+        except (KeyError, Exception):
+            _LOGGER.debug(f"Could not remove {genome_name}/{asset_name}:{tag_name}")
+
     return rgc
 
 
@@ -276,7 +289,7 @@ def safely_get_example(
         The first result element (if list) or the result itself, or the default.
     """
     try:
-        res = rgc.__getattr__(rgc_method)(**kwargs)
+        res = getattr(rgc, rgc_method)(**kwargs)
         return res[0] if isinstance(res, list) else res
     except Exception as e:
         _LOGGER.warning(

@@ -58,8 +58,7 @@ def main() -> None:
         archive(rgc, arp, args.force, args.remove, selected_cfg, args.genomes_desc)
     elif args.command == "serve":
         # the router imports need to be after the RefGenConf object is declared
-        with rgc as r:
-            purge_nonservable(r)
+        purge_nonservable(rgc)
         from .routers import private, version1, version2, version3
 
         app.include_router(version3.router)

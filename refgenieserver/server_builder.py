@@ -102,6 +102,7 @@ def archive(
         rgc_server = RefGenConf.from_yaml_file(rgc.file_path)
         rgc_server.write_copy(server_rgc_path)
         rgc_server.filepath = os.path.abspath(server_rgc_path)
+        rgc_server.locker.set_file_path(os.path.abspath(server_rgc_path))
     if registry_paths:
         genomes = _get_paths_element(registry_paths, "namespace")
         asset_list = _get_paths_element(registry_paths, "item")
@@ -158,7 +159,7 @@ def archive(
             r.write()
         _LOGGER.debug(f"Updating '{genome}' genome attributes...")
         asset = asset_list[counter] if asset_list is not None else None
-        assets = asset or rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY].keys()
+        assets = asset or list(rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY].keys())
         if not assets:
             _LOGGER.error("No assets found")
             continue
@@ -183,9 +184,9 @@ def archive(
             tag = tag_list[counter] if tag_list is not None else None
             tags = (
                 tag
-                or rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][asset_name][
+                or list(rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][asset_name][
                     CFG_ASSET_TAGS_KEY
-                ].keys()
+                ].keys())
             )
             for tag_name in tags if isinstance(tags, list) else [tags]:
                 if not rgc.is_asset_complete(genome, asset_name, tag_name):
