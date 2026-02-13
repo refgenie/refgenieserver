@@ -182,11 +182,10 @@ def archive(
                 r.write()
 
             tag = tag_list[counter] if tag_list is not None else None
-            tags = (
-                tag
-                or list(rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][asset_name][
+            tags = tag or list(
+                rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][asset_name][
                     CFG_ASSET_TAGS_KEY
-                ].keys())
+                ].keys()
             )
             for tag_name in tags if isinstance(tags, list) else [tags]:
                 if not rgc.is_asset_complete(genome, asset_name, tag_name):
