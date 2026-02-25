@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import sys
 
 import logmuse
@@ -24,7 +26,8 @@ templates = Jinja2Templates(directory=TEMPLATES_PATH)
 templates.env.filters["os_path_join"] = lambda paths: os.path.join(*paths)
 
 
-def main():
+def main() -> None:
+    """Entry point for the refgenieserver CLI."""
     global rgc, _LOGGER
     parser = build_parser()
     args = parser.parse_args()
@@ -39,13 +42,13 @@ def main():
     )
     _LOGGER = logmuse.setup_logger(**logger_args)
     selected_cfg = select_genome_config(args.config)
-    assert (
-        selected_cfg is not None
-    ), "You must provide a config file or set the {} environment variable".format(
-        "or ".join(CFG_ENV_VARS)
+    assert selected_cfg is not None, (
+        "You must provide a config file or set the {} environment variable".format(
+            "or ".join(CFG_ENV_VARS)
+        )
     )
     # this RefGenConf object will be used in the server, so it's read-only
-    rgc = RefGenConf(filepath=selected_cfg, writable=False)
+    rgc = RefGenConf.from_yaml_file(selected_cfg)
     if args.command == "archive":
         arp = (
             [parse_registry_path(x) for x in args.asset_registry_paths]
@@ -55,10 +58,12 @@ def main():
         archive(rgc, arp, args.force, args.remove, selected_cfg, args.genomes_desc)
     elif args.command == "serve":
         # the router imports need to be after the RefGenConf object is declared
-        with rgc as r:
-            purge_nonservable(r)
+        purge_nonservable(rgc)
         from .routers import private, version1, version2, version3
 
+        # v3 is registered at both root (latest/default API) and /v3 (versioned).
+        # This intentional dual-registration causes harmless "Duplicate Operation ID"
+        # warnings from FastAPI. These only affect OpenAPI codegen tools, not API usage.
         app.include_router(version3.router)
         app.include_router(version1.router, prefix="/v1")
         app.include_router(version2.router, prefix="/v2")

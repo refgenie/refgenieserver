@@ -2,6 +2,22 @@
 
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) and [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) format.
 
+## [0.8.0] -- 2026-02-25
+
+### Changed
+- Updated yacman and refgenconf dependency requirements
+- Modernized packaging to use pyproject.toml with hatchling
+- Updated FastAPI route definitions to use `pattern` instead of deprecated `regex`
+- Updated GitHub Actions to modern versions
+
+### Added
+- `app_factory.create_app()` function for programmatic server creation
+
+### Fixed
+- Compatibility with yacman v1 (`with rgc as r:` context manager removed)
+- Compatibility with refgenconf 0.13.0
+- Various modernization and small bugfix improvements
+
 ## [0.7.0] -- 2021-04-27
 ### Added
 - `remotes` section in the refgenieserver config, which supersedes `remote_url_base`. It can be used to define multiple remote data providers.

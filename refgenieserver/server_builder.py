@@ -1,10 +1,11 @@
+from __future__ import annotations
+
 import logging
 import sys
 from glob import glob
 from json import dump
 from subprocess import run
 
-from attmap import PathExAttMap as PXAM
 from refgenconf import RefGenConf
 from refgenconf.exceptions import (
     ConfigNotCompliantError,
@@ -14,6 +15,7 @@ from refgenconf.exceptions import (
 )
 from refgenconf.helpers import replace_str_in_obj, swap_names_in_tree
 from ubiquerg import checksum, is_command_callable, parse_registry_path, size
+from yacman import write_lock
 
 from .const import *
 
@@ -21,19 +23,27 @@ global _LOGGER
 _LOGGER = logging.getLogger(PKG_NAME)
 
 
-def archive(rgc, registry_paths, force, remove, cfg_path, genomes_desc):
-    """
-    Takes the RefGenConf object and builds individual tar archives
-    that can be then served with 'refgenieserver serve'. Additionally determines their md5 checksums, file sizes and
-    updates the original refgenie config with these data. If the --asset and/or --genome options  are used (specific
-    build is requested) the archiver will check for the existence of config file saved in the path provided in
-    `genome_server` in the original config and update it so that no archive metadata is lost
+def archive(
+    rgc: RefGenConf,
+    registry_paths: list[dict] | None,
+    force: bool,
+    remove: bool,
+    cfg_path: str,
+    genomes_desc: str | None,
+) -> None:
+    """Build tar archives for serving with 'refgenieserver serve'.
 
-    :param RefGenConf rgc: configuration object with the data to build the servable archives for
-    :param list[dict] registry_paths: a collection of mappings that identifies the assets to update
-    :param bool force: whether to force the build of archive, regardless of its existence
-    :param bool remove: whether remove specified genome/asset:tag from the archive
-    :param str cfg_path: config file path
+    Determines md5 checksums and file sizes and updates the original refgenie
+    config with these data. If specific assets/genomes are requested, checks
+    for the server config file and updates it to preserve archive metadata.
+
+    Args:
+        rgc: Configuration object with data to build servable archives for.
+        registry_paths: Collection of mappings identifying assets to update.
+        force: Whether to force the build regardless of existence.
+        remove: Whether to remove specified genome/asset:tag from the archive.
+        cfg_path: Config file path.
+        genomes_desc: Path to CSV file with genome descriptions.
     """
     if float(rgc[CFG_VERSION_KEY]) < float(REQ_CFG_VERSION):
         raise ConfigNotCompliantError(
@@ -70,7 +80,7 @@ def archive(rgc, registry_paths, force, remove, cfg_path, genomes_desc):
     # make it RW compatible and point to new target path for server use or initialize a new object
     if os.path.exists(server_rgc_path):
         _LOGGER.debug(f"'{server_rgc_path}' file was found and will be updated")
-        rgc_server = RefGenConf(filepath=server_rgc_path)
+        rgc_server = RefGenConf.from_yaml_file(server_rgc_path)
         if remove:
             if not registry_paths:
                 _LOGGER.error(
@@ -78,8 +88,9 @@ def archive(rgc, registry_paths, force, remove, cfg_path, genomes_desc):
                     "Use 'asset_registry_path' argument."
                 )
                 exit(1)
-            with rgc_server as r:
+            with write_lock(rgc_server) as r:
                 _remove_archive(r, registry_paths, CFG_ARCHIVE_KEY)
+                r.write()
             exit(0)
     else:
         if remove:
@@ -88,9 +99,10 @@ def archive(rgc, registry_paths, force, remove, cfg_path, genomes_desc):
             )
             exit(1)
         _LOGGER.debug(f"'{server_rgc_path}' file was not found and will be created")
-        rgc_server = RefGenConf(filepath=rgc.file_path)
-        rgc_server.make_writable(filepath=server_rgc_path)
-        rgc_server.make_readonly()
+        rgc_server = RefGenConf.from_yaml_file(rgc.file_path)
+        rgc_server.write_copy(server_rgc_path)
+        rgc_server.filepath = os.path.abspath(server_rgc_path)
+        rgc_server.locker.set_file_path(os.path.abspath(server_rgc_path))
     if registry_paths:
         genomes = _get_paths_element(registry_paths, "namespace")
         asset_list = _get_paths_element(registry_paths, "item")
@@ -141,12 +153,13 @@ def archive(rgc, registry_paths, force, remove, cfg_path, genomes_desc):
             CFG_GENOME_DESC_KEY: genome_desc,
             CFG_ALIASES_KEY: genome_aliases,
         }
-        with rgc_server as r:
-            r[CFG_GENOMES_KEY].setdefault(genome, PXAM())
+        with write_lock(rgc_server) as r:
+            r[CFG_GENOMES_KEY].setdefault(genome, {})
             r[CFG_GENOMES_KEY][genome].update(genome_attrs)
+            r.write()
         _LOGGER.debug(f"Updating '{genome}' genome attributes...")
         asset = asset_list[counter] if asset_list is not None else None
-        assets = asset or rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY].keys()
+        assets = asset or list(rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY].keys())
         if not assets:
             _LOGGER.error("No assets found")
             continue
@@ -164,13 +177,13 @@ def archive(rgc, registry_paths, force, remove, cfg_path, genomes_desc):
                 CFG_ASSET_DEFAULT_TAG_KEY: default_tag,
             }
             _LOGGER.debug(f"Updating '{genome}/{asset_name}' asset attributes...")
-            with rgc_server as r:
+            with write_lock(rgc_server) as r:
                 r.update_assets(genome, asset_name, asset_attrs)
+                r.write()
 
             tag = tag_list[counter] if tag_list is not None else None
-            tags = (
-                tag
-                or rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][asset_name][
+            tags = tag or list(
+                rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][asset_name][
                     CFG_ASSET_TAGS_KEY
                 ].keys()
             )
@@ -254,7 +267,7 @@ def archive(rgc, registry_paths, force, remove, cfg_path, genomes_desc):
                             {CFG_LEGACY_ARCHIVE_CHECKSUM_KEY: legacy_digest}
                         )
                         _LOGGER.debug(f"attr dict: {tag_attrs}")
-                        with rgc_server as r:
+                        with write_lock(rgc_server) as r:
                             for parent in parents:
                                 # here we update any pre-existing parents' children
                                 # attr with the newly added asset
@@ -287,6 +300,7 @@ def archive(rgc, registry_paths, force, remove, cfg_path, genomes_desc):
                                     children=True,
                                 )
                             r.update_tags(genome, asset_name, tag_name, tag_attrs)
+                            r.write()
                 else:
                     exists_msg = f"'{target_file}' exists."
                     try:
@@ -297,21 +311,23 @@ def archive(rgc, registry_paths, force, remove, cfg_path, genomes_desc):
                     except KeyError:
                         _LOGGER.debug(exists_msg + " Calculating archive digest")
                         tag_attrs = {CFG_ARCHIVE_CHECKSUM_KEY: checksum(target_file)}
-                        with rgc_server as r:
+                        with write_lock(rgc_server) as r:
                             r.update_tags(genome, asset_name, tag_name, tag_attrs)
+                            r.write()
 
         counter += 1
     _LOGGER.info(f"Builder finished; server config file saved: {rgc_server.file_path}")
 
 
-def _check_tgz(path, output):
-    """
-    Check if file exists and tar it.
-    If gzipping is requested, the pigz software is used if available.
+def _check_tgz(path: str, output: str) -> None:
+    """Check if file exists and tar it, using pigz if available.
 
-    :param str path: path to the file to be tarred
-    :param str output: path to the result file
-    :raise OSError: if the file/directory meant to be archived does not exist
+    Args:
+        path: Path to the file to be tarred.
+        output: Path to the result file.
+
+    Raises:
+        OSError: If the file/directory to be archived does not exist.
     """
     pth, tag_name = os.path.split(path)
     if os.path.exists(path):
@@ -329,18 +345,23 @@ def _check_tgz(path, output):
         raise OSError(f"Entity '{path}' does not exist")
 
 
-def _check_tgz_legacy(path, output, asset_name, genome_name, alias):
-    """
-    NOTE: This is a duplication of the _check_tgz function, kept separate as in
-    the future this step will be simply removed.
+def _check_tgz_legacy(
+    path: str, output: str, asset_name: str, genome_name: str, alias: str | list[str]
+) -> None:
+    """Legacy version of _check_tgz, to be removed in the future.
 
-    Check if file exists and tar it.
-    If gzipping is requested, the availability of pigz software is checked and used.
+    Checks if file exists and tars it with alias-based naming. Uses pigz
+    if available.
 
-    :param str path: path to the file to be tarred
-    :param str output: path to the result file
-    :param str asset_name: name of the asset
-    :raise OSError: if the file/directory meant to be archived does not exist
+    Args:
+        path: Path to the file to be tarred.
+        output: Path to the result file.
+        asset_name: Name of the asset.
+        genome_name: Genome digest name.
+        alias: Genome alias or list of aliases.
+
+    Raises:
+        OSError: If the file/directory to be archived does not exist.
     """
     # TODO: remove in the future
     if isinstance(alias, str):
@@ -368,12 +389,14 @@ def _check_tgz_legacy(path, output, asset_name, genome_name, alias):
             raise OSError(f"Entity '{path}' does not exist")
 
 
-def _copy_log(input_dir, target_dir, asset_name, tag_name):
-    """
-    Copy the log file
+def _copy_log(input_dir: str, target_dir: str, asset_name: str, tag_name: str) -> None:
+    """Copy the build log file.
 
-    :param str input_dir: path to the directory to copy the recipe from
-    :param str target_dir: path to the directory to copy the recipe to
+    Args:
+        input_dir: Path to the source directory.
+        target_dir: Path to the destination directory.
+        asset_name: Asset name.
+        tag_name: Tag name.
     """
     log_path = f"{input_dir}/{BUILD_STATS_DIR}/{ORI_LOG_NAME}"
     if log_path and os.path.exists(log_path):
@@ -389,12 +412,12 @@ def _copy_log(input_dir, target_dir, asset_name, tag_name):
         _LOGGER.warning(f"Log not found: {log_path}")
 
 
-def _copy_asset_dir(input_dir, target_dir):
-    """
-    Copy the asset directory
+def _copy_asset_dir(input_dir: str, target_dir: str) -> None:
+    """Copy the asset directory via rsync.
 
-    :param str input_dir: path to the directory to copy the asset dir from
-    :param str target_dir: path to the directory to copy the asset dir to
+    Args:
+        input_dir: Path to the source directory.
+        target_dir: Path to the destination directory.
     """
     if input_dir and os.path.exists(input_dir):
         run(
@@ -406,13 +429,13 @@ def _copy_asset_dir(input_dir, target_dir):
         _LOGGER.warning(f"Asset directory not found: {input_dir}")
 
 
-def _get_asset_dir_contents(asset_dir, asset_name, tag_name):
-    """
-    Create a file tree with contents of the unarchived asset directory
+def _get_asset_dir_contents(asset_dir: str, asset_name: str, tag_name: str) -> None:
+    """Create a JSON file listing the unarchived asset directory contents.
 
-    :param str asset_dir: path to the asset directory to get the contents of
-    :param str asset_name: name of the asset
-    :param str tag_name: name of the tag
+    Args:
+        asset_dir: Path to the asset directory.
+        asset_name: Name of the asset.
+        tag_name: Name of the tag.
     """
     asset_dir_contents_file_path = os.path.join(
         os.path.dirname(asset_dir),
@@ -432,14 +455,16 @@ def _get_asset_dir_contents(asset_dir, asset_name, tag_name):
     )
 
 
-def _copy_recipe(input_dir, target_dir, asset_name, tag_name):
-    """
-    Copy the recipe
+def _copy_recipe(
+    input_dir: str, target_dir: str, asset_name: str, tag_name: str
+) -> None:
+    """Copy the build recipe file.
 
-    :param str input_dir: path to the directory to copy the recipe from
-    :param str target_dir: path to the directory to copy the recipe to
-    :param str asset_name: asset name
-    :param str tag_name: tag name
+    Args:
+        input_dir: Path to the source directory.
+        target_dir: Path to the destination directory.
+        asset_name: Asset name.
+        tag_name: Tag name.
     """
     recipe_path = (
         f"{input_dir}/{BUILD_STATS_DIR}/"
@@ -452,15 +477,20 @@ def _copy_recipe(input_dir, target_dir, asset_name, tag_name):
         _LOGGER.warning(f"Recipe not found: {recipe_path}")
 
 
-def _remove_archive(rgc, registry_paths, cfg_archive_folder_key=CFG_ARCHIVE_KEY):
-    """
-    Remove archives and corresponding entries from the RefGenConf object
+def _remove_archive(
+    rgc: RefGenConf,
+    registry_paths: list[dict],
+    cfg_archive_folder_key: str = CFG_ARCHIVE_KEY,
+) -> list[str]:
+    """Remove archives and corresponding entries from the RefGenConf object.
 
-    :param refgenconf.RefGenConf rgc: object to remove the entries from
-    :param list[dict] registry_paths: entries to remove
-    :param str cfg_archive_folder_key: configuration archive folder key in the genome
-        configuration file
-    :return list[str]: removed file paths
+    Args:
+        rgc: Configuration object to remove entries from.
+        registry_paths: Entries to remove.
+        cfg_archive_folder_key: Archive folder key in the genome config file.
+
+    Returns:
+        List of removed file paths.
     """
     ret = []
     for registry_path in _correct_registry_paths(registry_paths):
@@ -505,21 +535,27 @@ def _remove_archive(rgc, registry_paths, cfg_archive_folder_key=CFG_ARCHIVE_KEY)
     return ret
 
 
-def _correct_registry_paths(registry_paths):
+def _correct_registry_paths(registry_paths: list[dict]) -> list[dict]:
+    """Correct registry paths by swapping 'namespace' and 'item' keys.
+
+    parse_registry_path recognizes 'item' as the central element, but we
+    require 'namespace' to be central. This function swaps them.
+
+    Args:
+        registry_paths: Output of parse_registry_path.
+
+    Returns:
+        Corrected registry paths.
     """
-    parse_registry_path function recognizes the 'item' as the central element of the asset registry path.
-    We require the 'namespace' to be the central one. Consequently, this function swaps them.
 
-    :param list[dict] registry_paths: output of parse_registry_path
-    :return list[dict]: corrected registry paths
-    """
+    def _swap(rp: dict) -> dict:
+        """Swap 'namespace' and 'item' values in a registry path dict.
 
-    def _swap(rp):
-        """
-        Swaps dict values of 'namespace' with 'item' keys
+        Args:
+            rp: Dict to swap values for.
 
-        :param dict rp: dict to swap values for
-        :return dict: dict with swapped values
+        Returns:
+            Dict with swapped values.
         """
         rp["namespace"] = rp["item"]
         rp["item"] = None
@@ -528,12 +564,14 @@ def _correct_registry_paths(registry_paths):
     return [_swap(x) if x["namespace"] is None else x for x in registry_paths]
 
 
-def _get_paths_element(registry_paths, element):
-    """
-    Extract the specific element from a collection of registry paths
+def _get_paths_element(registry_paths: list[dict], element: str) -> list[str | None]:
+    """Extract a specific element from a collection of registry paths.
 
-    :param list[dict] registry_paths: output of parse_registry_path
-    :param str element: 'protocol', 'namespace', 'item' or 'tag'
-    :return list[str]: extracted elements
+    Args:
+        registry_paths: Output of parse_registry_path.
+        element: One of 'protocol', 'namespace', 'item', or 'tag'.
+
+    Returns:
+        List of extracted elements.
     """
     return [x[element] for x in _correct_registry_paths(registry_paths)]
