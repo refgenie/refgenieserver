@@ -518,18 +518,18 @@ async def get_genome_alias_digest(alias: str = al) -> Response:
 
 
 @router.get(
-    "/genomes/aliases/{genome_digest}",
+    "/genomes/aliases/{genome}",
     operation_id=API_VERSION + API_ID_ALIAS_ALIAS,
     response_model=List[str],
     tags=api_version_tags,
 )
-async def get_genome_alias(genome_digest: str = g) -> list[str]:
+async def get_genome_alias(genome: str = g) -> list[str]:
     """Return the genome aliases for a given digest."""
     try:
-        alias = rgc[CFG_GENOMES_KEY][genome_digest][CFG_ALIASES_KEY]
-        _LOGGER.info(f"alias returned for '{genome_digest}': {alias}")
+        alias = rgc[CFG_GENOMES_KEY][genome][CFG_ALIASES_KEY]
+        _LOGGER.info(f"alias returned for '{genome}': {alias}")
         return alias
     except (KeyError, UndefinedAliasError):
-        msg = MSG_404.format(f"genome ({genome_digest})")
+        msg = MSG_404.format(f"genome ({genome})")
         _LOGGER.warning(msg)
         raise HTTPException(status_code=404, detail=msg)
