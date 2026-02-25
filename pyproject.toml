@@ -3,7 +3,7 @@ name = "refgenieserver"
 version = "0.8.0"
 description = "A web interface and RESTful API for reference genome assets"
 readme = "README.md"
-license = "BSD-2-Clause"
+license = {text = "BSD-2-Clause"}
 requires-python = ">=3.10"
 authors = [
     { name = "Michal Stolarczyk" },
