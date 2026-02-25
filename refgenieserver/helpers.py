@@ -332,7 +332,7 @@ def create_asset_file_path(
         msg = MSG_404.format(f"asset ({genome}/{asset}:{tag})")
         _LOGGER.warning(msg)
         raise HTTPException(status_code=404, detail=msg)
-    tag_dict = rgc.genomes[genome][CFG_ASSETS_KEY][asset][CFG_ASSET_TAGS_KEY][tag]
+    tag_dict = rgc[CFG_GENOMES_KEY][genome][CFG_ASSETS_KEY][asset][CFG_ASSET_TAGS_KEY][tag]
     if seek_key not in tag_dict[CFG_SEEK_KEYS_KEY]:
         msg = MSG_404.format(f"seek_key ({genome}/{asset}.{seek_key}:{tag})")
         _LOGGER.warning(msg)

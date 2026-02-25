@@ -44,7 +44,7 @@ build-backend = "setuptools.build_meta"
 include = ["refgenieserver*"]
 
 [tool.setuptools.package-data]
-refgenieserver = ["templates/*", "static/*"]
+refgenieserver = ["templates/**", "static/*"]
 
 [project.optional-dependencies]
 test = [
