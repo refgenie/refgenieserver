@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from copy import copy
 from datetime import date
 from enum import Enum
@@ -8,7 +10,7 @@ from refgenconf.refgenconf import map_paths_by_id
 from starlette.requests import Request
 from starlette.responses import FileResponse, RedirectResponse
 from ubiquerg import parse_registry_path
-from yacman import IK, UndefinedAliasError
+from yacman import UndefinedAliasError
 
 from ..const import *
 from ..data_models import Dict, List, Tag
@@ -48,41 +50,41 @@ router = APIRouter()
 g = Path(
     ...,
     description="Genome digest",
-    regex=r"^\w+$",
+    pattern=r"^\w+$",
     max_length=48,
     min_length=48,
-    example=ex_digest,
+    examples={"default": ex_digest},
 )
 al = Path(
     ...,
     description="Genome alias",
-    regex=r"^\S+$",
-    example=ex_alias,
+    pattern=r"^\S+$",
+    examples={"default": ex_alias},
 )
 a = Path(
     ...,
     description="Asset name",
-    regex=r"^\S+$",
-    example=ex_asset,
+    pattern=r"^\S+$",
+    examples={"default": ex_asset},
 )
 s = Path(
     ...,
     description="Seek key name",
-    regex=r"^\S+$",
-    example=ex_asset,
+    pattern=r"^\S+$",
+    examples={"default": ex_asset},
 )
 t = Path(
     ...,
     description="Tag name",
-    regex=r"^\S+$",
-    example=DEFAULT_TAG,
+    pattern=r"^\S+$",
+    examples={"default": DEFAULT_TAG},
 )
 
 # API query parameter definitions
 tq = Query(
     None,
     description="Tag name",
-    regex=r"^\S+$",
+    pattern=r"^\S+$",
 )
 
 api_version_tags = [API3_ID]
@@ -91,11 +93,8 @@ current_year = date.today().year
 
 @router.get("/", tags=api_version_tags)
 @router.get("/index", tags=api_version_tags)
-async def index(request: Request):
-    """
-    Returns a landing page HTML with the server resources ready do download.
-    No inputs required.
-    """
+async def index(request: Request) -> Response:
+    """Return a landing page HTML with the server resources ready to download."""
     _LOGGER.debug(f"RefGenConf object:\n{rgc}")
     templ_vars = {
         "request": request,
@@ -111,18 +110,14 @@ async def index(request: Request):
 @router.get(
     "/remotes/dict", tags=api_version_tags, response_model=Dict[str, Dict[str, str]]
 )
-async def get_remotes_dict():
-    """
-    Returns the remotes section of the server configuration file
-    """
+async def get_remotes_dict() -> dict[str, dict[str, str]] | None:
+    """Return the remotes section of the server configuration file."""
     return rgc["remotes"] if "remotes" in rgc else None
 
 
 @router.get("/genomes/splash/{genome}", tags=api_version_tags)
-async def genome_splash_page(request: Request, genome: str = g):
-    """
-    Returns a genome splash page
-    """
+async def genome_splash_page(request: Request, genome: str = g) -> Response:
+    """Return a genome splash page."""
     templ_vars = {
         "openapi_version": get_openapi_version(app),
         "genome": genome,
@@ -146,10 +141,8 @@ async def genome_splash_page(request: Request, genome: str = g):
 @router.get("/assets/splash/{genome}/{asset}", tags=api_version_tags)
 async def asset_splash_page(
     request: Request, genome: str = g, asset: str = a, tag: Optional[str] = tq
-):
-    """
-    Returns an asset splash page
-    """
+) -> Response:
+    """Return an asset splash page."""
     tag = tag or rgc.get_default_tag(
         genome, asset
     )  # returns 'default' for nonexistent genome/asset; no need to catch
@@ -202,12 +195,10 @@ async def asset_splash_page(
 
 
 @router.get("/genomes/list", response_model=List[str], tags=api_version_tags)
-async def list_available_genomes():
-    """
-    Returns a list of **genome digests** this server serves at least one asset for.
-    """
+async def list_available_genomes() -> list[str]:
+    """Return a list of genome digests this server serves at least one asset for."""
     _LOGGER.info("serving genomes list")
-    return list(rgc.genomes[IK]["aliases_raw"].keys())
+    return list(rgc[CFG_GENOMES_KEY].keys())
 
 
 @router.get(
@@ -216,12 +207,13 @@ async def list_available_genomes():
     tags=api_version_tags,
     operation_id=API_VERSION + API_ID_ALIASES_DICT,
 )
-async def get_alias_dict():
-    """
-    Returns a dictionary of lists of aliases keyed by the respective genome digests.
-    """
+async def get_alias_dict() -> dict[str, list[str]]:
+    """Return a dictionary of alias lists keyed by genome digests."""
     _LOGGER.info("serving genomes alias dict")
-    return rgc.genomes[IK]["aliases_raw"]
+    return {
+        g: rgc[CFG_GENOMES_KEY][g].get(CFG_ALIASES_KEY, [])
+        for g in rgc[CFG_GENOMES_KEY].keys()
+    }
 
 
 @router.get(
@@ -233,11 +225,9 @@ async def get_alias_dict():
 async def list_available_assets(
     includeSeekKeys: Optional[bool] = Query(
         False, description="Whether to include seek keys in the response"
-    )
-):
-    """
-    Returns a list of assets that can be downloaded, keyed by the respective genome digests.
-    """
+    ),
+) -> dict[str, list[str]]:
+    """Return a list of assets that can be downloaded, keyed by genome digests."""
     ret_dict = (
         rgc.list(include_tags=True) if includeSeekKeys else rgc.list_assets_by_genome()
     )
@@ -254,12 +244,13 @@ async def list_available_assets(
     operation_id=API_VERSION + API_ID_ARCHIVE,
     tags=api_version_tags,
 )
-async def download_asset(genome: str = g, asset: str = a, tag: Optional[str] = tq):
-    """
-    Returns an archive. Requires the genome name and the asset name as an input.
+async def download_asset(
+    genome: str = g, asset: str = a, tag: Optional[str] = tq
+) -> Response:
+    """Return an asset archive.
 
-    Optionally, 'tag' query parameter can be specified to get a tagged asset archive.
-    Default tag is returned otherwise.
+    Optionally, 'tag' query parameter can be specified to get a tagged asset
+    archive. Default tag is returned otherwise.
     """
     tag = tag or rgc.get_default_tag(
         genome, asset
@@ -297,10 +288,8 @@ async def get_asset_file_path(
     remoteClass: RemoteClassEnum = Query(
         "http", description="Remote data provider class"
     ),
-):
-    """
-    Returns a path to the unarchived asset file.
-    Requires a genome name, an asset name and a seek_key name as an input.
+) -> Response:
+    """Return a path to the unarchived asset file.
 
     Optionally, query parameters can be specified:
 
@@ -326,10 +315,8 @@ async def get_asset_file_path(
     response_model=str,
     tags=api_version_tags,
 )
-async def get_asset_default_tag(genome: str = g, asset: str = a):
-    """
-    Returns the default tag name. Requires genome name and asset name as an input.
-    """
+async def get_asset_default_tag(genome: str = g, asset: str = a) -> Response:
+    """Return the default tag name for a genome/asset pair."""
     return Response(content=rgc.get_default_tag(genome, asset), media_type="text/plain")
 
 
@@ -339,10 +326,10 @@ async def get_asset_default_tag(genome: str = g, asset: str = a):
     response_model=str,
     tags=api_version_tags,
 )
-async def get_asset_digest(genome: str = g, asset: str = a, tag: Optional[str] = tq):
-    """
-    Returns the asset digest. Requires genome name asset name and tag name as an input.
-    """
+async def get_asset_digest(
+    genome: str = g, asset: str = a, tag: Optional[str] = tq
+) -> Response:
+    """Return the asset digest for a genome/asset:tag combination."""
     tag = tag or DEFAULT_TAG
     try:
         return Response(
@@ -363,10 +350,10 @@ async def get_asset_digest(genome: str = g, asset: str = a, tag: Optional[str] =
     response_model=str,
     tags=api_version_tags,
 )
-async def get_archive_digest(genome: str = g, asset: str = a, tag: Optional[str] = tq):
-    """
-    Returns the archive digest. Requires genome name asset name and tag name as an input.
-    """
+async def get_archive_digest(
+    genome: str = g, asset: str = a, tag: Optional[str] = tq
+) -> Response:
+    """Return the archive digest for a genome/asset:tag combination."""
     tag = tag or DEFAULT_TAG
     try:
         return Response(
@@ -388,12 +375,11 @@ async def get_archive_digest(genome: str = g, asset: str = a, tag: Optional[str]
 )
 async def download_asset_build_recipe(
     genome: str = g, asset: str = a, tag: Optional[str] = tq
-):
-    """
-    Returns a build recipe. Requires the genome name and the asset name as an input.
+) -> Response:
+    """Return a build recipe.
 
-    Optionally, 'tag' query parameter can be specified to get a tagged asset archive.
-    Default tag is returned otherwise.
+    Optionally, 'tag' query parameter can be specified. Default tag is returned
+    otherwise.
     """
     return serve_json_for_asset(
         rgc=rgc,
@@ -411,12 +397,11 @@ async def download_asset_build_recipe(
 )
 async def download_asset_build_log(
     genome: str = g, asset: str = a, tag: Optional[str] = tq
-):
-    """
-    Returns a build log. Requires the genome name and the asset name as an input.
+) -> Response:
+    """Return a build log.
 
-    Optionally, 'tag' query parameter can be specified to get a tagged asset archive.
-    Default tag is returned otherwise.
+    Optionally, 'tag' query parameter can be specified. Default tag is returned
+    otherwise.
     """
     return serve_file_for_asset(
         rgc=rgc,
@@ -434,13 +419,11 @@ async def download_asset_build_log(
 )
 async def download_asset_directory_contents(
     genome: str = g, asset: str = a, tag: Optional[str] = tq
-):
-    """
-    Returns a asset directory tree file.
-    Requires the genome name and the asset name as an input.
+) -> Response:
+    """Return an asset directory tree file.
 
-    Optionally, 'tag' query parameter can be specified to get a tagged asset archive.
-    Default tag is returned otherwise.
+    Optionally, 'tag' query parameter can be specified. Default tag is returned
+    otherwise.
     """
     return serve_json_for_asset(
         rgc=rgc,
@@ -459,11 +442,11 @@ async def download_asset_directory_contents(
 )
 async def download_asset_attributes(
     genome: str = g, asset: str = a, tag: Optional[str] = tq
-):
-    """
-    Returns a dictionary of asset attributes, like archive size, archive digest etc.
-    Requires the genome name and the asset name as an input.
-    Optionally, 'tag' query parameter can be specified to get a tagged asset attributes.
+) -> dict:
+    """Return a dictionary of asset attributes (archive size, digest, etc.).
+
+    Optionally, 'tag' query parameter can be specified to get tagged asset
+    attributes.
     """
     tag = tag or rgc.get_default_tag(
         genome, asset
@@ -494,11 +477,8 @@ async def download_asset_attributes(
     response_model=Dict[str, str],
     tags=api_version_tags,
 )
-async def download_genome_attributes(genome: str = g):
-    """
-    Returns a dictionary of genome attributes, like archive size, archive digest etc.
-    Requires the genome name name as an input.
-    """
+async def download_genome_attributes(genome: str = g) -> dict:
+    """Return a dictionary of genome attributes (archive size, digest, etc.)."""
     try:
         attrs = rgc.get_genome_attributes(genome)
         _LOGGER.info(f"attributes returned for genome '{genome}': \n{attrs}")
@@ -512,11 +492,8 @@ async def download_genome_attributes(genome: str = g):
 @router.get(
     "/genomes/by_asset/{asset}", response_model=List[str], tags=api_version_tags
 )
-async def list_genomes_by_asset(asset: str = a):
-    """
-    Returns a list of genomes that have the requested asset defined.
-    Requires the asset name as an input.
-    """
+async def list_genomes_by_asset(asset: str = a) -> list[str]:
+    """Return a list of genomes that have the requested asset defined."""
     genomes = rgc.list_genomes_by_asset(asset)
     _LOGGER.info(f"serving genomes by '{asset}' asset: {genomes}")
     return genomes
@@ -528,10 +505,8 @@ async def list_genomes_by_asset(asset: str = a):
     response_model=str,
     tags=api_version_tags,
 )
-async def get_genome_alias_digest(alias: str = al):
-    """
-    Returns the genome digest. Requires the genome name as an input
-    """
+async def get_genome_alias_digest(alias: str = al) -> Response:
+    """Return the genome digest for a given alias."""
     try:
         digest = rgc.get_genome_alias_digest(alias=alias)
         _LOGGER.info(f"digest returned for '{alias}': {digest}")
@@ -543,20 +518,18 @@ async def get_genome_alias_digest(alias: str = al):
 
 
 @router.get(
-    "/genomes/aliases/{genome_digest}",
+    "/genomes/aliases/{genome}",
     operation_id=API_VERSION + API_ID_ALIAS_ALIAS,
     response_model=List[str],
     tags=api_version_tags,
 )
-async def get_genome_alias(genome_digest: str = g):
-    """
-    Returns the genome digest. Requires the genome name as an input
-    """
+async def get_genome_alias(genome: str = g) -> list[str]:
+    """Return the genome aliases for a given digest."""
     try:
-        alias = rgc[CFG_GENOMES_KEY][genome_digest][CFG_ALIASES_KEY]
-        _LOGGER.info(f"alias returned for '{genome_digest}': {alias}")
+        alias = rgc[CFG_GENOMES_KEY][genome][CFG_ALIASES_KEY]
+        _LOGGER.info(f"alias returned for '{genome}': {alias}")
         return alias
     except (KeyError, UndefinedAliasError):
-        msg = MSG_404.format(f"genome ({genome_digest})")
+        msg = MSG_404.format(f"genome ({genome})")
         _LOGGER.warning(msg)
         raise HTTPException(status_code=404, detail=msg)
