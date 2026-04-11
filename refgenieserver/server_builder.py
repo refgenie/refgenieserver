@@ -6,7 +6,6 @@ from glob import glob
 from json import dump
 from subprocess import run
 
-from yacman import write_lock
 from refgenconf import RefGenConf
 from refgenconf.exceptions import (
     ConfigNotCompliantError,
@@ -16,6 +15,7 @@ from refgenconf.exceptions import (
 )
 from refgenconf.helpers import replace_str_in_obj, swap_names_in_tree
 from ubiquerg import checksum, is_command_callable, parse_registry_path, size
+from yacman import write_lock
 
 from .const import *
 

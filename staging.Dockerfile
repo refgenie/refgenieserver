@@ -1,6 +1,7 @@
-FROM tiangolo/uvicorn-gunicorn:python3.7-alpine3.8
+FROM python:3.12-slim
 LABEL authors="Nathan Sheffield, Michal Stolarczyk"
 
 COPY . /app
-#RUN pip install https://github.com/refgenie/refgenconf/archive/dev.zip
+WORKDIR /app
 RUN pip install .
+CMD ["uvicorn", "refgenieserver.main:app", "--host", "0.0.0.0", "--port", "80"]

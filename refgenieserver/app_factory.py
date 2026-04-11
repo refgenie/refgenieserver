@@ -8,7 +8,7 @@ import sys
 from fastapi import FastAPI
 from refgenconf import RefGenConf
 
-from .const import PKG_NAME, TAGS_METADATA, PRIVATE_API
+from .const import PKG_NAME, PRIVATE_API, TAGS_METADATA
 from .helpers import purge_nonservable
 
 _LOGGER = logging.getLogger(PKG_NAME)
@@ -33,9 +33,9 @@ def create_app(config_path: str, archive_base_dir: str | None = None) -> FastAPI
     # `import refgenieserver.main as m` can return a different object
     # than what's in sys.modules (due to __init__.py's `from .main import *`),
     # which means attribute modifications won't be visible to other modules.
-    import refgenieserver.main  # ensure loaded
-    import refgenieserver.const  # ensure loaded
-    import refgenieserver.helpers  # ensure loaded
+    import refgenieserver.const  # noqa: F401 ensure loaded
+    import refgenieserver.helpers  # noqa: F401 ensure loaded
+    import refgenieserver.main  # noqa: F401 ensure loaded
 
     main_module = sys.modules["refgenieserver.main"]
     const_module = sys.modules["refgenieserver.const"]
